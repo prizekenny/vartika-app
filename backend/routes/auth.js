@@ -26,9 +26,28 @@ router.post("/register", async (req, res) => {
   }
 });
 
-// Local login route
-router.post("/login", passport.authenticate("local"), (req, res) => {
-  res.json({ user: req.user });
+// Local login with last_login_time update
+router.post("/login", (req, res, next) => {
+  passport.authenticate("local", async (err, user, info) => {
+    if (err) return next(err);
+    if (!user) return res.status(401).json(info);
+
+    try {
+      // Update last_login_time
+      await pool.query(
+        "UPDATE users SET last_login_time = NOW() WHERE user_id = $1",
+        [user.user_id]
+      );
+
+      // Complete login
+      req.logIn(user, (err) => {
+        if (err) return next(err);
+        res.json({ user });
+      });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  })(req, res, next);
 });
 
 // Google OAuth routes
@@ -37,18 +56,28 @@ router.get(
   passport.authenticate("google", { scope: ["profile", "email"] })
 );
 
+// Also update last_login_time for Google login
 router.get(
   "/google/callback",
   passport.authenticate("google", {
     failureRedirect: "/login",
-    successRedirect: "/",
   }),
-  (req, res) => {
-    console.log("Google authentication successful");
-    res.json({
-      success: true,
-      user: req.user,
-    });
+  async (req, res) => {
+    try {
+      if (req.user) {
+        // Update last_login_time
+        await pool.query(
+          "UPDATE users SET last_login_time = NOW() WHERE user_id = $1",
+          [req.user.user_id]
+        );
+      }
+      res.json({
+        success: true,
+        user: req.user,
+      });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
   }
 );
 

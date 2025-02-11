@@ -20,7 +20,8 @@ CREATE TABLE users (
     status VARCHAR(20) DEFAULT 'active',
     user_type VARCHAR(20) DEFAULT 'Client',
     last_login_time TIMESTAMP,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Roles table
