@@ -3,6 +3,9 @@
 import React, { useState } from "react";
 import Button from "../../components/Button"; // Adjust the path based on your project structure
 import { FaGoogle, FaFacebook, FaMicrosoft } from "react-icons/fa";
+import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
+import jwt_decode from 'jwt-decode';
+import { useRouter } from 'next/navigation';
 
 function SignUpPage() {
   // State for form inputs
@@ -11,7 +14,9 @@ function SignUpPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const router = useRouter();
 
+  
   // Function to handle form submission
   const handleSubmit = async (event) => {
     event.preventDefault(); // Prevents the default form submission behavior
@@ -33,10 +38,9 @@ function SignUpPage() {
       alert("You must accept the Terms and Conditions to proceed.");
       return;
     }
-
-    // Call the backend API to create a new user account
+// Call the backend API to create a new user account
     try {
-      const response = await fetch("http://localhost:5000/api/signup", {
+      const response = await fetch("http://localhost:5001/auth/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json", // Specify JSON payload
@@ -54,6 +58,7 @@ function SignUpPage() {
         // Signup successful, redirect to login or dashboard
         alert("Sign up successful! Please log in.");
         console.log("User created:", data);
+        router.push('/login');
       } else {
         // Handle signup failure (e.g., username already exists)
         alert(`Sign up failed: ${data.message}`);
@@ -63,6 +68,40 @@ function SignUpPage() {
       console.error("Error during sign up:", error);
       alert("An error occurred. Please try again later.");
     }
+  };
+
+  // Function to handle Google sign up  
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      const decoded = jwt_decode(credentialResponse.credential);
+      const response = await fetch("http://localhost:5001/auth/google-signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          token: credentialResponse.credential,
+          email: decoded.email,
+          name: decoded.name
+        }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        // Redirect to workspace
+        alert("Google sign up successful!");
+        router.push('/workspace');
+      } else {
+        alert(`Google sign up failed: ${data.message}`);
+      }
+    } catch (error) {
+      console.error("Error during Google sign up:", error);
+      alert("An error occurred during Google sign up");
+    }
+  };
+
+  const handleGoogleError = () => {
+    alert("Google sign up failed. Please try again.");
   };
 
   return (
@@ -153,7 +192,19 @@ function SignUpPage() {
         <div className="flex flex-col items-center justify-center mt-6 space-y-4">
           <p className="text-gray-500">Or sign up with</p>
           <div className="flex space-x-4">
-            <Button icon={<FaGoogle size={20} />} text="Google" />
+            <GoogleOAuthProvider clientId={process.env.GOOGLE_CLIENT_ID}>
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleError}
+                render={(renderProps) => (
+                  <Button 
+                    icon={<FaGoogle size={20} />} 
+                    text="Google" 
+                    onClick={renderProps.onClick}
+                  />
+                )}
+              />
+            </GoogleOAuthProvider>
             <Button icon={<FaMicrosoft size={20} />} text="Microsoft" />
             <Button icon={<FaFacebook size={20} />} text="Facebook" />
           </div>

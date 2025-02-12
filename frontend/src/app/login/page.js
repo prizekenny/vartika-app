@@ -3,7 +3,8 @@
 import React, { useState } from "react";
 import Button from "../../components/Button"; // Adjust the path based on your project structure
 import { FaGoogle, FaFacebook, FaMicrosoft } from "react-icons/fa";
-
+import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
+import jwt_decode from 'jwt-decode';
 import { useRouter } from "next/navigation";
 
 function LoginPage() {
@@ -24,7 +25,7 @@ function LoginPage() {
 
     // Call the backend API to verify login credentials
     try {
-      const response = await fetch("http://localhost:5000/api/login", {
+      const response = await fetch("http://localhost:5001/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json", // Specify JSON payload
@@ -53,6 +54,39 @@ function LoginPage() {
 
     // If login successful, redirect the user to workspace page, now it's just to test.
     router.push("/workspace");
+  };
+
+  // Function to handle Google login
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      const decoded = jwt_decode(credentialResponse.credential);
+      const response = await fetch("http://localhost:5001/auth/google-login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          token: credentialResponse.credential,
+          email: decoded.email,
+          name: decoded.name
+        }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        alert("Google login successful!");
+        router.push('/workspace');
+      } else {
+        alert(`Google login failed: ${data.message}`);
+      }
+    } catch (error) {
+      console.error("Error during Google login:", error);
+      alert("An error occurred during Google login");
+    }
+  };
+
+  const handleGoogleError = () => {
+    alert("Google login failed. Please try again.");
   };
 
   return (
@@ -119,7 +153,19 @@ function LoginPage() {
         <div className="flex flex-col items-center justify-center mt-6 space-y-4">
           <p className="text-gray-500">Or log in with</p>
           <div className="flex space-x-4">
-            <Button icon={<FaGoogle size={20} />} text="Google" />
+            <GoogleOAuthProvider clientId={process.env.GOOGLE_CLIENT_ID}>
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleError}
+                render={(renderProps) => (
+                  <Button 
+                    icon={<FaGoogle size={20} />} 
+                    text="Google" 
+                    onClick={renderProps.onClick}
+                  />
+                )}
+              />
+            </GoogleOAuthProvider>
             <Button icon={<FaMicrosoft size={20} />} text="Microsoft" />
             <Button icon={<FaFacebook size={20} />} text="Facebook" />
           </div>
