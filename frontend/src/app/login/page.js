@@ -33,14 +33,21 @@ function LoginPage() {
           username: username, // Username from input
           password: password, // Password from input
         }),
+        credentials: 'include', // 允許跨域請求時發送 cookies
       });
 
       const data = await response.json();
 
       if (response.ok) {
+        // 儲存 JWT token 到 localStorage
+        if (data.token) {
+          localStorage.setItem('token', data.token);
+        }
+        
         // Login successful, redirect to dashboard or handle success
         alert("Login successful!");
         console.log("User data:", data);
+        router.push("/workspace");
       } else {
         // Handle login failure
         alert(`Login failed: ${data.message}`);
@@ -51,8 +58,6 @@ function LoginPage() {
       alert("An error occurred. Please try again later.");
     }
 
-    // If login successful, redirect the user to workspace page, now it's just to test.
-    router.push("/workspace");
   };
 
   return (

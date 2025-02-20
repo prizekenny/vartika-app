@@ -5,26 +5,25 @@ import Button from "../../components/Button"; // Adjust the path based on your p
 import { FaGoogle, FaFacebook, FaMicrosoft } from "react-icons/fa";
 
 function SignUpPage() {
+  
   // State for form inputs
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [errors, setErrors] = useState({
+    username: '',
+    email: '',
+    password: '',
+    confirmPassword: ''
+  });
 
   // Function to handle form submission
   const handleSubmit = async (event) => {
     event.preventDefault(); // Prevents the default form submission behavior
 
-    // Validate input fields
-    if (!username || !email || !password || !confirmPassword) {
-      alert("Please fill in all required fields.");
-      return;
-    }
-
-    // Check if passwords match
-    if (password !== confirmPassword) {
-      alert("Passwords do not match. Please try again.");
+    if (!validateForm()) {
       return;
     }
 
@@ -65,6 +64,40 @@ function SignUpPage() {
     }
   };
 
+  const validateForm = () => {
+    let isValid = true;
+    const newErrors = {};
+
+    // 用戶名驗證
+    if (username.length < 3) {
+      newErrors.username = '用戶名至少需要3個字符';
+      isValid = false;
+    }
+
+    // 電子郵件驗證
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      newErrors.email = '請輸入有效的電子郵件地址';
+      isValid = false;
+    }
+
+    // 密碼驗證
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
+    if (!passwordRegex.test(password)) {
+      newErrors.password = '密碼至少8位，必須包含字母和數字';
+      isValid = false;
+    }
+
+    // 確認密碼驗證
+    if (password !== confirmPassword) {
+      newErrors.confirmPassword = '兩次輸入的密碼不一致';
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
+
   return (
     <main className="bg-white min-h-screen flex flex-col justify-center items-center">
       <header className="flex flex-col items-center justify-center mb-6">
@@ -83,10 +116,13 @@ function SignUpPage() {
             type="text"
             id="username"
             placeholder="Enter your username"
-            className="border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={`border ${errors.username ? 'border-red-500' : 'border-gray-300'} rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500`}
             value={username}
             onChange={(e) => setUsername(e.target.value)} // Update username state
           />
+          {errors.username && (
+            <p className="text-red-500 text-sm mt-1">{errors.username}</p>
+          )}
 
           <label htmlFor="email" className="text-gray-700 font-medium">
             Email
@@ -95,10 +131,13 @@ function SignUpPage() {
             type="email"
             id="email"
             placeholder="Enter your email"
-            className="border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={`border ${errors.email ? 'border-red-500' : 'border-gray-300'} rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500`}
             value={email}
             onChange={(e) => setEmail(e.target.value)} // Update email state
           />
+          {errors.email && (
+            <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+          )}
 
           <label htmlFor="password" className="text-gray-700 font-medium">
             Password
@@ -107,10 +146,13 @@ function SignUpPage() {
             type="password"
             id="password"
             placeholder="Create a password"
-            className="border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={`border ${errors.password ? 'border-red-500' : 'border-gray-300'} rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500`}
             value={password}
             onChange={(e) => setPassword(e.target.value)} // Update password state
           />
+          {errors.password && (
+            <p className="text-red-500 text-sm mt-1">{errors.password}</p>
+          )}
 
           <label
             htmlFor="confirm-password"
@@ -122,10 +164,13 @@ function SignUpPage() {
             type="password"
             id="confirm-password"
             placeholder="Confirm your password"
-            className="border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={`border ${errors.confirmPassword ? 'border-red-500' : 'border-gray-300'} rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500`}
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)} // Update confirmPassword state
           />
+          {errors.confirmPassword && (
+            <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>
+          )}
 
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
