@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Tab } from "@headlessui/react";
 
 export default function TransactionTab() {
@@ -48,59 +48,9 @@ export default function TransactionTab() {
       console.error("Failed to fetch transactions:", error);
       alert("Failed to load transactions. Displaying sample data instead.");
 
-      // 8. Dummy data (at least 5 transactions)
-      setTransactions([
-        {
-          date: "2024-12-01",
-          bankDetail: "Deposit from Client A",
-          payee: "Client A",
-          categorizeOrMatch: "Income",
-          tax: "5%",
-          spent: "-",
-          received: "$1,500.00",
-          doc: "Invoice-123",
-        },
-        {
-          date: "2024-12-02",
-          bankDetail: "Utility Bill",
-          payee: "City Utilities",
-          categorizeOrMatch: "Expense",
-          tax: "0%",
-          spent: "$200.00",
-          received: "-",
-          doc: "Bill-456",
-        },
-        {
-          date: "2024-12-03",
-          bankDetail: "Office Supplies",
-          payee: "Stationery Shop",
-          categorizeOrMatch: "Expense",
-          tax: "12%",
-          spent: "$50.00",
-          received: "-",
-          doc: "Receipt-789",
-        },
-        {
-          date: "2024-12-04",
-          bankDetail: "Service Payment",
-          payee: "Freelancer B",
-          categorizeOrMatch: "Contractor Expense",
-          tax: "15%",
-          spent: "$600.00",
-          received: "-",
-          doc: "Payment-101",
-        },
-        {
-          date: "2024-12-05",
-          bankDetail: "Refund from Vendor",
-          payee: "Vendor C",
-          categorizeOrMatch: "Income",
-          tax: "0%",
-          spent: "-",
-          received: "$300.00",
-          doc: "Refund-202",
-        },
-      ]);
+      // 8. Import dummy data from JSON file
+      const dummyData = await import("../../../../dummy_data/transaction.json");
+      setTransactions(dummyData.default);
     }
   };
 
@@ -174,110 +124,186 @@ export default function TransactionTab() {
 
 // Bank Transactions Tab Content
 function BankTransactions({ fetchTransactions, transactions }) {
+  const [selectAll, setSelectAll] = useState(false);
+  // 添加选中项的状态管理
+  const [selectedItems, setSelectedItems] = useState({});
+
+  // 添加 useEffect 来在组件加载时获取数据
+  useEffect(() => {
+    fetchTransactions();
+  }, []); // 空依赖数组意味着只在组件挂载时执行一次
+
+  // 处理全选
+  const handleSelectAll = () => {
+    const newSelectAll = !selectAll;
+    setSelectAll(newSelectAll);
+
+    // 更新所有项的选中状态
+    const newSelectedItems = {};
+    transactions.forEach((transaction, index) => {
+      newSelectedItems[index] = newSelectAll;
+    });
+    setSelectedItems(newSelectedItems);
+  };
+
+  // 处理单个项的选中
+  const handleSelectItem = (index) => {
+    setSelectedItems((prev) => ({
+      ...prev,
+      [index]: !prev[index],
+    }));
+
+    // 检查是否所有项都被选中，更新全选状态
+    const allSelected = Object.values({
+      ...selectedItems,
+      [index]: !selectedItems[index],
+    }).every((value) => value);
+    setSelectAll(allSelected);
+  };
+
   return (
-    <div>
-      {/* Account Type and Update Button */}
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center">
-          <label htmlFor="accountType" className="text-gray-700 font-medium">
-            Account Type
-          </label>
-          <select
-            id="accountType"
-            className="mt-1 ml-2 block w-48 border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
-          >
-            <option value="Chequing Account">Chequing Account</option>
-            <option value="Saving Account">Saving Account</option>
+    <div className="h-[calc(100vh-6rem)] flex flex-col">
+      {/* 上方固定内容 */}
+      <div className="flex-none">
+        {/* Header with Company Selection */}
+        <div className="flex items-center mb-6">
+          <span className="mr-2">≡</span>
+          <select className="border-none bg-transparent font-semibold text-lg">
+            <option>Jane Bryan Consulting Ltd.</option>
           </select>
         </div>
-        <div className="flex items-center">
-          <p className="text-red-700 ">Use Case 2 ---- </p>
-          <button
-            onClick={fetchTransactions}
-            className="px-4 py-2 bg-blue-500 text-white rounded-md shadow hover:bg-blue-600"
-          >
-            Update
+
+        {/* Account Selection and Update Button */}
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex items-center">
+            <select
+              id="accountType"
+              className="mt-1 block w-48 border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
+            >
+              <option value="Chequing Account">Chequing Account</option>
+              <option value="Saving Account">Saving Account</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <button className="px-3 py-1.5 border rounded-md hover:bg-gray-50">
+              Link account
+            </button>
+            <button
+              onClick={fetchTransactions}
+              className="px-4 py-2 bg-blue-500 text-white rounded-md shadow hover:bg-blue-600"
+            >
+              Update
+            </button>
+          </div>
+        </div>
+
+        {/* Filter Tabs */}
+        <div className="flex gap-4 mb-4 border-b">
+          <button className="px-3 py-2 text-blue-600 border-b-2 border-blue-600">
+            For review(46)
           </button>
+          <button className="px-3 py-2 text-gray-600">Categorized</button>
+          <button className="px-3 py-2 text-gray-600">Excluded</button>
+        </div>
+
+        {/* Filters - 保持原有的下拉选择框 */}
+        <div className="flex items-center space-x-4 mb-4">
+          <div className="flex items-center">
+            <label
+              htmlFor="dateFilter"
+              className="mr-2 text-gray-700 font-medium"
+            >
+              Filter by Date
+            </label>
+            <select
+              id="dateFilter"
+              className="block w-48 border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
+            >
+              <option value="All Dates">All Dates</option>
+              <option value="Last 7 Days">Last 7 Days</option>
+              <option value="Last 30 Days">Last 30 Days</option>
+            </select>
+          </div>
+          <div className="flex items-center ml-5">
+            <label
+              htmlFor="transactionTypeFilter"
+              className="mr-2 text-gray-700 font-medium"
+            >
+              Filter by Transaction Type
+            </label>
+            <select
+              id="transactionTypeFilter"
+              className="block w-48 border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
+            >
+              <option value="All Transactions">All Transactions</option>
+              <option value="Deposits">Deposits</option>
+              <option value="Withdrawals">Withdrawals</option>
+            </select>
+          </div>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex items-center space-x-4 mb-4">
-        <div className="flex items-center">
-          <label
-            htmlFor="dateFilter"
-            className="mr-2 text-gray-700 font-medium"
-          >
-            Filter by Date
-          </label>
-          <select
-            id="dateFilter"
-            className="block w-48 border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
-          >
-            <option value="All Dates">All Dates</option>
-            <option value="Last 7 Days">Last 7 Days</option>
-            <option value="Last 30 Days">Last 30 Days</option>
-          </select>
+      {/* 表格部分（可滚动） */}
+      {transactions.length === 0 ? (
+        <div className="flex justify-center items-center h-full">
+          <p>Loading transactions...</p>
         </div>
-        <div className="flex items-center ml-5">
-          <label
-            htmlFor="transactionTypeFilter"
-            className="mr-2 text-gray-700 font-medium"
-          >
-            Filter by Transaction Type
-          </label>
-          <select
-            id="transactionTypeFilter"
-            className="block w-48 border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
-          >
-            <option value="All Transactions">All Transactions</option>
-            <option value="Deposits">Deposits</option>
-            <option value="Withdrawals">Withdrawals</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Transaction Table */}
-      <div className="overflow-auto border border-gray-300 rounded-lg">
-        <table className="min-w-full divide-y divide-gray-200 bg-white">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-4 py-2 text-left">✓</th>
-              <th className="px-4 py-2 text-left">Date</th>
-              <th className="px-4 py-2 text-left">Bank Detail</th>
-              <th className="px-4 py-2 text-left">Payee</th>
-              <th className="px-4 py-2 text-left">Categorize or MATCH</th>
-              <th className="px-4 py-2 text-left">Tax</th>
-              <th className="px-4 py-2 text-right">Spent</th>
-              <th className="px-4 py-2 text-right">Received</th>
-              <th className="px-4 py-2 text-left">Doc.</th>
-              <th className="px-4 py-2 text-left">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {transactions.map((transaction, index) => (
-              <tr key={index} className="hover:bg-gray-100">
-                <td className="px-4 py-2">
-                  <input type="checkbox" />
-                </td>
-                <td className="px-4 py-2">{transaction.date}</td>
-                <td className="px-4 py-2">{transaction.bankDetail}</td>
-                <td className="px-4 py-2">{transaction.payee}</td>
-                <td className="px-4 py-2">{transaction.categorizeOrMatch}</td>
-                <td className="px-4 py-2">{transaction.tax}</td>
-                <td className="px-4 py-2 text-right">{transaction.spent}</td>
-                <td className="px-4 py-2 text-right">{transaction.received}</td>
-                <td className="px-4 py-2">{transaction.doc}</td>
-                <td className="px-4 py-2">
-                  <button className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600">
-                    Add
-                  </button>
-                </td>
+      ) : (
+        <div className="flex-1 overflow-auto min-h-[800px]">
+          <table className="min-w-full divide-y divide-gray-200 bg-white">
+            <thead className="bg-gray-50 sticky top-0 z-10">
+              <tr>
+                <th className="px-4 py-2 text-left">
+                  <input
+                    type="checkbox"
+                    checked={selectAll}
+                    onChange={handleSelectAll}
+                    className="rounded"
+                  />
+                </th>
+                <th className="px-4 py-2 text-left">Date</th>
+                <th className="px-4 py-2 text-left">Bank Detail</th>
+                <th className="px-4 py-2 text-left">Payee</th>
+                <th className="px-4 py-2 text-left">Categorize or Match</th>
+                <th className="px-4 py-2 text-left">Tax</th>
+                <th className="px-4 py-2 text-right">Spent</th>
+                <th className="px-4 py-2 text-right">Received</th>
+                <th className="px-4 py-2 text-left">Doc.</th>
+                <th className="px-4 py-2 text-left">Action</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {transactions.map((transaction, index) => (
+                <tr key={index} className="hover:bg-gray-100">
+                  <td className="px-4 py-2">
+                    <input
+                      type="checkbox"
+                      checked={selectedItems[index] || false}
+                      onChange={() => handleSelectItem(index)}
+                      className="rounded"
+                    />
+                  </td>
+                  <td className="px-4 py-2">{transaction.date}</td>
+                  <td className="px-4 py-2">{transaction.bankDetail}</td>
+                  <td className="px-4 py-2">{transaction.payee}</td>
+                  <td className="px-4 py-2">{transaction.categorizeOrMatch}</td>
+                  <td className="px-4 py-2">{transaction.tax}</td>
+                  <td className="px-4 py-2 text-right">{transaction.spent}</td>
+                  <td className="px-4 py-2 text-right">
+                    {transaction.received}
+                  </td>
+                  <td className="px-4 py-2">{transaction.doc}</td>
+                  <td className="px-4 py-2">
+                    <button className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600">
+                      {transaction.action || "Add"}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
