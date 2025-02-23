@@ -117,6 +117,35 @@ passport.use(
     }
   )
 );
+// 📂 **Google Drive OAuth Strategy (仅允许一个用户)**
+passport.use(
+  "google-drive",
+  new GoogleStrategy(
+    {
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: "/auth/drive/callback",
+      passReqToCallback: true,
+    },
+    async (req, accessToken, refreshToken, profile, done) => {
+      try {
+        if (!refreshToken) {
+          console.log(
+            "⚠️ No refresh_token received for Google Drive, skipping storage."
+          );
+        }
+        const user = {
+          email: profile.emails[0].value,
+          refresh_token: refreshToken || null,
+        };
+        console.log(`✅ Google Drive OAuth Success: ${user.email}`);
+        return done(null, user);
+      } catch (err) {
+        return done(err);
+      }
+    }
+  )
+);
 
 // 🔹 Microsoft Strategy (Restored `passReqToCallback: true`)
 passport.use(

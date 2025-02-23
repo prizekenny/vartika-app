@@ -28,6 +28,16 @@
 
 ---
 
+## ☁️ **Google Drive API Endpoints**
+
+| Method   | Endpoint               | Function                                |
+| -------- | ---------------------- | --------------------------------------- |
+| **GET**  | `/auth/drive`          | Redirect user to Google OAuth for Drive |
+| **GET**  | `/auth/drive/callback` | Handle Google Drive OAuth               |
+| **POST** | `/api/drive/upload`    | Upload file to Google Drive             |
+
+---
+
 ## 👤 **User Management API**
 
 | Method     | Endpoint             | Function                       |
@@ -39,10 +49,11 @@
 
 ---
 
-## 🚀 **Usage**
+## 🚀 **Usage Notes**
 
 - 🔹 **Google Authentication:** `/auth/google` → Redirects user to sign in with Google.
 - 🔹 **Gmail API:** Requires **Gmail OAuth** via `/auth/gmail` before accessing email endpoints.
+- 🔹 **Google Drive API:** Requires **Google Drive OAuth** via `/auth/drive` before accessing file operations.
 - 🔹 **User API:** Manage users via `/api/users`.
 
-🚀 **Now you can use this structured API documentation for your project!** ✅
+🚀 **Now you have a well-structured API documentation for both Gmail and Google Drive!** ✅

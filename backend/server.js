@@ -6,6 +6,8 @@ import userRoutes from "./routes/users.js";
 import authRoutes from "./routes/auth.js";
 import gmailAuthRoutes from "./routes/gmailAuth.js";
 import gmailRoutes from "./routes/gmail.js";
+import driveAuthRoutes from "./routes/driveAuth.js";
+import googleDriveRoutes from "./routes/googleDrive.js";
 
 const app = express();
 app.use(cors());
@@ -34,9 +36,13 @@ app.use("/api/users", userRoutes);
 
 // ✅ Gmail-specific authentication (redirects for OAuth)
 app.use("/auth/gmail", gmailAuthRoutes);
-
 // ✅ Gmail API routes (fetch emails)
 app.use("/api/gmail", gmailRoutes);
+
+// ✅ Google Drive API routes (redirects for OAuth)
+app.use("/auth/drive", driveAuthRoutes);
+// ✅ Google Drive routes (upload, download files)
+app.use("/api/drive", googleDriveRoutes);
 
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () =>
