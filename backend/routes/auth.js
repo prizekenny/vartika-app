@@ -4,6 +4,7 @@ import bcrypt from "bcrypt";
 import { pool } from "../config/database.js";
 
 const router = express.Router();
+
 // Test route - just for API testing
 router.get("/test", (req, res) => {
   res.json({ message: "Auth route working" });
@@ -53,13 +54,13 @@ router.post("/login", (req, res, next) => {
 // Google OAuth routes
 router.get(
   "/google",
-  passport.authenticate("google", { scope: ["profile", "email"] })
+  passport.authenticate("google-login", { scope: ["profile", "email"] })
 );
 
 // Also update last_login_time for Google login
 router.get(
   "/google/callback",
-  passport.authenticate("google", {
+  passport.authenticate("google-login", {
     failureRedirect: "/login",
   }),
   async (req, res) => {

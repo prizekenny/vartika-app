@@ -17,6 +17,7 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "express-session": "^1.18.1",
+    "googleapis": "^144.0.0",
     "jsonwebtoken": "^9.0.2",
     "passport": "^0.7.0",
     "passport-apple": "^2.0.2",
