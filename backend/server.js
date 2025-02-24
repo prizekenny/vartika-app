@@ -44,7 +44,6 @@ app.use("/auth/drive", driveAuthRoutes);
 // ✅ Google Drive routes (upload, download files)
 app.use("/api/drive", googleDriveRoutes);
 
+const BASE_URL = process.env.BASE_URL || "http://localhost:5001";
 const PORT = process.env.PORT || 5001;
-app.listen(PORT, () =>
-  console.log(`🚀 Server running at http://localhost:${PORT}`)
-);
+app.listen(PORT, () => console.log(`🚀 Server running at ${BASE_URL}:${PORT}`));
