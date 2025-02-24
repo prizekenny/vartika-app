@@ -4,11 +4,14 @@ import { Strategy as MicrosoftStrategy } from "passport-microsoft";
 import { Strategy as FacebookStrategy } from "passport-facebook";
 import { Strategy as LocalStrategy } from "passport-local";
 import bcrypt from "bcrypt";
-import fs from "fs";
 import { pool } from "./database.js";
 
 const BASE_URL = process.env.BASE_URL || "http://localhost:5001";
-const TOKEN_FILE = "./gmail_tokens.json"; // File to store refresh tokens
+
+console.log(`🔹 BASE_URL: ${BASE_URL}`);
+console.log(`🔹 Google Auth Callback: ${BASE_URL}/auth/google/callback`);
+console.log(`🔹 Gmail Auth Callback: ${BASE_URL}/auth/gmail/callback`);
+console.log(`🔹 Drive Auth Callback: ${BASE_URL}/auth/drive/callback`);
 
 // 🔹 Serialize user ID into session
 passport.serializeUser((user, done) => {

@@ -64,6 +64,7 @@ router.get(
     failureRedirect: "/login",
   }),
   async (req, res) => {
+    console.log("Google login callback");
     try {
       if (req.user) {
         // Update last_login_time
