@@ -1,12 +1,18 @@
-import { BrowserRouter as Router } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Sidebar from "./components/Sidebar";
+import User from "./app/workspace/tabs/user";
 
 function App() {
   return (
     <Router>
       <div className="flex">
         <Sidebar />
-        <div className="flex-1">{/* 您的路由内容 */}</div>
+        <div className="flex-1 bg-gray-50 min-h-screen">
+          <Routes>
+            <Route path="/users" element={<User />} />
+            {/* Add other routes as needed */}
+          </Routes>
+        </div>
       </div>
     </Router>
   );
