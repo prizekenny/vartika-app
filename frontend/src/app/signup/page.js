@@ -1,67 +1,71 @@
 "use client";
 
 import React, { useState } from "react";
-import Button from "../../components/Button"; // Adjust the path based on your project structure
+import Button from "../../components/Button";
 import { FaGoogle, FaFacebook, FaMicrosoft } from "react-icons/fa";
+import { useRouter } from "next/navigation";
 
 function SignUpPage() {
-  // State for form inputs
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const router = useRouter();
 
-  // Function to handle form submission
   const handleSubmit = async (event) => {
-    event.preventDefault(); // Prevents the default form submission behavior
+    event.preventDefault();
 
-    // Validate input fields
-    if (!username || !email || !password || !confirmPassword) {
-      alert("Please fill in all required fields.");
-      return;
-    }
-
-    // Check if passwords match
-    if (password !== confirmPassword) {
-      alert("Passwords do not match. Please try again.");
-      return;
-    }
-
-    // Check if terms and conditions are accepted
-    if (!termsAccepted) {
-      alert("You must accept the Terms and Conditions to proceed.");
-      return;
-    }
-
-    // Call the backend API to create a new user account
     try {
-      const response = await fetch("http://localhost:5000/api/signup", {
+      console.log("Starting signup process...");
+      
+      // Validate input fields
+      if (!username || !email || !password || !confirmPassword) {
+        alert("Please fill in all required fields.");
+        return;
+      }
+
+      // Check if passwords match
+      if (password !== confirmPassword) {
+        alert("Passwords do not match. Please try again.");
+        return;
+      }
+
+      // Check if terms and conditions are accepted
+      if (!termsAccepted) {
+        alert("You must accept the Terms and Conditions to proceed.");
+        return;
+      }
+
+      console.log("Using API URL:", process.env.NEXT_PUBLIC_API_URL);
+      
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/register`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json", // Specify JSON payload
+          "Content-Type": "application/json",
+          "Accept": "application/json"
         },
         body: JSON.stringify({
-          username: username, // Username entered by the user
-          email: email, // Email entered by the user
-          password: password, // Password entered by the user
-        }),
+          username,
+          email,
+          password
+        })
       });
 
+      console.log("Response received:", response.status);
+      
       const data = await response.json();
+      console.log("Response data:", data);
 
       if (response.ok) {
-        // Signup successful, redirect to login or dashboard
         alert("Sign up successful! Please log in.");
-        console.log("User created:", data);
+        router.push("/login");
       } else {
-        // Handle signup failure (e.g., username already exists)
-        alert(`Sign up failed: ${data.message}`);
+        alert(`Sign up failed: ${data.message || "Unknown error occurred"}`);
       }
     } catch (error) {
-      // Handle errors from the API call
-      console.error("Error during sign up:", error);
-      alert("An error occurred. Please try again later.");
+      console.error("Detailed error:", error);
+      alert("An error occurred during sign up. Please try again later.");
     }
   };
 
