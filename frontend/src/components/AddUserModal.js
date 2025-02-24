@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { EyeIcon } from "@heroicons/react/24/outline";
 import Button from "./Button";
 
-const AddUserModal = ({ isOpen, onClose }) => {
+const AddUserModal = ({ isOpen, onClose, onSubmit }) => {
   const [formData, setFormData] = useState({
     username: "",
     role: "Super Admin",
@@ -22,11 +22,23 @@ const AddUserModal = ({ isOpen, onClose }) => {
     "France",
   ];
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle form submission
-    console.log(formData);
-    onClose();
+    try {
+      await onSubmit(formData);
+      // 重置表单
+      setFormData({
+        username: "",
+        role: "Super Admin",
+        phone: "",
+        email: "",
+        country: "United States",
+        password: "",
+      });
+      onClose();
+    } catch (error) {
+      console.error("Error submitting form:", error);
+    }
   };
 
   if (!isOpen) return null;
