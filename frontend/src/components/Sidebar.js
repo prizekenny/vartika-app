@@ -36,8 +36,8 @@ const Sidebar = () => {
   return (
     <div className="w-64 h-screen bg-white shadow-lg">
       {/* Logo */}
-      <div className="px-6 py-4 border-b">
-        <img src="/vartika-logo.svg" alt="Vartika" className="h-8" />
+      <div className="px-6 py-4 border-b bg-[#4F46E5] text-white">
+        <h1 className="text-2xl font-semibold">Vartika</h1>
       </div>
 
       {/* Search Bar */}
@@ -73,15 +73,17 @@ const Sidebar = () => {
             key={item.path}
             to={item.path}
             className={({ isActive }) => `
-              flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100
+              flex items-center px-6 py-2.5 text-gray-600 hover:bg-gray-50
               ${
                 isActive
-                  ? "bg-gray-100 text-blue-600 border-r-4 border-blue-600"
+                  ? "bg-[#4F46E5] bg-opacity-5 text-[#4F46E5] font-medium"
                   : ""
               }
             `}
           >
-            <item.icon className="w-5 h-5 mr-3" />
+            <item.icon
+              className={`w-5 h-5 mr-3 ${isActive ? "text-[#4F46E5]" : ""}`}
+            />
             <span className="text-sm font-medium">{item.name}</span>
           </NavLink>
         ))}
