@@ -7,6 +7,7 @@ import bcrypt from "bcrypt";
 import fs from "fs";
 import { pool } from "./database.js";
 
+const BASE_URL = process.env.BASE_URL || "http://localhost:5001";
 const TOKEN_FILE = "./gmail_tokens.json"; // File to store refresh tokens
 
 // 🔹 Serialize user ID into session
@@ -64,7 +65,7 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: "/auth/google/callback", // 🔥 普通用户登录
+      callbackURL: `${BASE_URL}/auth/google/callback`,
       passReqToCallback: true,
     },
     async (req, accessToken, refreshToken, profile, done) => {
@@ -95,7 +96,7 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: "/auth/gmail/callback", // 🔥 Gmail 授权专用
+      callbackURL: `${BASE_URL}/auth/gmail/callback`, // 🔥 Gmail 授权专用
       passReqToCallback: true,
     },
     async (req, accessToken, refreshToken, profile, done) => {
@@ -124,7 +125,7 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: "/auth/drive/callback",
+      callbackURL: `${BASE_URL}/auth/drive/callback`,
       passReqToCallback: true,
     },
     async (req, accessToken, refreshToken, profile, done) => {
@@ -153,7 +154,7 @@ passport.use(
     {
       clientID: process.env.MICROSOFT_CLIENT_ID,
       clientSecret: process.env.MICROSOFT_CLIENT_SECRET,
-      callbackURL: "/auth/microsoft/callback",
+      callbackURL: `${BASE_URL}/auth/microsoft/callback`,
       scope: ["user.read"],
       passReqToCallback: true, // ✅ Ensures req is accessible
     },
@@ -190,7 +191,7 @@ passport.use(
     {
       clientID: process.env.FACEBOOK_CLIENT_ID,
       clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
-      callbackURL: "/auth/facebook/callback",
+      callbackURL: `${BASE_URL}/auth/facebook/callback`,
       profileFields: ["id", "displayName", "email"],
       passReqToCallback: true, // ✅ Required to access `req`
     },
