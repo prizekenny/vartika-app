@@ -12,7 +12,6 @@ const quickbooksAuthClient = new OAuthClient({
   clientSecret: process.env.QUICKBOOKS_CLIENT_SECRET,
   environment: process.env.QUICKBOOKS_ENV, // "sandbox" 或 "production"
   redirectUri: QUICKBOOKS_REDIRECT_URI,
-  logging: true,
 });
 
 /**
