@@ -3,11 +3,13 @@ import {
   getQuickBooksAuthURL,
   handleQuickBooksCallback,
 } from "../config/quickbooksAuth.js";
+import { pool } from "../config/database.js";
+import { updateToken } from "../services/tokenService.js";
 
 const router = express.Router();
 
 /**
- * ✅ **重定向用户到 QuickBooks 进行 OAuth 认证**
+ * ✅ **Redirect users to QuickBooks OAuth**
  */
 router.get("/", (req, res) => {
   const authURL = getQuickBooksAuthURL();
@@ -15,21 +17,35 @@ router.get("/", (req, res) => {
 });
 
 /**
- * ✅ **处理 QuickBooks OAuth 回调**
+ * ✅ **Handle QuickBooks OAuth callback**
  */
 router.get("/callback", async (req, res) => {
   try {
-    const tokens = await handleQuickBooksCallback({ url: req.url });
+    const { userEmail, accessToken, refreshToken, realmId } =
+      await handleQuickBooksCallback({ url: req.url });
 
-    // 你可以选择存储 `tokens.accessToken` 和 `tokens.refreshToken` 到数据库
-    console.log("✅ QuickBooks Tokens:", tokens);
+    // ⚠️ Extract email properly
+    if (!userEmail) {
+      console.warn("⚠️ No email found in QuickBooks OAuth response.");
+      return res.status(400).json({ error: "User email is required" });
+    }
+
+    // ✅ Store or update QuickBooks tokens in the database
+    await updateToken(
+      userEmail,
+      "quickbooks",
+      accessToken,
+      refreshToken,
+      realmId,
+      null
+    );
+
+    console.log(`✅ Stored QuickBooks refresh_token for: ${userEmail}`);
 
     res.json({
       success: true,
       message: "QuickBooks OAuth success",
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
-      realmId: tokens.realmId,
+      email: userEmail,
     });
   } catch (error) {
     console.error("❌ QuickBooks OAuth callback failed:", error);

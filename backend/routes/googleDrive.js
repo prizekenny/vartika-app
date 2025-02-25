@@ -1,6 +1,6 @@
 import express from "express";
 import multer from "multer";
-import { uploadFile } from "../services/driveService.js";
+import { uploadFile, isAuthorized } from "../services/googleDriveService.js";
 import fs from "fs";
 
 const router = express.Router();
@@ -44,6 +44,18 @@ router.post("/upload", upload.single("file"), async (req, res) => {
       console.error(`❌ Failed to clean up file: ${path}`, unlinkErr);
     }
 
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * 🔍 Check if Google Drive is authorized
+ */
+router.get("/authorized", async (req, res) => {
+  try {
+    const result = await isAuthorized();
+    res.json(result);
+  } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });

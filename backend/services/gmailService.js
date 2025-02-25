@@ -1,16 +1,14 @@
 import { google } from "googleapis";
-import { getStoredToken } from "../routes/gmailAuth.js";
+import { getGmailToken } from "../services/tokenService.js";
 
 /**
  * 🔑 Get OAuth2 client using stored refresh token
  */
 async function getOAuthClient(email) {
-  const refreshToken = getStoredToken(email);
-
-  if (!refreshToken) {
-    throw new Error(
-      `No refresh token found for ${email}. User must reauthorize.`
-    );
+  const tokenData = await getGmailToken(email);
+  console.log(`🔍 Debug: Retrieved Gmail Token Data:`, tokenData);
+  if (!tokenData || !tokenData.refresh_token) {
+    throw new Error("No Gmail refresh token found. Please authorize.");
   }
 
   const oAuth2Client = new google.auth.OAuth2(
@@ -19,7 +17,7 @@ async function getOAuthClient(email) {
     process.env.GMAIL_REDIRECT_URI
   );
 
-  oAuth2Client.setCredentials({ refresh_token: refreshToken });
+  oAuth2Client.setCredentials({ refresh_token: tokenData.refresh_token });
   return oAuth2Client;
 }
 
@@ -147,4 +145,23 @@ function getEmailBody(payload) {
   return "(No plain text content)";
 }
 
-export { checkUnreadEmails, getAllEmails, getEmailContent };
+/**
+ * 🔍 Check if Gmail is authorized via Google's API
+ */
+async function isAuthorized(email) {
+  try {
+    const auth = await getOAuthClient(email); // Get OAuth2 client
+    const gmail = google.gmail({ version: "v1", auth });
+
+    // ✅ Make a test API call to check authorization
+    const profile = await gmail.users.getProfile({ userId: "me" });
+
+    console.log(`✅ Gmail API authorized for ${email}:`, profile.data);
+    return { authorized: true, profile: profile.data };
+  } catch (error) {
+    console.error(`❌ Gmail API authorization failed for ${email}:`, error);
+    return { authorized: false, error: "Invalid or expired token" };
+  }
+}
+
+export { checkUnreadEmails, getAllEmails, getEmailContent, isAuthorized };

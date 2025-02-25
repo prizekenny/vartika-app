@@ -1,14 +1,18 @@
 import express from "express";
-import { getCompanyInfo, getInvoices } from "../services/quickbooksService.js";
+import {
+  getCompanyInfo,
+  getInvoices,
+  isAuthorized,
+} from "../services/quickbooksService.js";
 
 const router = express.Router();
 
 /**
- * 📌 **获取 QuickBooks 公司的基本信息**
+ * 📌 **Get QuickBooks company information**
  */
 router.get("/company", async (req, res) => {
   try {
-    const data = await getCompanyInfo(req.user);
+    const data = await getCompanyInfo();
     res.json(data);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -16,12 +20,24 @@ router.get("/company", async (req, res) => {
 });
 
 /**
- * 📌 **获取 QuickBooks 的所有发票**
+ * 📌 **Get all invoices from QuickBooks**
  */
 router.get("/invoices", async (req, res) => {
   try {
-    const data = await getInvoices(req.user);
+    const data = await getInvoices();
     res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * 🔍 Check if QuickBooks is authorized
+ */
+router.get("/authorized", async (req, res) => {
+  try {
+    const result = await isAuthorized();
+    res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

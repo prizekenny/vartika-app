@@ -5,6 +5,7 @@ import { Strategy as FacebookStrategy } from "passport-facebook";
 import { Strategy as LocalStrategy } from "passport-local";
 import bcrypt from "bcrypt";
 import { pool } from "./database.js";
+import { getToken } from "../services/tokenService.js";
 
 const BASE_URL = process.env.BASE_URL || "http://localhost:5001";
 
@@ -21,13 +22,17 @@ passport.serializeUser((user, done) => {
 
 // 🔹 Deserialize user by ID from database
 passport.deserializeUser(async (email, done) => {
+  console.log("🔍 Debug: Deserializing User:", email);
   try {
-    const result = await pool.query("SELECT * FROM users WHERE email = $1", [
-      email,
-    ]);
-    done(null, result.rows[0]);
-  } catch (err) {
-    done(err);
+    const userToken = await getToken(email, "gmail"); // 确保 getToken 逻辑正确
+    if (!userToken) {
+      return done(new Error("❌ User not found in session"), null);
+    }
+    console.log("✅ Debug: Deserialized User:", userToken);
+    done(null, userToken);
+  } catch (error) {
+    console.error("❌ Error deserializing user:", error);
+    done(error, null);
   }
 });
 

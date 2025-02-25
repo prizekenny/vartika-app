@@ -6,7 +6,7 @@ dotenv.config();
 const BASE_URL = process.env.BASE_URL || "http://localhost:5001";
 const QUICKBOOKS_REDIRECT_URI = `${BASE_URL}/auth/quickbooks/callback`;
 
-// 🔹 **创建 QuickBooks OAuth 客户端**
+// 🔹 **Create QuickBooks OAuth Client**
 const quickbooksAuthClient = new OAuthClient({
   clientId: process.env.QUICKBOOKS_CLIENT_ID,
   clientSecret: process.env.QUICKBOOKS_CLIENT_SECRET,
@@ -20,55 +20,47 @@ const quickbooksAuthClient = new OAuthClient({
  */
 function getQuickBooksAuthURL() {
   return quickbooksAuthClient.authorizeUri({
-    scope: [OAuthClient.scopes.Accounting], // 访问 QuickBooks Accounting API
-    state: "security_token", // 可选的 CSRF 保护 token
+    scope: [
+      OAuthClient.scopes.Accounting, // Access QuickBooks Accounting API
+      OAuthClient.scopes.Profile,
+      OAuthClient.scopes.OpenId,
+      OAuthClient.scopes.Email,
+    ],
+    state: "intuit-test",
   });
 }
 
 /**
- * 🔑 **处理 QuickBooks OAuth 回调**
+ * 🔑 **Handle QuickBooks OAuth Callback**
  */
 async function handleQuickBooksCallback({ url }) {
   try {
     const authResponse = await quickbooksAuthClient.createToken(url);
-    return {
-      accessToken: authResponse.getJson().access_token,
-      refreshToken: authResponse.getJson().refresh_token,
-      realmId: authResponse.getJson().realmId,
-    };
+    const accessToken = authResponse.getJson().access_token;
+    const refreshToken = authResponse.getJson().refresh_token;
+    const userInfo = await quickbooksAuthClient.getUserInfo();
+
+    console.log("✅ QuickBooks Auth Response:", authResponse.getJson());
+    console.log("✅ QuickBooks User Info:", userInfo.json);
+
+    // ✅ Decode the ID token to extract the email
+    const realmId = userInfo.token.realmId || null;
+    const userEmail = userInfo.json?.email || null;
+
+    console.log("✅ QuickBooks User Email:", userEmail);
+
+    // ❌ Prevent storing if email is missing
+    if (!userEmail) {
+      throw new Error(
+        "QuickBooks did not return an email. Ensure OpenID scope is requested."
+      );
+    }
+
+    return { userEmail, accessToken, refreshToken, realmId };
   } catch (error) {
     console.error("❌ QuickBooks OAuth error:", error);
     throw error;
   }
 }
 
-/**
- * 🔗 **创建 QuickBooks API 客户端**
- */
-async function quickbooksClient(accessToken) {
-  return {
-    request: async (endpoint) => {
-      try {
-        const response = await quickbooksAuthClient.makeApiCall({
-          url: `https://sandbox-quickbooks.api.intuit.com/v3/company/${process.env.QUICKBOOKS_REALM_ID}${endpoint}`,
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            Accept: "application/json",
-          },
-        });
-        return response.getJson();
-      } catch (error) {
-        console.error(`❌ QuickBooks API Request Failed: ${endpoint}`, error);
-        throw error;
-      }
-    },
-  };
-}
-
-export {
-  quickbooksAuthClient,
-  getQuickBooksAuthURL,
-  handleQuickBooksCallback,
-  quickbooksClient,
-};
+export { quickbooksAuthClient, getQuickBooksAuthURL, handleQuickBooksCallback };

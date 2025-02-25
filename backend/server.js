@@ -6,10 +6,11 @@ import userRoutes from "./routes/users.js";
 import authRoutes from "./routes/auth.js";
 import gmailAuthRoutes from "./routes/gmailAuth.js";
 import gmailRoutes from "./routes/gmail.js";
-import driveAuthRoutes from "./routes/driveAuth.js";
+import driveAuthRoutes from "./routes/googleDriveAuth.js";
 import googleDriveRoutes from "./routes/googleDrive.js";
 import quickbooksAuthRoutes from "./routes/quickbooksAuth.js"; // ✅ 认证逻辑
 import quickbooksRoutes from "./routes/quickbooks.js"; // ✅ API 访问逻辑
+import { loadTokensIntoCache } from "./services/tokenService.js";
 
 const app = express();
 app.use(cors());
@@ -50,6 +51,9 @@ app.use("/api/drive", googleDriveRoutes);
 app.use("/auth/quickbooks", quickbooksAuthRoutes);
 // ✅ QuickBooks API (获取财务数据)
 app.use("/api/quickbooks", quickbooksRoutes);
+
+// 🔹 Load tokens into cache at server startup
+loadTokensIntoCache();
 
 const BASE_URL = process.env.BASE_URL || "http://localhost:5001";
 const PORT = process.env.PORT || 5001;

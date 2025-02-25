@@ -1,6 +1,5 @@
 import express from "express";
 import passport from "passport";
-import fs from "fs";
 import { updateToken } from "../services/tokenService.js";
 
 const router = express.Router();
@@ -18,7 +17,7 @@ router.get(
 );
 
 /**
- * 🔑 Google OAuth callback (Only stores refresh_token for Gmail monitoring)
+ * 🔑 Google OAuth callback (Stores refresh_token for Gmail monitoring)
  */
 router.get(
   "/callback",
@@ -40,9 +39,16 @@ router.get(
       }
 
       // ✅ Store or update refresh_token using updateToken function
-      await updateToken(userEmail, "gmail", null, refreshToken, null, null);
+      await updateToken(
+        userEmail,
+        "google_drive",
+        null,
+        refreshToken,
+        null,
+        null
+      );
 
-      console.log(`✅ Stored refresh_token for Gmail: ${userEmail}`);
+      console.log(`✅ Stored refresh_token for Gmail access: ${userEmail}`);
       res.json({ success: true, user: req.user });
     } catch (err) {
       console.error("❌ Failed to store Gmail refresh token:", err);
