@@ -1,21 +1,25 @@
 import { google } from "googleapis";
 import fs from "fs";
-import { getDriveToken } from "../routes/driveAuth.js";
+import {
+  getGoogleDriveToken,
+  getAllTokensByPlatform,
+} from "../services/tokenService.js";
 
 /**
  * 🔑 获取 Google Drive API 客户端
  */
 async function getDriveClient() {
-  const refreshToken = getDriveToken();
-  if (!refreshToken)
+  const tokenData = await getGoogleDriveToken();
+  if (!tokenData || !tokenData.refresh_token) {
     throw new Error("No Google Drive refresh token found. Please authorize.");
+  }
 
   const auth = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
     process.env.GMAIL_REDIRECT_URI
   );
-  auth.setCredentials({ refresh_token: refreshToken });
+  auth.setCredentials({ refresh_token: tokenData.refresh_token });
 
   return google.drive({ version: "v3", auth });
 }
@@ -105,4 +109,58 @@ async function uploadFile(username, fileType, filePath, fileName, mimeType) {
   }
 }
 
-export { uploadFile };
+/**
+ * 🔍 Check if Google Drive is authorized via API
+ */
+async function isAuthorized() {
+  try {
+    const tokenData = await getGoogleDriveToken();
+
+    if (!tokenData || !tokenData.refresh_token) {
+      return { authorized: false, error: "No valid refresh token found" };
+    }
+
+    const auth = new google.auth.OAuth2(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      process.env.GMAIL_REDIRECT_URI
+    );
+    auth.setCredentials({ refresh_token: tokenData.refresh_token });
+
+    const drive = google.drive({ version: "v3", auth });
+
+    // ✅ Test API call to check authorization
+    const response = await drive.about.get({ fields: "user" });
+
+    console.log(`✅ Google Drive API authorized for:`, response.data.user);
+    return { authorized: true, user: response.data.user };
+  } catch (error) {
+    console.error(`❌ Google Drive authorization failed:`, error);
+    return { authorized: false, error: "Invalid or expired token" };
+  }
+}
+
+/**
+ * 🔍 Get all authorized Google Drive users from cache
+ */
+async function getAllAuthorizedUsers() {
+  const allTokens = await getAllTokensByPlatform("google_drive");
+  const authorizedUsers = [];
+
+  for (const token of allTokens) {
+    try {
+      const drive = await getDriveClient(token.user_email);
+      await drive.files.list({ pageSize: 1 }); // Small test request
+      authorizedUsers.push(token.user_email);
+    } catch (error) {
+      console.error(
+        `❌ Google Drive API authorization failed for ${token.user_email}:`,
+        error
+      );
+    }
+  }
+
+  return authorizedUsers;
+}
+
+export { uploadFile, isAuthorized, getAllAuthorizedUsers };

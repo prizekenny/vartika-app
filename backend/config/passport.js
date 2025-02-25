@@ -4,10 +4,15 @@ import { Strategy as MicrosoftStrategy } from "passport-microsoft";
 import { Strategy as FacebookStrategy } from "passport-facebook";
 import { Strategy as LocalStrategy } from "passport-local";
 import bcrypt from "bcrypt";
-import fs from "fs";
 import { pool } from "./database.js";
+import { getToken } from "../services/tokenService.js";
 
-const TOKEN_FILE = "./gmail_tokens.json"; // File to store refresh tokens
+const BASE_URL = process.env.BASE_URL || "http://localhost:5001";
+
+console.log(`🔹 BASE_URL: ${BASE_URL}`);
+console.log(`🔹 Google Auth Callback: ${BASE_URL}/auth/google/callback`);
+console.log(`🔹 Gmail Auth Callback: ${BASE_URL}/auth/gmail/callback`);
+console.log(`🔹 Drive Auth Callback: ${BASE_URL}/auth/drive/callback`);
 
 // 🔹 Serialize user ID into session
 passport.serializeUser((user, done) => {
@@ -17,13 +22,17 @@ passport.serializeUser((user, done) => {
 
 // 🔹 Deserialize user by ID from database
 passport.deserializeUser(async (email, done) => {
+  console.log("🔍 Debug: Deserializing User:", email);
   try {
-    const result = await pool.query("SELECT * FROM users WHERE email = $1", [
-      email,
-    ]);
-    done(null, result.rows[0]);
-  } catch (err) {
-    done(err);
+    const userToken = await getToken(email, "gmail"); // 确保 getToken 逻辑正确
+    if (!userToken) {
+      return done(new Error("❌ User not found in session"), null);
+    }
+    console.log("✅ Debug: Deserialized User:", userToken);
+    done(null, userToken);
+  } catch (error) {
+    console.error("❌ Error deserializing user:", error);
+    done(error, null);
   }
 });
 
@@ -64,7 +73,7 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: "/auth/google/callback", // 🔥 普通用户登录
+      callbackURL: `${BASE_URL}/auth/google/callback`,
       passReqToCallback: true,
     },
     async (req, accessToken, refreshToken, profile, done) => {
@@ -95,7 +104,7 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: "/auth/gmail/callback", // 🔥 Gmail 授权专用
+      callbackURL: `${BASE_URL}/auth/gmail/callback`, // 🔥 Gmail 授权专用
       passReqToCallback: true,
     },
     async (req, accessToken, refreshToken, profile, done) => {
@@ -124,7 +133,7 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: "/auth/drive/callback",
+      callbackURL: `${BASE_URL}/auth/drive/callback`,
       passReqToCallback: true,
     },
     async (req, accessToken, refreshToken, profile, done) => {
@@ -153,7 +162,7 @@ passport.use(
     {
       clientID: process.env.MICROSOFT_CLIENT_ID,
       clientSecret: process.env.MICROSOFT_CLIENT_SECRET,
-      callbackURL: "/auth/microsoft/callback",
+      callbackURL: `${BASE_URL}/auth/microsoft/callback`,
       scope: ["user.read"],
       passReqToCallback: true, // ✅ Ensures req is accessible
     },
@@ -190,7 +199,7 @@ passport.use(
     {
       clientID: process.env.FACEBOOK_CLIENT_ID,
       clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
-      callbackURL: "/auth/facebook/callback",
+      callbackURL: `${BASE_URL}/auth/facebook/callback`,
       profileFields: ["id", "displayName", "email"],
       passReqToCallback: true, // ✅ Required to access `req`
     },

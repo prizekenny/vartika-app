@@ -25,16 +25,33 @@
 | **GET** | `/api/gmail/unread/:email`             | Get all unread Gmail messages (IDs only)                 |
 | **GET** | `/api/gmail/all/:email`                | Get all Gmail messages (IDs only, paginated)             |
 | **GET** | `/api/gmail/message/:email/:messageId` | Get detailed Gmail message (subject, sender, body, etc.) |
+| **GET** | `/api/gmail/authorized/:email`         | Check if Gmail API is authorized for a specific email    |
+| **GET** | `/api/gmail/authorized-users`          | Get all users which is authorized.                       |
 
 ---
 
 ## ☁️ **Google Drive API Endpoints**
 
-| Method   | Endpoint               | Function                                |
-| -------- | ---------------------- | --------------------------------------- |
-| **GET**  | `/auth/drive`          | Redirect user to Google OAuth for Drive |
-| **GET**  | `/auth/drive/callback` | Handle Google Drive OAuth               |
-| **POST** | `/api/drive/upload`    | Upload file to Google Drive             |
+| Method   | Endpoint                      | Function                                |
+| -------- | ----------------------------- | --------------------------------------- |
+| **GET**  | `/auth/drive`                 | Redirect user to Google OAuth for Drive |
+| **GET**  | `/auth/drive/callback`        | Handle Google Drive OAuth               |
+| **POST** | `/api/drive/upload`           | Upload file to Google Drive             |
+| **GET**  | `/api/drive/authorized`       | Check if Google Drive API is authorized |
+| **GET**  | `/api/drive/authorized-users` | Get all users which is authorized.      |
+
+---
+
+## 📊 **QuickBooks API Endpoints**
+
+| Method  | Endpoint                                         | Function                              |
+| ------- | ------------------------------------------------ | ------------------------------------- |
+| **GET** | `/api/quickbooks/company`                        | Fetch QuickBooks company info         |
+| **GET** | `/api/quickbooks/invoices`                       | Fetch all QuickBooks invoices         |
+| **GET** | `/api/quickbooks/reports/profit-and-loss`        | Fetch Profit and Loss report          |
+| **GET** | `/api/quickbooks/reports/profit-and-loss-detail` | Fetch Profit and Loss Detail report   |
+| **GET** | `/api/quickbooks/authorized`                     | Check if QuickBooks API is authorized |
+| **GET** | `/api/quickbooks/authorized-users`               | Get all users which is authorized.    |
 
 ---
 
@@ -54,6 +71,7 @@
 - 🔹 **Google Authentication:** `/auth/google` → Redirects user to sign in with Google.
 - 🔹 **Gmail API:** Requires **Gmail OAuth** via `/auth/gmail` before accessing email endpoints.
 - 🔹 **Google Drive API:** Requires **Google Drive OAuth** via `/auth/drive` before accessing file operations.
+- 🔹 **QuickBooks API:** Requires **QuickBooks OAuth** before accessing financial reports and invoices.
 - 🔹 **User API:** Manage users via `/api/users`.
 
-🚀 **Now you have a well-structured API documentation for both Gmail and Google Drive!** ✅
+🚀 **Now your API documentation is up-to-date with the new QuickBooks endpoints!** ✅
