@@ -8,6 +8,8 @@ import gmailAuthRoutes from "./routes/gmailAuth.js";
 import gmailRoutes from "./routes/gmail.js";
 import driveAuthRoutes from "./routes/driveAuth.js";
 import googleDriveRoutes from "./routes/googleDrive.js";
+import quickbooksAuthRoutes from "./routes/quickbooksAuth.js"; // ✅ 认证逻辑
+import quickbooksRoutes from "./routes/quickbooks.js"; // ✅ API 访问逻辑
 
 const app = express();
 app.use(cors());
@@ -43,6 +45,11 @@ app.use("/api/gmail", gmailRoutes);
 app.use("/auth/drive", driveAuthRoutes);
 // ✅ Google Drive routes (upload, download files)
 app.use("/api/drive", googleDriveRoutes);
+
+// ✅ QuickBooks OAuth 认证
+app.use("/auth/quickbooks", quickbooksAuthRoutes);
+// ✅ QuickBooks API (获取财务数据)
+app.use("/api/quickbooks", quickbooksRoutes);
 
 const BASE_URL = process.env.BASE_URL || "http://localhost:5001";
 const PORT = process.env.PORT || 5001;
