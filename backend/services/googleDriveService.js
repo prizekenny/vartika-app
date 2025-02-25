@@ -1,6 +1,9 @@
 import { google } from "googleapis";
 import fs from "fs";
-import { getGoogleDriveToken } from "../services/tokenService.js";
+import {
+  getGoogleDriveToken,
+  getAllTokensByPlatform,
+} from "../services/tokenService.js";
 
 /**
  * 🔑 获取 Google Drive API 客户端
@@ -137,4 +140,27 @@ async function isAuthorized() {
   }
 }
 
-export { uploadFile, isAuthorized };
+/**
+ * 🔍 Get all authorized Google Drive users from cache
+ */
+async function getAllAuthorizedUsers() {
+  const allTokens = await getAllTokensByPlatform("google_drive");
+  const authorizedUsers = [];
+
+  for (const token of allTokens) {
+    try {
+      const drive = await getDriveClient(token.user_email);
+      await drive.files.list({ pageSize: 1 }); // Small test request
+      authorizedUsers.push(token.user_email);
+    } catch (error) {
+      console.error(
+        `❌ Google Drive API authorization failed for ${token.user_email}:`,
+        error
+      );
+    }
+  }
+
+  return authorizedUsers;
+}
+
+export { uploadFile, isAuthorized, getAllAuthorizedUsers };

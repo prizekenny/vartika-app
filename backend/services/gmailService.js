@@ -1,5 +1,8 @@
 import { google } from "googleapis";
-import { getGmailToken } from "../services/tokenService.js";
+import {
+  getGmailToken,
+  getAllTokensByPlatform,
+} from "../services/tokenService.js";
 
 /**
  * 🔑 Get OAuth2 client using stored refresh token
@@ -164,4 +167,27 @@ async function isAuthorized(email) {
   }
 }
 
-export { checkUnreadEmails, getAllEmails, getEmailContent, isAuthorized };
+/**
+ * 🔍 Get all authorized Gmail users from cache
+ */
+async function getAllAuthorizedUsers() {
+  const allTokens = await getAllTokensByPlatform("gmail");
+  const authorizedUsers = [];
+
+  for (const token of allTokens) {
+    const isAuth = await isAuthorized(token.user_email);
+    if (isAuth.authorized) {
+      authorizedUsers.push(token.user_email);
+    }
+  }
+
+  return authorizedUsers;
+}
+
+export {
+  checkUnreadEmails,
+  getAllEmails,
+  getEmailContent,
+  isAuthorized,
+  getAllAuthorizedUsers,
+};

@@ -4,6 +4,7 @@ import {
   getAllEmails,
   getEmailContent,
   isAuthorized,
+  getAllAuthorizedUsers,
 } from "../services/gmailService.js";
 
 const router = express.Router();
@@ -60,6 +61,18 @@ router.get("/authorized/:email", async (req, res) => {
     const { email } = req.params;
     const result = await isAuthorized(email);
     res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * ✅ Get all authorized Gmail users
+ */
+router.get("/authorized-users", async (req, res) => {
+  try {
+    const authorizedUsers = await getAllAuthorizedUsers();
+    res.json({ authorizedUsers });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

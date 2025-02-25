@@ -185,6 +185,7 @@ async function getQuickBooksToken() {
 export {
   loadTokensIntoCache,
   getToken,
+  getAllTokensByPlatform,
   updateToken,
   getAllGmailTokens,
   getGmailToken,

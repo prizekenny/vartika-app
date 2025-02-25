@@ -1,5 +1,5 @@
 import { quickbooksAuthClient } from "../config/quickbooksAuth.js";
-import { getToken, updateToken } from "../services/tokenService.js";
+import { getToken, getAllTokensByPlatform } from "../services/tokenService.js";
 
 // ✅ **全局声明 QuickBooks API Base URL** (sandbox/production 自动切换)
 const QUICKBOOKS_BASE_URL =
@@ -130,4 +130,113 @@ async function isAuthorized() {
     return { authorized: false, error: "Invalid or expired token" };
   }
 }
-export { getCompanyInfo, getInvoices, isAuthorized };
+
+/**
+ * 📊 Retrieve Profit and Loss Report
+ */
+async function reportProfitAndLoss(options = {}) {
+  try {
+    console.log("🔍 Fetching Profit and Loss Report...");
+
+    const { client, realmId, accessToken } = await getQuickBooksClient();
+
+    if (!accessToken) {
+      throw new Error("❌ No Access Token Found.");
+    }
+
+    const response = await client.makeApiCall({
+      url: `${QUICKBOOKS_BASE_URL}/v3/company/${realmId}/reports/ProfitAndLoss`,
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: "application/json",
+      },
+      params: options, // Pass user-provided options
+    });
+
+    console.log(
+      "✅ Profit and Loss Report retrieved:",
+      response.response?.data
+    );
+    return response.response?.data;
+  } catch (error) {
+    console.error("❌ Failed to fetch Profit and Loss Report:", error);
+    throw error;
+  }
+}
+
+/**
+ * 📊 Retrieve Profit and Loss Detail Report
+ */
+async function reportProfitAndLossDetail(options = {}) {
+  try {
+    console.log("🔍 Fetching Profit and Loss Detail Report...");
+
+    const { client, realmId, accessToken } = await getQuickBooksClient();
+
+    if (!accessToken) {
+      throw new Error("❌ No Access Token Found.");
+    }
+
+    const response = await client.makeApiCall({
+      url: `${QUICKBOOKS_BASE_URL}/v3/company/${realmId}/reports/ProfitAndLossDetail`,
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: "application/json",
+      },
+      params: options, // Pass user-provided options
+    });
+
+    console.log(
+      "✅ Profit and Loss Detail Report retrieved:",
+      response.response?.data
+    );
+    return response.response?.data;
+  } catch (error) {
+    console.error("❌ Failed to fetch Profit and Loss Detail Report:", error);
+    throw error;
+  }
+}
+
+/**
+ * 🔍 Get all authorized QuickBooks users from cache
+ */
+async function getAllAuthorizedUsers() {
+  const allTokens = await getAllTokensByPlatform("quickbooks");
+  const authorizedUsers = [];
+
+  for (const token of allTokens) {
+    try {
+      const { client, realmId, accessToken } = await getQuickBooksClient(
+        token.user_email
+      );
+      await client.makeApiCall({
+        url: `${QUICKBOOKS_BASE_URL}/v3/company/${realmId}/companyinfo/${realmId}`,
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          Accept: "application/json",
+        },
+      });
+
+      authorizedUsers.push(token.user_email);
+    } catch (error) {
+      console.error(
+        `❌ QuickBooks API authorization failed for ${token.user_email}:`,
+        error
+      );
+    }
+  }
+
+  return authorizedUsers;
+}
+
+export {
+  getCompanyInfo,
+  getInvoices,
+  isAuthorized,
+  getAllAuthorizedUsers,
+  reportProfitAndLoss,
+  reportProfitAndLossDetail,
+};
