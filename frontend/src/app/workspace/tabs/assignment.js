@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { FaSearch, FaPlus, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import SortableHeader from '../../../components/SortableHeader';
+import useSortable from '../../../hooks/useSortable';
 
 const AssignmentTab = () => {
   const [assignments, setAssignments] = useState([]);
@@ -10,6 +12,9 @@ const AssignmentTab = () => {
   const [statusFilter, setStatusFilter] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState('');
+  
+  // 使用排序钩子
+  const { sortField, sortDirection, handleSort, sortData } = useSortable('dueDate', 'desc');
 
   useEffect(() => {
     const loadAssignments = async () => {
@@ -23,7 +28,7 @@ const AssignmentTab = () => {
     loadAssignments();
   }, []);
 
-  // 过滤和分页
+  // 过滤
   const filteredAssignments = assignments.filter(assignment => {
     const matchesStatus = statusFilter === 'All' || assignment.status === statusFilter;
     const matchesSearch = assignment.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -32,10 +37,19 @@ const AssignmentTab = () => {
     return matchesStatus && matchesSearch && matchesDate;
   });
 
+  // 排序
+  const sortedAssignments = sortData(filteredAssignments);
+
   const itemsPerPage = 5;
-  const totalPages = Math.ceil(filteredAssignments.length / itemsPerPage);
+  const totalPages = Math.ceil(sortedAssignments.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentAssignments = filteredAssignments.slice(startIndex, startIndex + itemsPerPage);
+  const currentAssignments = sortedAssignments.slice(startIndex, startIndex + itemsPerPage);
+
+  // 处理状态过滤器变化
+  const handleStatusChange = (e) => {
+    setStatusFilter(e.target.value);
+    setCurrentPage(1); // 重置到第一页
+  };
 
   return (
     <div className="p-6">
@@ -47,7 +61,7 @@ const AssignmentTab = () => {
         <div className="flex space-x-4">
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={handleStatusChange}
             className="border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="All">All Status</option>
@@ -86,34 +100,52 @@ const AssignmentTab = () => {
         <div className="grid grid-cols-4 gap-4 p-4 border-b border-gray-200 bg-gray-50 font-medium">
           <div>Assignment</div>
           <div>Status</div>
-          <div>Due Date</div>
-          <div>Create Time</div>
+          <SortableHeader 
+            label="Due Date" 
+            field="dueDate" 
+            currentSortField={sortField} 
+            sortDirection={sortDirection} 
+            onSort={handleSort} 
+          />
+          <SortableHeader 
+            label="Create Time" 
+            field="createTime" 
+            currentSortField={sortField} 
+            sortDirection={sortDirection} 
+            onSort={handleSort} 
+          />
         </div>
         
         <div className="divide-y divide-gray-200">
-          {currentAssignments.map((assignment) => (
-            <div
-              key={assignment.id}
-              onClick={() => setSelectedAssignment(assignment)}
-              className="grid grid-cols-4 gap-4 p-4 hover:bg-gray-50 cursor-pointer"
-            >
-              <div>
-                <div className="text-lg font-medium">{assignment.title}</div>
-                <div className="text-sm text-gray-500">{assignment.assignee}</div>
-              </div>
-              <div className="flex items-center">
-                <span className={`px-2 py-1 rounded-full text-sm ${
-                  assignment.status === 'Completed' ? 'bg-green-100 text-green-800' :
-                  assignment.status === 'In Progress' ? 'bg-blue-100 text-blue-800' :
-                  'bg-gray-100 text-gray-800'
-                }`}>
-                  {assignment.status}
-                </span>
-              </div>
-              <div>{new Date(assignment.dueDate).toLocaleDateString()}</div>
-              <div>{new Date(assignment.createTime).toLocaleDateString()}</div>
+          {currentAssignments.length === 0 ? (
+            <div className="p-4 text-center text-gray-500">
+              No assignments found matching your criteria
             </div>
-          ))}
+          ) : (
+            currentAssignments.map((assignment) => (
+              <div
+                key={assignment.id}
+                onClick={() => setSelectedAssignment(assignment)}
+                className="grid grid-cols-4 gap-4 p-4 hover:bg-gray-50 cursor-pointer"
+              >
+                <div>
+                  <div className="text-lg font-medium">{assignment.title}</div>
+                  <div className="text-sm text-gray-500">{assignment.assignee}</div>
+                </div>
+                <div className="flex items-center">
+                  <span className={`px-2 py-1 rounded-full text-sm ${
+                    assignment.status === 'Completed' ? 'bg-green-100 text-green-800' :
+                    assignment.status === 'In Progress' ? 'bg-blue-100 text-blue-800' :
+                    'bg-gray-100 text-gray-800'
+                  }`}>
+                    {assignment.status}
+                  </span>
+                </div>
+                <div>{new Date(assignment.dueDate).toLocaleDateString()}</div>
+                <div>{new Date(assignment.createTime).toLocaleDateString()}</div>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
@@ -126,10 +158,10 @@ const AssignmentTab = () => {
       )}
 
       {/* 分页 */}
-      {filteredAssignments.length > 0 && (
+      {sortedAssignments.length > 0 && (
         <div className="flex justify-between items-center">
           <div className="text-sm text-gray-500">
-            Showing {startIndex + 1} to {Math.min(startIndex + itemsPerPage, filteredAssignments.length)} of {filteredAssignments.length} entries
+            Showing {startIndex + 1} to {Math.min(startIndex + itemsPerPage, sortedAssignments.length)} of {sortedAssignments.length} entries
           </div>
           <div className="flex space-x-2">
             <button
