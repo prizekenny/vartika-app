@@ -9,7 +9,7 @@ const router = express.Router();
  */
 router.get(
   "/",
-  passport.authenticate("google-gmail", {
+  passport.authenticate("google-drive", {
     scope: ["profile", "email", "https://mail.google.com/"],
     accessType: "offline",
     prompt: "consent",
@@ -21,7 +21,7 @@ router.get(
  */
 router.get(
   "/callback",
-  passport.authenticate("google-gmail", { failureRedirect: "/login" }),
+  passport.authenticate("google-drive", { failureRedirect: "/login" }),
   async (req, res) => {
     try {
       if (!req.user || !req.user.email) {
