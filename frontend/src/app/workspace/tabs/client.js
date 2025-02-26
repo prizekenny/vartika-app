@@ -2,9 +2,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { FaSearch, FaUser, FaBuilding } from 'react-icons/fa';
+import SortableHeader from '../../../components/SortableHeader';
+import useSortable from '../../../hooks/useSortable';
 
 const ClientTab = () => {
   const [clients, setClients] = useState([]);
+  
+  // 使用排序钩子
+  const { sortField, sortDirection, handleSort, sortData } = useSortable('id', 'asc');
 
   useEffect(() => {
     // 加载测试数据
@@ -33,6 +38,9 @@ const ClientTab = () => {
                          client.contact.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesSearch;
   });
+  
+  // 排序客户数据
+  const sortedClients = sortData(filteredClients);
 
   // 处理搜索
   const handleSearch = (e) => {
@@ -43,6 +51,9 @@ const ClientTab = () => {
 
   // 处理分页
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  
+  // 获取当前页的客户
+  const currentClients = sortedClients.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <div className="max-w-[1400px] mx-auto p-4">
@@ -79,19 +90,59 @@ const ClientTab = () => {
           <table className="w-full divide-y divide-gray-200">
             <thead className="bg-gray-50 sticky top-0 z-10">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-48">Client</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Type</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">ID</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-48">
+                  <SortableHeader 
+                    label="Client" 
+                    field="name" 
+                    currentSortField={sortField} 
+                    sortDirection={sortDirection} 
+                    onSort={handleSort} 
+                  />
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
+                  <SortableHeader 
+                    label="Type" 
+                    field="type" 
+                    currentSortField={sortField} 
+                    sortDirection={sortDirection} 
+                    onSort={handleSort} 
+                  />
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
+                  <SortableHeader 
+                    label="ID" 
+                    field="id" 
+                    currentSortField={sortField} 
+                    sortDirection={sortDirection} 
+                    onSort={handleSort} 
+                  />
+                </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-48">Contact</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Address</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-36">Phone</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28">Open Time</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-36">
+                  <SortableHeader 
+                    label="Phone" 
+                    field="phone" 
+                    currentSortField={sortField} 
+                    sortDirection={sortDirection} 
+                    onSort={handleSort} 
+                  />
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28">
+                  <SortableHeader 
+                    label="Open Time" 
+                    field="openTime" 
+                    currentSortField={sortField} 
+                    sortDirection={sortDirection} 
+                    onSort={handleSort} 
+                  />
+                </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Status</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remark</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredClients.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((client) => (
+              {currentClients.map((client) => (
                 <tr key={client.id} className="hover:bg-gray-50">
                   <td className="px-4 py-2.5 whitespace-nowrap">
                     <div className="flex items-center">
@@ -141,7 +192,7 @@ const ClientTab = () => {
       {/* 分页 */}
       <div className="mt-4 flex items-center justify-between bg-white px-4 py-3 rounded-lg shadow">
         <div className="flex items-center text-sm text-gray-700">
-          <span>Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredClients.length)} of {filteredClients.length} entries</span>
+          <span>Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, sortedClients.length)} of {sortedClients.length} entries</span>
         </div>
         <div className="flex space-x-1">
           <button
@@ -151,7 +202,7 @@ const ClientTab = () => {
           >
             Previous
           </button>
-          {[...Array(Math.ceil(filteredClients.length / itemsPerPage))].map((_, i) => (
+          {[...Array(Math.ceil(sortedClients.length / itemsPerPage))].map((_, i) => (
             <button
               key={i}
               onClick={() => paginate(i + 1)}
@@ -164,7 +215,7 @@ const ClientTab = () => {
           ))}
           <button
             onClick={() => paginate(currentPage + 1)}
-            disabled={currentPage === Math.ceil(filteredClients.length / itemsPerPage)}
+            disabled={currentPage === Math.ceil(sortedClients.length / itemsPerPage)}
             className="px-2 py-1 border rounded hover:bg-gray-50 disabled:opacity-50 text-sm"
           >
             Next
