@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   FaUpload, 
   FaSpinner,
   FaFile,
   FaChevronLeft,
-  FaChevronRight
+  FaChevronRight,
+  FaGripLines
 } from 'react-icons/fa';
 
 const DocumentTab = () => {
@@ -15,6 +16,20 @@ const DocumentTab = () => {
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [documentsData, setDocumentsData] = useState({ documents: [], pagination: { itemsPerPage: 10, totalItems: 0 } });
+  
+  // 列宽状态
+  const [columnWidths, setColumnWidths] = useState({
+    fileName: 40,
+    size: 20,
+    type: 25,
+    uploadTime: 15
+  });
+  
+  // 拖拽状态
+  const [isDragging, setIsDragging] = useState(false);
+  const [currentColumn, setCurrentColumn] = useState(null);
+  const [startX, setStartX] = useState(0);
+  const tableRef = useRef(null);
 
   // 加载文档数据
   useEffect(() => {
@@ -30,6 +45,65 @@ const DocumentTab = () => {
     };
     loadDocumentData();
   }, []);
+
+  // 处理拖拽开始
+  const handleDragStart = (e, column) => {
+    setIsDragging(true);
+    setCurrentColumn(column);
+    setStartX(e.clientX);
+  };
+
+  // 处理拖拽
+  const handleDrag = (e) => {
+    if (!isDragging || !currentColumn) return;
+    
+    const deltaX = e.clientX - startX;
+    const tableWidth = tableRef.current?.offsetWidth || 1000;
+    const percentageDelta = (deltaX / tableWidth) * 100;
+    
+    // 确保列宽不会太小
+    const minWidth = 10;
+    
+    setColumnWidths(prev => {
+      const newWidth = Math.max(prev[currentColumn] + percentageDelta, minWidth);
+      
+      // 调整其他列的宽度以保持总宽度为100%
+      const otherColumns = Object.keys(prev).filter(col => col !== currentColumn);
+      const totalOtherWidth = otherColumns.reduce((sum, col) => sum + prev[col], 0);
+      const adjustmentFactor = (100 - newWidth) / totalOtherWidth;
+      
+      const newWidths = {};
+      otherColumns.forEach(col => {
+        newWidths[col] = prev[col] * adjustmentFactor;
+      });
+      
+      return {
+        ...newWidths,
+        [currentColumn]: newWidth
+      };
+    });
+    
+    setStartX(e.clientX);
+  };
+
+  // 处理拖拽结束
+  const handleDragEnd = () => {
+    setIsDragging(false);
+    setCurrentColumn(null);
+  };
+
+  // 添加全局鼠标事件监听
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener('mousemove', handleDrag);
+      window.addEventListener('mouseup', handleDragEnd);
+    }
+    
+    return () => {
+      window.removeEventListener('mousemove', handleDrag);
+      window.removeEventListener('mouseup', handleDragEnd);
+    };
+  }, [isDragging, currentColumn, startX]);
 
   // 获取文件类型
   const getFileType = (fileName) => {
@@ -157,14 +231,57 @@ const DocumentTab = () => {
       )}
 
       {/* 文件列表 */}
-      <div className="bg-white rounded-lg shadow">
-        <div className="grid grid-cols-12 gap-4 p-4 border-b border-gray-200 bg-gray-50 font-medium">
-          <div className="col-span-4">File Name</div>
-          <div className="col-span-3">Size</div>
-          <div className="col-span-3">Type</div>
-          <div className="col-span-2">Upload Time</div>
+      <div className="bg-white rounded-lg shadow" ref={tableRef}>
+        {/* 表头 */}
+        <div className="flex border-b border-gray-200 bg-gray-50 font-medium">
+          <div 
+            className="p-4 flex items-center relative" 
+            style={{ width: `${columnWidths.fileName}%` }}
+          >
+            <span>File Name</span>
+            <div 
+              className="absolute right-0 top-0 bottom-0 w-4 flex items-center justify-center cursor-col-resize hover:bg-gray-300"
+              onMouseDown={(e) => handleDragStart(e, 'fileName')}
+            >
+              <FaGripLines className="text-gray-400" />
+            </div>
+          </div>
+          
+          <div 
+            className="p-4 flex items-center relative" 
+            style={{ width: `${columnWidths.size}%` }}
+          >
+            <span>Size</span>
+            <div 
+              className="absolute right-0 top-0 bottom-0 w-4 flex items-center justify-center cursor-col-resize hover:bg-gray-300"
+              onMouseDown={(e) => handleDragStart(e, 'size')}
+            >
+              <FaGripLines className="text-gray-400" />
+            </div>
+          </div>
+          
+          <div 
+            className="p-4 flex items-center relative" 
+            style={{ width: `${columnWidths.type}%` }}
+          >
+            <span>Type</span>
+            <div 
+              className="absolute right-0 top-0 bottom-0 w-4 flex items-center justify-center cursor-col-resize hover:bg-gray-300"
+              onMouseDown={(e) => handleDragStart(e, 'type')}
+            >
+              <FaGripLines className="text-gray-400" />
+            </div>
+          </div>
+          
+          <div 
+            className="p-4 flex items-center relative" 
+            style={{ width: `${columnWidths.uploadTime}%` }}
+          >
+            <span>Upload Time</span>
+          </div>
         </div>
         
+        {/* 文件列表内容 */}
         <div className="divide-y divide-gray-200">
           {currentFiles.length === 0 ? (
             <div className="p-4 text-center text-gray-500">
@@ -172,18 +289,18 @@ const DocumentTab = () => {
             </div>
           ) : (
             currentFiles.map((file, index) => (
-              <div key={index} className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-gray-50">
-                <div className="col-span-4 flex items-center">
+              <div key={index} className="flex items-center hover:bg-gray-50">
+                <div className="p-4 flex items-center" style={{ width: `${columnWidths.fileName}%` }}>
                   <FaFile className="mr-2 text-gray-400" />
                   <span className="truncate">{file.name}</span>
                 </div>
-                <div className="col-span-3">
+                <div className="p-4" style={{ width: `${columnWidths.size}%` }}>
                   {file.size}
                 </div>
-                <div className="col-span-3">
+                <div className="p-4" style={{ width: `${columnWidths.type}%` }}>
                   {file.type}
                 </div>
-                <div className="col-span-2">
+                <div className="p-4" style={{ width: `${columnWidths.uploadTime}%` }}>
                   {new Date(file.uploadTime).toLocaleDateString()}
                 </div>
               </div>
@@ -237,6 +354,20 @@ const DocumentTab = () => {
           </div>
         )}
       </div>
+      
+      {/* 添加一些CSS来处理拖拽时的视觉反馈 */}
+      <style jsx>{`
+        .cursor-col-resize {
+          cursor: col-resize;
+        }
+        
+        ${isDragging ? `
+          body {
+            cursor: col-resize !important;
+            user-select: none;
+          }
+        ` : ''}
+      `}</style>
     </div>
   );
 };

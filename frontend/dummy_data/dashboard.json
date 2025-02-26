@@ -1,11 +1,11 @@
 {
   "todos": [
-    { "id": 1, "text": "Complete Q1 Financial Report", "starred": false },
-    { "id": 2, "text": "Prepare Board Meeting Materials", "starred": true },
-    { "id": 3, "text": "Review Project Budget Proposal", "starred": false },
-    { "id": 4, "text": "Update Business Development Plan", "starred": false },
-    { "id": 5, "text": "Quarterly Investor Communication", "starred": true },
-    { "id": 6, "text": "Evaluate Market Opportunities", "starred": false }
+    { "id": 1, "text": "Complete Q1 Financial Report", "starred": false, "completed": false },
+    { "id": 2, "text": "Prepare Board Meeting Materials", "starred": true, "completed": true },
+    { "id": 3, "text": "Review Project Budget Proposal", "starred": false, "completed": false },
+    { "id": 4, "text": "Update Business Development Plan", "starred": false, "completed": false },
+    { "id": 5, "text": "Quarterly Investor Communication", "starred": true, "completed": false },
+    { "id": 6, "text": "Evaluate Market Opportunities", "starred": false, "completed": true }
   ],
   "revenueData": [
     { "month": "Jan", "revenue": 4000, "expenses": 2400 },

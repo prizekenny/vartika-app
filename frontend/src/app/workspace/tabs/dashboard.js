@@ -10,7 +10,9 @@ import {
   FaArrowUp,
   FaArrowDown,
   FaDollarSign,
-  FaPercentage
+  FaPercentage,
+  FaCheck,
+  FaRegSquare
 } from 'react-icons/fa';
 import {
   BarChart,
@@ -40,6 +42,8 @@ const DashboardTab = () => {
   const [financialMetrics, setFinancialMetrics] = useState({});
   const [COLORS, setCOLORS] = useState([]);
   const [activeTab, setActiveTab] = useState('todo');
+  const [newTaskText, setNewTaskText] = useState('');
+  const [showNewTaskInput, setShowNewTaskInput] = useState(false);
 
   // 加载仪表板数据
   useEffect(() => {
@@ -79,6 +83,38 @@ const DashboardTab = () => {
     setTodos(todos.filter(todo => todo.id !== id));
   };
 
+  // Toggle task completion status
+  const toggleComplete = (id) => {
+    setTodos(todos.map(todo => {
+      if (todo.id === id) {
+        return { ...todo, completed: !todo.completed };
+      }
+      return todo;
+    }));
+  };
+
+  // Add new task
+  const addNewTask = () => {
+    if (newTaskText.trim() !== '') {
+      const newTask = {
+        id: Date.now(), // 使用时间戳作为临时ID
+        text: newTaskText,
+        starred: false,
+        completed: false
+      };
+      setTodos([...todos, newTask]);
+      setNewTaskText('');
+      setShowNewTaskInput(false);
+    }
+  };
+
+  // Handle key press in new task input
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      addNewTask();
+    }
+  };
+
   return (
     <div className="p-6">
       {/* Title */}
@@ -107,11 +143,59 @@ const DashboardTab = () => {
         {activeTab === 'todo' ? (
           // To-do List
           <div>
-            <h3 className="text-xl font-semibold mb-4">Tasks</h3>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-semibold">Tasks</h3>
+              <button
+                onClick={() => setShowNewTaskInput(true)}
+                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition-colors"
+              >
+                Add New Task
+              </button>
+            </div>
+            
+            {showNewTaskInput && (
+              <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                <div className="flex items-center">
+                  <input
+                    type="text"
+                    value={newTaskText}
+                    onChange={(e) => setNewTaskText(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Enter new task..."
+                    className="flex-grow p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    autoFocus
+                  />
+                  <button
+                    onClick={addNewTask}
+                    className="ml-2 bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-md transition-colors"
+                  >
+                    Add
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowNewTaskInput(false);
+                      setNewTaskText('');
+                    }}
+                    className="ml-2 bg-gray-300 hover:bg-gray-400 text-gray-700 px-3 py-2 rounded-md transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+            
             <div className="space-y-3">
               {todos.map(todo => (
                 <div key={todo.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100">
-                  <span className="flex-grow">{todo.text}</span>
+                  <div className="flex items-center">
+                    <button
+                      onClick={() => toggleComplete(todo.id)}
+                      className={`mr-3 text-lg ${todo.completed ? 'text-green-500' : 'text-gray-400'}`}
+                    >
+                      {todo.completed ? <FaCheck /> : <FaRegSquare />}
+                    </button>
+                    <span className={`flex-grow ${todo.completed ? 'line-through text-gray-400' : ''}`}>{todo.text}</span>
+                  </div>
                   <div className="flex items-center space-x-3">
                     <button
                       onClick={() => toggleStar(todo.id)}
