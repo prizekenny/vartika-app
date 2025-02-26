@@ -16,6 +16,10 @@ async function loadTokensIntoCache() {
         realm_id: row.realm_id,
         expires_at: row.expires_at,
       });
+      // ✅ Print token info excluding refresh_token
+      console.log(
+        `🔑 Cached token for ${row.user_email} (${row.platform}) | Realm ID: ${row.realm_id} | Expires At: ${row.expires_at}`
+      );
     });
     console.log("✅ Tokens loaded into cache.");
   } catch (error) {
