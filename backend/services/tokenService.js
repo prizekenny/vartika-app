@@ -174,7 +174,7 @@ async function getGmailToken(email) {
  * 📌 **Get the latest Google Drive token (single user)**
  */
 async function getGoogleDriveToken() {
-  const tokens = getAllTokensByPlatform("google_drive");
+  const tokens = await getAllTokensByPlatform("google_drive");
   return tokens.length > 0 ? tokens[0] : null;
 }
 
