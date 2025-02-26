@@ -15,6 +15,8 @@ import {
   Legend,
   ResponsiveContainer
 } from 'recharts';
+import SortableHeader from '../../../components/SortableHeader';
+import useSortable from '../../../hooks/useSortable';
 
 const ContractTab = () => {
   // 状态管理
@@ -30,6 +32,9 @@ const ContractTab = () => {
     topClients: [],
     contracts: []
   });
+  
+  // 使用排序钩子
+  const { sortField, sortDirection, handleSort, sortData } = useSortable('id', 'asc');
 
   // 加载数据
   useEffect(() => {
@@ -65,6 +70,9 @@ const ContractTab = () => {
 
   // 标签页状态
   const [activeTab, setActiveTab] = useState('overview');
+  
+  // 排序合同数据
+  const sortedContracts = sortData(contractData.contracts);
 
   return (
     <div className="p-6">
@@ -254,17 +262,57 @@ const ContractTab = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">End Date</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <SortableHeader 
+                      label="ID" 
+                      field="id" 
+                      currentSortField={sortField} 
+                      sortDirection={sortDirection} 
+                      onSort={handleSort} 
+                    />
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <SortableHeader 
+                      label="Subject" 
+                      field="subject" 
+                      currentSortField={sortField} 
+                      sortDirection={sortDirection} 
+                      onSort={handleSort} 
+                    />
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <SortableHeader 
+                      label="Client" 
+                      field="client" 
+                      currentSortField={sortField} 
+                      sortDirection={sortDirection} 
+                      onSort={handleSort} 
+                    />
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <SortableHeader 
+                      label="Start Date" 
+                      field="startDate" 
+                      currentSortField={sortField} 
+                      sortDirection={sortDirection} 
+                      onSort={handleSort} 
+                    />
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <SortableHeader 
+                      label="End Date" 
+                      field="endDate" 
+                      currentSortField={sortField} 
+                      sortDirection={sortDirection} 
+                      onSort={handleSort} 
+                    />
+                  </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {contractData.contracts.map((contract) => (
+                {sortedContracts.map((contract) => (
                   <tr key={contract.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{contract.id}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{contract.subject}</td>
