@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   FaStar, 
   FaRegStar,
@@ -31,53 +31,34 @@ import {
 } from 'recharts';
 
 const DashboardTab = () => {
-  // Mock todo data
-  const initialTodos = [
-    { id: 1, text: "Complete Q1 Financial Report", starred: false },
-    { id: 2, text: "Prepare Board Meeting Materials", starred: true },
-    { id: 3, text: "Review Project Budget Proposal", starred: false },
-    { id: 4, text: "Update Business Development Plan", starred: false },
-    { id: 5, text: "Quarterly Investor Communication", starred: true },
-    { id: 6, text: "Evaluate Market Opportunities", starred: false },
-  ];
-
-  // Mock financial data
-  const revenueData = [
-    { month: 'Jan', revenue: 4000, expenses: 2400 },
-    { month: 'Feb', revenue: 3000, expenses: 1398 },
-    { month: 'Mar', revenue: 2000, expenses: 9800 },
-    { month: 'Apr', revenue: 2780, expenses: 3908 },
-    { month: 'May', revenue: 1890, expenses: 4800 },
-    { month: 'Jun', revenue: 2390, expenses: 3800 },
-  ];
-
-  const marketShareData = [
-    { name: 'Product A', value: 400 },
-    { name: 'Product B', value: 300 },
-    { name: 'Product C', value: 300 },
-    { name: 'Product D', value: 200 },
-  ];
-
-  const growthData = [
-    { month: 'Jan', growth: 20 },
-    { month: 'Feb', growth: 35 },
-    { month: 'Mar', growth: 25 },
-    { month: 'Apr', growth: 45 },
-    { month: 'May', growth: 40 },
-    { month: 'Jun', growth: 50 },
-  ];
-
-  const expenseBreakdown = [
-    { name: 'Operations', value: 35 },
-    { name: 'Marketing', value: 25 },
-    { name: 'R&D', value: 20 },
-    { name: 'Admin', value: 20 },
-  ];
-
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
-
-  const [todos, setTodos] = useState(initialTodos);
+  // 状态管理
+  const [todos, setTodos] = useState([]);
+  const [revenueData, setRevenueData] = useState([]);
+  const [marketShareData, setMarketShareData] = useState([]);
+  const [growthData, setGrowthData] = useState([]);
+  const [expenseBreakdown, setExpenseBreakdown] = useState([]);
+  const [financialMetrics, setFinancialMetrics] = useState({});
+  const [COLORS, setCOLORS] = useState([]);
   const [activeTab, setActiveTab] = useState('todo');
+
+  // 加载仪表板数据
+  useEffect(() => {
+    const loadDashboardData = async () => {
+      try {
+        const data = await import("../../../../dummy_data/dashboard.json");
+        setTodos(data.todos);
+        setRevenueData(data.revenueData);
+        setMarketShareData(data.marketShareData);
+        setGrowthData(data.growthData);
+        setExpenseBreakdown(data.expenseBreakdown);
+        setFinancialMetrics(data.financialMetrics);
+        setCOLORS(data.colors);
+      } catch (error) {
+        console.error("Error loading dashboard data:", error);
+      }
+    };
+    loadDashboardData();
+  }, []);
 
   // Toggle task star status
   const toggleStar = (id) => {
@@ -96,30 +77,6 @@ const DashboardTab = () => {
   // Delete task
   const deleteTodo = (id) => {
     setTodos(todos.filter(todo => todo.id !== id));
-  };
-
-  // Mock financial metrics
-  const financialMetrics = {
-    revenue: {
-      value: '$2.4M',
-      change: '+12.5%',
-      positive: true
-    },
-    expenses: {
-      value: '$1.1M',
-      change: '-5.2%',
-      positive: true
-    },
-    profit: {
-      value: '$1.3M',
-      change: '+15.8%',
-      positive: true
-    },
-    margin: {
-      value: '54.2%',
-      change: '+3.2%',
-      positive: true
-    }
   };
 
   return (
@@ -186,13 +143,13 @@ const DashboardTab = () => {
                   <div className="text-blue-600">
                     <FaDollarSign className="text-2xl" />
                   </div>
-                  <div className={`flex items-center ${financialMetrics.revenue.positive ? 'text-green-500' : 'text-red-500'}`}>
-                    <span className="text-sm">{financialMetrics.revenue.change}</span>
-                    {financialMetrics.revenue.positive ? <FaArrowUp className="ml-1" /> : <FaArrowDown className="ml-1" />}
+                  <div className={`flex items-center ${financialMetrics.revenue?.positive ? 'text-green-500' : 'text-red-500'}`}>
+                    <span className="text-sm">{financialMetrics.revenue?.change}</span>
+                    {financialMetrics.revenue?.positive ? <FaArrowUp className="ml-1" /> : <FaArrowDown className="ml-1" />}
                   </div>
                 </div>
                 <h4 className="text-gray-600 mt-2">Revenue</h4>
-                <p className="text-2xl font-bold text-gray-800">{financialMetrics.revenue.value}</p>
+                <p className="text-2xl font-bold text-gray-800">{financialMetrics.revenue?.value}</p>
               </div>
 
               {/* Expenses Card */}
@@ -201,13 +158,13 @@ const DashboardTab = () => {
                   <div className="text-red-600">
                     <FaDollarSign className="text-2xl" />
                   </div>
-                  <div className={`flex items-center ${financialMetrics.expenses.positive ? 'text-green-500' : 'text-red-500'}`}>
-                    <span className="text-sm">{financialMetrics.expenses.change}</span>
-                    {financialMetrics.expenses.positive ? <FaArrowUp className="ml-1" /> : <FaArrowDown className="ml-1" />}
+                  <div className={`flex items-center ${financialMetrics.expenses?.positive ? 'text-green-500' : 'text-red-500'}`}>
+                    <span className="text-sm">{financialMetrics.expenses?.change}</span>
+                    {financialMetrics.expenses?.positive ? <FaArrowUp className="ml-1" /> : <FaArrowDown className="ml-1" />}
                   </div>
                 </div>
                 <h4 className="text-gray-600 mt-2">Expenses</h4>
-                <p className="text-2xl font-bold text-gray-800">{financialMetrics.expenses.value}</p>
+                <p className="text-2xl font-bold text-gray-800">{financialMetrics.expenses?.value}</p>
               </div>
 
               {/* Profit Card */}
@@ -216,13 +173,13 @@ const DashboardTab = () => {
                   <div className="text-green-600">
                     <FaDollarSign className="text-2xl" />
                   </div>
-                  <div className={`flex items-center ${financialMetrics.profit.positive ? 'text-green-500' : 'text-red-500'}`}>
-                    <span className="text-sm">{financialMetrics.profit.change}</span>
-                    {financialMetrics.profit.positive ? <FaArrowUp className="ml-1" /> : <FaArrowDown className="ml-1" />}
+                  <div className={`flex items-center ${financialMetrics.profit?.positive ? 'text-green-500' : 'text-red-500'}`}>
+                    <span className="text-sm">{financialMetrics.profit?.change}</span>
+                    {financialMetrics.profit?.positive ? <FaArrowUp className="ml-1" /> : <FaArrowDown className="ml-1" />}
                   </div>
                 </div>
                 <h4 className="text-gray-600 mt-2">Net Profit</h4>
-                <p className="text-2xl font-bold text-gray-800">{financialMetrics.profit.value}</p>
+                <p className="text-2xl font-bold text-gray-800">{financialMetrics.profit?.value}</p>
               </div>
 
               {/* Margin Card */}
@@ -231,13 +188,13 @@ const DashboardTab = () => {
                   <div className="text-purple-600">
                     <FaPercentage className="text-2xl" />
                   </div>
-                  <div className={`flex items-center ${financialMetrics.margin.positive ? 'text-green-500' : 'text-red-500'}`}>
-                    <span className="text-sm">{financialMetrics.margin.change}</span>
-                    {financialMetrics.margin.positive ? <FaArrowUp className="ml-1" /> : <FaArrowDown className="ml-1" />}
+                  <div className={`flex items-center ${financialMetrics.margin?.positive ? 'text-green-500' : 'text-red-500'}`}>
+                    <span className="text-sm">{financialMetrics.margin?.change}</span>
+                    {financialMetrics.margin?.positive ? <FaArrowUp className="ml-1" /> : <FaArrowDown className="ml-1" />}
                   </div>
                 </div>
                 <h4 className="text-gray-600 mt-2">Profit Margin</h4>
-                <p className="text-2xl font-bold text-gray-800">{financialMetrics.margin.value}</p>
+                <p className="text-2xl font-bold text-gray-800">{financialMetrics.margin?.value}</p>
               </div>
             </div>
 

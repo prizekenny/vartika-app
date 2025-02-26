@@ -1,0 +1,151 @@
+{
+  "logs": [
+    {
+      "id": "LOG001",
+      "timestamp": "2025-02-25T15:30:00",
+      "name": "QuickBooks Sync Failed",
+      "description": "Failed to synchronize data with QuickBooks. Error: Connection timeout",
+      "type": "System Sync",
+      "status": "Error",
+      "user": "System"
+    },
+    {
+      "id": "LOG002",
+      "timestamp": "2025-02-25T15:15:00",
+      "name": "Bank Statement Upload",
+      "description": "Successfully uploaded February 2025 bank statement for account ending in 4567",
+      "type": "File Operation",
+      "status": "Success",
+      "user": "Emma Wilson"
+    },
+    {
+      "id": "LOG003",
+      "timestamp": "2025-02-25T14:45:00",
+      "name": "Storage Space Warning",
+      "description": "System storage usage has reached 85% of allocated space",
+      "type": "System Alert",
+      "status": "Warning",
+      "user": "System"
+    },
+    {
+      "id": "LOG004",
+      "timestamp": "2025-02-25T14:30:00",
+      "name": "User Login",
+      "description": "Successful login from IP address 192.168.1.100",
+      "type": "Security",
+      "status": "Success",
+      "user": "John Smith"
+    },
+    {
+      "id": "LOG005",
+      "timestamp": "2025-02-25T14:15:00",
+      "name": "File Upload",
+      "description": "New invoice template uploaded: template_v2.xlsx",
+      "type": "File Operation",
+      "status": "Success",
+      "user": "Sarah Davis"
+    },
+    {
+      "id": "LOG006",
+      "timestamp": "2025-02-25T14:00:00",
+      "name": "QuickBooks Sync",
+      "description": "Successfully synchronized customer data with QuickBooks",
+      "type": "System Sync",
+      "status": "Success",
+      "user": "System"
+    },
+    {
+      "id": "LOG007",
+      "timestamp": "2025-02-25T13:45:00",
+      "name": "Bank Statement Processing",
+      "description": "Automated processing of bank statement completed with 3 warnings",
+      "type": "File Operation",
+      "status": "Warning",
+      "user": "System"
+    },
+    {
+      "id": "LOG008",
+      "timestamp": "2025-02-25T13:30:00",
+      "name": "User Logout",
+      "description": "User session ended normally",
+      "type": "Security",
+      "status": "Success",
+      "user": "Michael Brown"
+    },
+    {
+      "id": "LOG009",
+      "timestamp": "2025-02-25T13:15:00",
+      "name": "File Upload",
+      "description": "Client documentation uploaded: client_requirements.pdf",
+      "type": "File Operation",
+      "status": "Success",
+      "user": "Lisa Anderson"
+    },
+    {
+      "id": "LOG010",
+      "timestamp": "2025-02-25T13:00:00",
+      "name": "System Backup",
+      "description": "Daily system backup completed successfully",
+      "type": "System Operation",
+      "status": "Success",
+      "user": "System"
+    },
+    {
+      "id": "LOG011",
+      "timestamp": "2025-02-25T12:45:00",
+      "name": "QuickBooks Sync Failed",
+      "description": "Failed to sync invoice data. Error: Invalid format",
+      "type": "System Sync",
+      "status": "Error",
+      "user": "System"
+    },
+    {
+      "id": "LOG012",
+      "timestamp": "2025-02-25T12:30:00",
+      "name": "User Login Failed",
+      "description": "Failed login attempt from IP address 192.168.1.105",
+      "type": "Security",
+      "status": "Error",
+      "user": "System"
+    },
+    {
+      "id": "LOG013",
+      "timestamp": "2025-02-25T12:15:00",
+      "name": "File Delete",
+      "description": "Removed outdated template: old_template.xlsx",
+      "type": "File Operation",
+      "status": "Success",
+      "user": "David Taylor"
+    },
+    {
+      "id": "LOG014",
+      "timestamp": "2025-02-25T12:00:00",
+      "name": "Storage Space Alert",
+      "description": "Storage usage exceeded 90% threshold",
+      "type": "System Alert",
+      "status": "Warning",
+      "user": "System"
+    },
+    {
+      "id": "LOG015",
+      "timestamp": "2025-02-25T11:45:00",
+      "name": "Bank Statement Upload",
+      "description": "January 2025 bank statement uploaded for processing",
+      "type": "File Operation",
+      "status": "Success",
+      "user": "Jennifer Thomas"
+    }
+  ],
+  "logTypes": [
+    "System Alert",
+    "File Operation",
+    "System Sync",
+    "Security",
+    "System Operation"
+  ],
+  "statusTypes": [
+    "Success",
+    "Warning",
+    "Error"
+  ]
+}

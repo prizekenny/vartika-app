@@ -21,7 +21,7 @@ import { useRouter } from "next/navigation";
 
 import DashboardTab from "./tabs/dashboard";
 import UserTab from "./tabs/user";
-import SettingTab from "./tabs/settings";
+import SettingTab from "./tabs/setting";
 import ClientTab from "./tabs/client";
 import ContractTab from "./tabs/contract";
 import InvoiceTab from "./tabs/invoice";

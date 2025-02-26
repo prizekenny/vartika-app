@@ -1,0 +1,118 @@
+[
+    {
+      "date": "2024-11-10",
+      "bankDetail": "Amazon Prime Member",
+      "payee": "Amazon",
+      "categorizeOrMatch": "Services",
+      "tax": "GST",
+      "spent": "$10",
+      "received": "-",
+      "doc": "Online",
+      "action": "Add"
+    },
+    {
+      "date": "2024-11-11",
+      "bankDetail": "CALGARY",
+      "payee": "Subscription",
+      "categorizeOrMatch": "GST",
+      "tax": "GST",
+      "spent": "$20",
+      "received": "-",
+      "doc": "Online",
+      "action": "Match"
+    },
+    {
+      "date": "2024-11-12",
+      "bankDetail": "INTUIT QBooks Online",
+      "payee": "Intuit",
+      "categorizeOrMatch": "Expenses",
+      "tax": "GST",
+      "spent": "$20",
+      "received": "-",
+      "doc": "Online",
+      "action": "Add"
+    },
+    {
+      "date": "2024-11-13",
+      "bankDetail": "TIM HORTONS #2000",
+      "payee": "Tim Hortons",
+      "categorizeOrMatch": "Billable Expenses",
+      "tax": "GST",
+      "spent": "$2.5",
+      "received": "-",
+      "doc": "Online",
+      "action": "Match"
+    },
+    {
+      "date": "2024-11-14",
+      "bankDetail": "SUBWAY",
+      "payee": "Subway",
+      "categorizeOrMatch": "Billable Expenses",
+      "tax": "GST",
+      "spent": "$8.9",
+      "received": "-",
+      "doc": "Online",
+      "action": "Add"
+    },
+    {
+      "date": "2024-11-15",
+      "bankDetail": "HAIR SALON",
+      "payee": "-",
+      "categorizeOrMatch": "Billable Expenses",
+      "tax": "GST",
+      "spent": "$60",
+      "received": "-",
+      "doc": "Online",
+      "action": "Match"
+    },
+    {
+      "date": "2024-11-20",
+      "bankDetail": "Deposit from Client A",
+      "payee": "Client A",
+      "categorizeOrMatch": "Income",
+      "tax": "5%",
+      "spent": "-",
+      "received": "$1,500.00",
+      "doc": "Invoice-123"
+    },
+    {
+      "date": "2024-11-21",
+      "bankDetail": "Utility Bill",
+      "payee": "City Utilities",
+      "categorizeOrMatch": "Expense",
+      "tax": "0%",
+      "spent": "$200.00",
+      "received": "-",
+      "doc": "Bill-456"
+    },
+    {
+      "date": "2024-11-22",
+      "bankDetail": "Office Supplies",
+      "payee": "Stationery Shop",
+      "categorizeOrMatch": "Expense",
+      "tax": "12%",
+      "spent": "$50.00",
+      "received": "-",
+      "doc": "Receipt-789"
+    },
+    {
+      "date": "2024-11-23",
+      "bankDetail": "Service Payment",
+      "payee": "Freelancer B",
+      "categorizeOrMatch": "Contractor Expense",
+      "tax": "15%",
+      "spent": "$600.00",
+      "received": "-",
+      "doc": "Payment-101"
+    },
+    {
+      "date": "2024-11-24",
+      "bankDetail": "Refund from Vendor",
+      "payee": "Vendor C",
+      "categorizeOrMatch": "Income",
+      "tax": "0%",
+      "spent": "-",
+      "received": "$300.00",
+      "doc": "Refund-202"
+    }
+  ]

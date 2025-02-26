@@ -1,30 +1,33 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaSearch, FaSort, FaUserPlus } from 'react-icons/fa';
 
 const UserTab = () => {
-  // 生成随机用户数据
-  const generateRandomUsers = (count) => {
-    const names = ['John Smith', 'Emma Wilson', 'Michael Brown', 'Sarah Davis', 'James Miller', 'Lisa Anderson', 'David Taylor', 'Jennifer Thomas', 'Robert Martinez', 'Jessica Garcia'];
-    const roles = ['Super Admin', 'Admin', 'Employee', 'Client'];
-    const countries = ['Canada', 'USA', 'UK', 'Australia', 'France'];
-    
-    return Array.from({ length: count }, (_, i) => ({
-      id: i + 1,
-      name: names[Math.floor(Math.random() * names.length)],
-      role: 'Select role',
-      phone: `+1 (${Math.floor(Math.random() * 900) + 100}) ${Math.floor(Math.random() * 900) + 100}-${Math.floor(Math.random() * 9000) + 1000}`,
-      email: `${names[Math.floor(Math.random() * names.length)].toLowerCase().replace(' ', '.')}@example.com`,
-      country: countries[Math.floor(Math.random() * countries.length)],
-      status: false
-    }));
-  };
-
-  const [users, setUsers] = useState(generateRandomUsers(10));
+  const [users, setUsers] = useState([]);
+  const [roles, setRoles] = useState([]);
+  const [countries, setCountries] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const usersPerPage = 5;
+
+  // 加载用户数据
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        const data = await import("../../../../dummy_data/user.json");
+        setUsers(data.users);
+        setRoles(data.roles);
+        setCountries(data.countries);
+      } catch (error) {
+        console.error("Error loading user data:", error);
+        setUsers([]);
+        setRoles([]);
+        setCountries([]);
+      }
+    };
+    loadUserData();
+  }, []);
 
   // 处理角色变化
   const handleRoleChange = (userId, newRole) => {
@@ -101,10 +104,9 @@ const UserTab = () => {
                     onChange={(e) => handleRoleChange(user.id, e.target.value)}
                   >
                     <option value="Select role" disabled>Select role</option>
-                    <option value="Super Admin">Super Admin</option>
-                    <option value="Admin">Admin</option>
-                    <option value="Employee">Employee</option>
-                    <option value="Client">Client</option>
+                    {roles.map(role => (
+                      <option key={role} value={role}>{role}</option>
+                    ))}
                   </select>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">{user.phone}</td>
