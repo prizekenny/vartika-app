@@ -22,14 +22,15 @@ passport.serializeUser((user, done) => {
 
 // 🔹 Deserialize user by ID from database
 passport.deserializeUser(async (email, done) => {
-  console.log("🔍 Debug: Deserializing User:", email);
+  console.log("🔍 Debug: Deserializing User from users table:", email);
   try {
-    const userToken = await getToken(email, "gmail"); // 确保 getToken 逻辑正确
-    if (!userToken) {
-      return done(new Error("❌ User not found in session"), null);
+    const result = await pool.query("SELECT * FROM users WHERE email = $1", [
+      email,
+    ]);
+    if (!result.rows.length) {
+      return done(new Error("❌ User not found in users database"), null);
     }
-    console.log("✅ Debug: Deserialized User:", userToken);
-    done(null, userToken);
+    done(null, result.rows[0]); // 返回完整的用户信息
   } catch (error) {
     console.error("❌ Error deserializing user:", error);
     done(error, null);
