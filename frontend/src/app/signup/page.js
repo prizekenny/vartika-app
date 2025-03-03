@@ -1,101 +1,72 @@
 "use client";
 
 import React, { useState } from "react";
-import Button from "../../components/Button"; // Adjust the path based on your project structure
+import Button from "../../components/Button";
 import { FaGoogle, FaFacebook, FaMicrosoft } from "react-icons/fa";
+import { useRouter } from "next/navigation";
 
 function SignUpPage() {
-  
-  // State for form inputs
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
-  const [errors, setErrors] = useState({
-    username: '',
-    email: '',
-    password: '',
-    confirmPassword: ''
-  });
+  const router = useRouter();
 
-  // Function to handle form submission
   const handleSubmit = async (event) => {
-    event.preventDefault(); // Prevents the default form submission behavior
+    event.preventDefault();
 
-    if (!validateForm()) {
-      return;
-    }
-
-    // Check if terms and conditions are accepted
-    if (!termsAccepted) {
-      alert("You must accept the Terms and Conditions to proceed.");
-      return;
-    }
-
-    // Call the backend API to create a new user account
     try {
-      const response = await fetch("http://localhost:5000/api/signup", {
+      console.log("Starting signup process...");
+      
+      // Validate input fields
+      if (!username || !email || !password || !confirmPassword) {
+        alert("Please fill in all required fields.");
+        return;
+      }
+
+      // Check if passwords match
+      if (password !== confirmPassword) {
+        alert("Passwords do not match. Please try again.");
+        return;
+      }
+
+      // Check if terms and conditions are accepted
+      if (!termsAccepted) {
+        alert("You must accept the Terms and Conditions to proceed.");
+        return;
+      }
+
+      console.log("Using API URL:", process.env.NEXT_PUBLIC_API_URL);
+      
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/register`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json", // Specify JSON payload
+          "Content-Type": "application/json",
+          "Accept": "application/json"
         },
         body: JSON.stringify({
-          username: username, // Username entered by the user
-          email: email, // Email entered by the user
-          password: password, // Password entered by the user
-        }),
+          username,
+          email,
+          password
+        })
       });
 
+      console.log("Response received:", response.status);
+      
       const data = await response.json();
+      console.log("Response data:", data);
 
       if (response.ok) {
-        // Signup successful, redirect to login or dashboard
         alert("Sign up successful! Please log in.");
-        console.log("User created:", data);
+        router.push("/login");
       } else {
-        // Handle signup failure (e.g., username already exists)
-        alert(`Sign up failed: ${data.message}`);
+        alert(`Sign up failed: ${data.message || "Unknown error occurred"}`);
       }
     } catch (error) {
-      // Handle errors from the API call
-      console.error("Error during sign up:", error);
-      alert("An error occurred. Please try again later.");
+      console.error("Detailed error:", error);
+      alert("An error occurred during sign up. Please try again later.");
     }
-  };
-
-  const validateForm = () => {
-    let isValid = true;
-    const newErrors = {};
-
-    // 用戶名驗證
-    if (username.length < 3) {
-      newErrors.username = '用戶名至少需要3個字符';
-      isValid = false;
-    }
-
-    // 電子郵件驗證
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      newErrors.email = '請輸入有效的電子郵件地址';
-      isValid = false;
-    }
-
-    // 密碼驗證
-    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
-    if (!passwordRegex.test(password)) {
-      newErrors.password = '密碼至少8位，必須包含字母和數字';
-      isValid = false;
-    }
-
-    // 確認密碼驗證
-    if (password !== confirmPassword) {
-      newErrors.confirmPassword = '兩次輸入的密碼不一致';
-      isValid = false;
-    }
-
-    setErrors(newErrors);
-    return isValid;
   };
 
   return (
@@ -116,13 +87,10 @@ function SignUpPage() {
             type="text"
             id="username"
             placeholder="Enter your username"
-            className={`border ${errors.username ? 'border-red-500' : 'border-gray-300'} rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500`}
+            className="border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={username}
             onChange={(e) => setUsername(e.target.value)} // Update username state
           />
-          {errors.username && (
-            <p className="text-red-500 text-sm mt-1">{errors.username}</p>
-          )}
 
           <label htmlFor="email" className="text-gray-700 font-medium">
             Email
@@ -131,13 +99,10 @@ function SignUpPage() {
             type="email"
             id="email"
             placeholder="Enter your email"
-            className={`border ${errors.email ? 'border-red-500' : 'border-gray-300'} rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500`}
+            className="border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={email}
             onChange={(e) => setEmail(e.target.value)} // Update email state
           />
-          {errors.email && (
-            <p className="text-red-500 text-sm mt-1">{errors.email}</p>
-          )}
 
           <label htmlFor="password" className="text-gray-700 font-medium">
             Password
@@ -146,13 +111,10 @@ function SignUpPage() {
             type="password"
             id="password"
             placeholder="Create a password"
-            className={`border ${errors.password ? 'border-red-500' : 'border-gray-300'} rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500`}
+            className="border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={password}
             onChange={(e) => setPassword(e.target.value)} // Update password state
           />
-          {errors.password && (
-            <p className="text-red-500 text-sm mt-1">{errors.password}</p>
-          )}
 
           <label
             htmlFor="confirm-password"
@@ -164,13 +126,10 @@ function SignUpPage() {
             type="password"
             id="confirm-password"
             placeholder="Confirm your password"
-            className={`border ${errors.confirmPassword ? 'border-red-500' : 'border-gray-300'} rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500`}
+            className="border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)} // Update confirmPassword state
           />
-          {errors.confirmPassword && (
-            <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>
-          )}
 
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">

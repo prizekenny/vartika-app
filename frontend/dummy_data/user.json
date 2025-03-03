@@ -1,0 +1,96 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "name": "John Smith",
+      "role": "Super Admin",
+      "phone": "+1 (416) 555-0123",
+      "email": "john.smith@example.com",
+      "country": "Canada",
+      "status": true
+    },
+    {
+      "id": 2,
+      "name": "Emma Wilson",
+      "role": "Admin",
+      "phone": "+1 (647) 555-0456",
+      "email": "emma.wilson@example.com",
+      "country": "USA",
+      "status": true
+    },
+    {
+      "id": 3,
+      "name": "Michael Brown",
+      "role": "Employee",
+      "phone": "+1 (905) 555-0789",
+      "email": "michael.brown@example.com",
+      "country": "UK",
+      "status": false
+    },
+    {
+      "id": 4,
+      "name": "Sarah Davis",
+      "role": "Client",
+      "phone": "+1 (289) 555-0321",
+      "email": "sarah.davis@example.com",
+      "country": "Australia",
+      "status": true
+    },
+    {
+      "id": 5,
+      "name": "James Miller",
+      "role": "Employee",
+      "phone": "+1 (437) 555-0654",
+      "email": "james.miller@example.com",
+      "country": "Canada",
+      "status": true
+    },
+    {
+      "id": 6,
+      "name": "Lisa Anderson",
+      "role": "Admin",
+      "phone": "+1 (647) 555-0987",
+      "email": "lisa.anderson@example.com",
+      "country": "USA",
+      "status": true
+    },
+    {
+      "id": 7,
+      "name": "David Taylor",
+      "role": "Employee",
+      "phone": "+1 (416) 555-0147",
+      "email": "david.taylor@example.com",
+      "country": "UK",
+      "status": false
+    },
+    {
+      "id": 8,
+      "name": "Jennifer Thomas",
+      "role": "Client",
+      "phone": "+1 (905) 555-0258",
+      "email": "jennifer.thomas@example.com",
+      "country": "France",
+      "status": true
+    },
+    {
+      "id": 9,
+      "name": "Robert Martinez",
+      "role": "Employee",
+      "phone": "+1 (289) 555-0369",
+      "email": "robert.martinez@example.com",
+      "country": "Canada",
+      "status": true
+    },
+    {
+      "id": 10,
+      "name": "Jessica Garcia",
+      "role": "Admin",
+      "phone": "+1 (437) 555-0741",
+      "email": "jessica.garcia@example.com",
+      "country": "USA",
+      "status": true
+    }
+  ],
+  "roles": ["Super Admin", "Admin", "Employee", "Client"],
+  "countries": ["Canada", "USA", "UK", "Australia", "France"]
+}

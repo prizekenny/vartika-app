@@ -1,0 +1,128 @@
+{
+  "overview": {
+    "draftContracts": {
+      "count": 45,
+      "total": 320,
+      "percentage": 14.06
+    },
+    "newBusinesses": {
+      "count": 28,
+      "total": 320,
+      "percentage": 8.75
+    },
+    "ongoingContracts": {
+      "count": 247,
+      "total": 320,
+      "percentage": 77.19
+    }
+  },
+  "clientTypes": [
+    { "type": "Advisory", "value": 35 },
+    { "type": "Other Individuals", "value": 25 },
+    { "type": "SMEs", "value": 30 },
+    { "type": "Self-employed", "value": 10 }
+  ],
+  "locations": [
+    { "city": "Toronto", "count": 120 },
+    { "city": "Vancouver", "count": 85 },
+    { "city": "Montreal", "count": 65 },
+    { "city": "Calgary", "count": 50 }
+  ],
+  "reminders": [
+    { "client": "Tech Solutions Inc", "expiryDate": "2025-03-15" },
+    { "client": "Global Trading Ltd", "expiryDate": "2025-03-20" },
+    { "client": "Sarah Johnson", "expiryDate": "2025-03-25" },
+    { "client": "Eco Friendly Corp", "expiryDate": "2025-03-30" },
+    { "client": "Digital Dynamics", "expiryDate": "2025-04-05" }
+  ],
+  "topClients": [
+    { "name": "Tech Solutions Inc", "value": 150000 },
+    { "name": "Global Trading Ltd", "value": 120000 },
+    { "name": "Eco Friendly Corp", "value": 100000 },
+    { "name": "Digital Dynamics", "value": 85000 },
+    { "name": "Smart Systems Co", "value": 75000 },
+    { "name": "Green Energy Inc", "value": 65000 }
+  ],
+  "contracts": [
+    {
+      "id": "CT001",
+      "subject": "Accounting Agreement",
+      "client": "Tech Solutions Inc",
+      "startDate": "2024-01-01",
+      "endDate": "2025-12-31",
+      "status": "Accept"
+    },
+    {
+      "id": "CT002",
+      "subject": "Tax Services Contract",
+      "client": "Global Trading Ltd",
+      "startDate": "2024-02-01",
+      "endDate": "2025-01-31",
+      "status": "Pending"
+    },
+    {
+      "id": "CT003",
+      "subject": "Bookkeeping Contract",
+      "client": "Sarah Johnson",
+      "startDate": "2024-03-01",
+      "endDate": "2025-02-28",
+      "status": "Accept"
+    },
+    {
+      "id": "CT004",
+      "subject": "Advisory Services",
+      "client": "Eco Friendly Corp",
+      "startDate": "2024-02-15",
+      "endDate": "2025-02-14",
+      "status": "Pending"
+    },
+    {
+      "id": "CT005",
+      "subject": "Tax Planning Agreement",
+      "client": "Digital Dynamics",
+      "startDate": "2024-01-15",
+      "endDate": "2024-12-31",
+      "status": "Accept"
+    },
+    {
+      "id": "CT006",
+      "subject": "Financial Consulting",
+      "client": "Smart Systems Co",
+      "startDate": "2024-03-01",
+      "endDate": "2025-02-28",
+      "status": "Accept"
+    },
+    {
+      "id": "CT007",
+      "subject": "Audit Services",
+      "client": "Green Energy Inc",
+      "startDate": "2024-02-01",
+      "endDate": "2025-01-31",
+      "status": "Pending"
+    },
+    {
+      "id": "CT008",
+      "subject": "Tax Compliance",
+      "client": "Nova Industries",
+      "startDate": "2024-01-01",
+      "endDate": "2024-12-31",
+      "status": "Accept"
+    },
+    {
+      "id": "CT009",
+      "subject": "Financial Statements",
+      "client": "Blue Ocean Ltd",
+      "startDate": "2024-03-15",
+      "endDate": "2025-03-14",
+      "status": "Pending"
+    },
+    {
+      "id": "CT010",
+      "subject": "Business Advisory",
+      "client": "Peak Performance Co",
+      "startDate": "2024-02-15",
+      "endDate": "2025-02-14",
+      "status": "Accept"
+    }
+  ]
+}
