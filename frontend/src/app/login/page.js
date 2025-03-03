@@ -25,17 +25,15 @@ function LoginPage() {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          username: username, // Username from input
-          password: password, // Password from input
-        }),
+          email,
+          password
+        })
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        // Login successful, redirect to dashboard or handle success
-        alert("Login successful!");
-        console.log("User data:", data);
+        router.push("/workspace");
       } else {
         alert(data.message || "Login failed. Please try again.");
       }
@@ -44,8 +42,8 @@ function LoginPage() {
     }
   };
 
-    // If login successful, redirect the user to workspace page, now it's just to test.
-    router.push("/workspace");
+  const handleOAuthLogin = (provider) => {
+    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/${provider}`;
   };
 
   return (
