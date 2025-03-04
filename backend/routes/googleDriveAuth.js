@@ -1,28 +1,27 @@
 import express from "express";
 import passport from "passport";
-import fs from "fs";
 import { updateToken } from "../services/tokenService.js";
 
 const router = express.Router();
 
 /**
- * 🔗 Redirect users to Google OAuth (Only for Gmail authorization)
+ * 🔗 Redirect users to Google OAuth (Only for Google Drive authorization)
  */
 router.get(
   "/",
-  passport.authenticate("google-gmail", {
-    scope: ["profile", "email", "https://mail.google.com/"],
+  passport.authenticate("google-drive", {
+    scope: ["profile", "email", "https://www.googleapis.com/auth/drive"],
     accessType: "offline",
     prompt: "consent",
   })
 );
 
 /**
- * 🔑 Google OAuth callback (Only stores refresh_token for Gmail monitoring)
+ * 🔑 Google OAuth callback (Stores refresh_token for Google Drive)
  */
 router.get(
   "/callback",
-  passport.authenticate("google-gmail", { failureRedirect: "/login" }),
+  passport.authenticate("google-drive", { failureRedirect: "/login" }),
   async (req, res) => {
     try {
       if (!req.user || !req.user.email) {
@@ -35,18 +34,29 @@ router.get(
       const refreshToken = req.user.refresh_token;
 
       if (!refreshToken) {
-        console.log(`⚠️ No refresh_token received for Gmail: ${userEmail}`);
+        console.log(
+          `⚠️ No refresh_token received for Google Drive: ${userEmail}`
+        );
         return res.status(400).json({ error: "No refresh_token received" });
       }
 
       // ✅ Store or update refresh_token using updateToken function
-      await updateToken(userEmail, "gmail", null, refreshToken, null, null);
+      await updateToken(
+        userEmail,
+        "google_drive",
+        null,
+        refreshToken,
+        null,
+        null
+      );
 
-      console.log(`✅ Stored refresh_token for Gmail: ${userEmail}`);
+      console.log(`✅ Stored refresh_token for Google Drive: ${userEmail}`);
       res.json({ success: true, user: req.user });
     } catch (err) {
-      console.error("❌ Failed to store Gmail refresh token:", err);
-      res.status(500).json({ error: "Failed to store Gmail refresh token" });
+      console.error("❌ Failed to store Google Drive refresh token:", err);
+      res
+        .status(500)
+        .json({ error: "Failed to store Google Drive refresh token" });
     }
   }
 );

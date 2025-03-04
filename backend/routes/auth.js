@@ -64,6 +64,7 @@ router.get(
     failureRedirect: "/login",
   }),
   async (req, res) => {
+    console.log("Google login callback");
     try {
       if (req.user) {
         // Update last_login_time
@@ -92,9 +93,23 @@ router.get("/current-user", (req, res) => {
 });
 
 // Logout route
-router.get("/logout", (req, res) => {
-  req.logout();
-  res.json({ message: "Logged out successfully" });
+router.get("/logout", (req, res, next) => {
+  if (typeof req.logOut !== "function") {
+    return res.status(500).json({ error: "req.logOut is not a function" });
+  }
+
+  req.logOut((err) => {
+    if (err) {
+      return next(err);
+    }
+    req.session.destroy((err) => {
+      if (err) {
+        return next(err);
+      }
+      res.clearCookie("connect.sid"); // 清除 session cookie
+      res.json({ message: "Logged out successfully" });
+    });
+  });
 });
 
 export default router;

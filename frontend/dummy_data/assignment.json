@@ -1,0 +1,109 @@
+{
+  "assignments": [
+    {
+      "id": "A001",
+      "title": "Client Onboarding Dec",
+      "assignee": "John Smith, CPA, CA (Chartered Professional Accountant)",
+      "status": "Completed",
+      "dueDate": "2024-12-31",
+      "createTime": "2024-12-01T09:00:00",
+      "description": "Client onboarding Dec. for Vartika Satija, CPA, CA (Chartered Professional Accountant)",
+      "details": "Complete client onboarding process including documentation review, risk assessment, and initial consultation."
+    },
+    {
+      "id": "A002",
+      "title": "Client Onboarding Feb",
+      "assignee": "John Smith, CPA, CA (Chartered Professional Accountant)",
+      "status": "In Progress",
+      "dueDate": "2025-02-28",
+      "createTime": "2025-02-01T10:30:00",
+      "description": "Client onboarding Feb. for Michael Johnson, CPA (Certified Public Accountant)",
+      "details": "Prepare and review all necessary documentation for new client onboarding process."
+    },
+    {
+      "id": "A003",
+      "title": "Tax Planning Review Mar",
+      "assignee": "Sarah Davis, CPA (Certified Public Accountant)",
+      "status": "Planned",
+      "dueDate": "2025-03-15",
+      "createTime": "2025-02-15T14:20:00",
+      "description": "Quarterly tax planning review for corporate clients",
+      "details": "Conduct comprehensive tax planning review for Q1 2025."
+    },
+    {
+      "id": "A004",
+      "title": "Financial Statement Audit",
+      "assignee": "Emily Wilson, CPA, CA (Chartered Professional Accountant)",
+      "status": "In Progress",
+      "dueDate": "2025-03-31",
+      "createTime": "2025-02-10T11:15:00",
+      "description": "Annual financial statement audit for ABC Corporation",
+      "details": "Perform detailed audit procedures and prepare audit report."
+    },
+    {
+      "id": "A005",
+      "title": "Regulatory Compliance Review",
+      "assignee": "Robert Brown, CPA (Certified Public Accountant)",
+      "status": "Completed",
+      "dueDate": "2025-02-20",
+      "createTime": "2025-02-01T09:45:00",
+      "description": "Review and update regulatory compliance documentation",
+      "details": "Ensure all regulatory requirements are met and documented properly."
+    },
+    {
+      "id": "A006",
+      "title": "Client Onboarding Jan",
+      "assignee": "David Clark, CPA, CA (Chartered Professional Accountant)",
+      "status": "Completed",
+      "dueDate": "2025-01-31",
+      "createTime": "2025-01-02T08:30:00",
+      "description": "Client onboarding Jan. for Elizabeth Taylor, CPA (Certified Public Accountant)",
+      "details": "Complete new client onboarding process and initial assessment."
+    },
+    {
+      "id": "A007",
+      "title": "Tax Return Preparation",
+      "assignee": "Jennifer Lee, CPA (Certified Public Accountant)",
+      "status": "Planned",
+      "dueDate": "2025-04-15",
+      "createTime": "2025-02-20T13:45:00",
+      "description": "Prepare corporate tax returns for Q1",
+      "details": "Review and prepare corporate tax returns for multiple clients."
+    },
+    {
+      "id": "A008",
+      "title": "Advisory Services Meeting",
+      "assignee": "Michael Thompson, CPA, CA (Chartered Professional Accountant)",
+      "status": "In Progress",
+      "dueDate": "2025-03-10",
+      "createTime": "2025-02-25T10:00:00",
+      "description": "Strategic advisory services meeting with key clients",
+      "details": "Provide strategic financial advice and planning services."
+    },
+    {
+      "id": "A009",
+      "title": "Internal Control Review",
+      "assignee": "Amanda Martinez, CPA (Certified Public Accountant)",
+      "status": "Planned",
+      "dueDate": "2025-04-30",
+      "createTime": "2025-02-22T15:30:00",
+      "description": "Annual internal control review and documentation",
+      "details": "Review and update internal control procedures and documentation."
+    },
+    {
+      "id": "A010",
+      "title": "Client Onboarding Mar",
+      "assignee": "William Anderson, CPA, CA (Chartered Professional Accountant)",
+      "status": "Planned",
+      "dueDate": "2025-03-31",
+      "createTime": "2025-02-28T09:15:00",
+      "description": "Client onboarding Mar. for Robert Johnson, CPA (Certified Public Accountant)",
+      "details": "Prepare and process new client onboarding documentation."
+    }
+  ],
+  "statuses": ["All", "Planned", "In Progress", "Completed"],
+  "pagination": {
+    "itemsPerPage": 5,
+    "totalItems": 10
+  }
+}
