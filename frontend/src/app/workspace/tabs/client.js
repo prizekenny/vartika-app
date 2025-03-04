@@ -5,6 +5,8 @@ import { FaSearch, FaUser, FaBuilding } from 'react-icons/fa';
 
 const ClientTab = () => {
   const [clients, setClients] = useState([]);
+  const [editingClient, setEditingClient] = useState(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   useEffect(() => {
     // 加载测试数据
@@ -43,6 +45,21 @@ const ClientTab = () => {
 
   // 处理分页
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  // 處理編輯客戶資料
+  const handleEdit = (client) => {
+    setEditingClient({ ...client });
+    setIsEditModalOpen(true);
+  };
+
+  // 處理保存編輯
+  const handleSaveEdit = () => {
+    setClients(clients.map(client => 
+      client.id === editingClient.id ? editingClient : client
+    ));
+    setIsEditModalOpen(false);
+    setEditingClient(null);
+  };
 
   return (
     <div className="max-w-[1400px] mx-auto p-4">
@@ -88,6 +105,7 @@ const ClientTab = () => {
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28">Open Time</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Status</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remark</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -131,12 +149,121 @@ const ClientTab = () => {
                     </span>
                   </td>
                   <td className="px-4 py-2.5 text-sm text-gray-500">{client.remark}</td>
+                  <td className="px-4 py-2.5 whitespace-nowrap text-sm">
+                    <button
+                      onClick={() => handleEdit(client)}
+                      className="text-blue-600 hover:text-blue-900"
+                    >
+                      Edit
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       </div>
+
+      {/* 編輯模態框 */}
+      {isEditModalOpen && editingClient && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-2xl">
+            <h3 className="text-lg font-medium mb-4">Edit Client Data</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Name</label>
+                <input
+                  type="text"
+                  value={editingClient.name}
+                  onChange={(e) => setEditingClient({...editingClient, name: e.target.value})}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Type</label>
+                <select
+                  value={editingClient.type}
+                  onChange={(e) => setEditingClient({...editingClient, type: e.target.value})}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                >
+                  <option value="Individual">Individual</option>
+                  <option value="Company">Company</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Contact</label>
+                <input
+                  type="text"
+                  value={editingClient.contact}
+                  onChange={(e) => setEditingClient({...editingClient, contact: e.target.value})}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Phone</label>
+                <input
+                  type="text"
+                  value={editingClient.phone}
+                  onChange={(e) => setEditingClient({...editingClient, phone: e.target.value})}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Address</label>
+                <input
+                  type="text"
+                  value={editingClient.address}
+                  onChange={(e) => setEditingClient({...editingClient, address: e.target.value})}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Open Time</label>
+                <input
+                  type="text"
+                  value={editingClient.openTime}
+                  onChange={(e) => setEditingClient({...editingClient, openTime: e.target.value})}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Status</label>
+                <select
+                  value={editingClient.status}
+                  onChange={(e) => setEditingClient({...editingClient, status: e.target.value})}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                >
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Remark</label>
+                <textarea
+                  value={editingClient.remark}
+                  onChange={(e) => setEditingClient({...editingClient, remark: e.target.value})}
+                  rows="3"
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end space-x-3">
+              <button
+                onClick={() => setIsEditModalOpen(false)}
+                className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveEdit}
+                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 分页 */}
       <div className="mt-4 flex items-center justify-between bg-white px-4 py-3 rounded-lg shadow">
