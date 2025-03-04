@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { FaSearch, FaFilter, FaSort, FaDownload } from 'react-icons/fa';
+import { FaSearch, FaFilter, FaDownload } from 'react-icons/fa';
+import SortableHeader from '../../../components/SortableHeader';
+import useSortable from '../../../hooks/useSortable';
 
 const LogTab = () => {
   // 状态管理
@@ -12,9 +14,10 @@ const LogTab = () => {
   const [selectAll, setSelectAll] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortField, setSortField] = useState('timestamp');
-  const [sortDirection, setSortDirection] = useState('desc');
   const logsPerPage = 7;
+  
+  // 使用排序钩子
+  const { sortField, sortDirection, handleSort, sortData } = useSortable('timestamp', 'desc');
 
   // 加载日志数据
   useEffect(() => {
@@ -51,29 +54,20 @@ const LogTab = () => {
     });
   };
 
-  // 处理排序
-  const handleSort = (field) => {
-    if (sortField === field) {
-      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
-    }
-  };
-
-  // 过滤和排序日志
+  // 过滤日志
   const filteredLogs = logs.filter(log => 
     log.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     log.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
     log.type.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const sortedLogs = [...filteredLogs].sort((a, b) => {
-    const direction = sortDirection === 'asc' ? 1 : -1;
-    if (sortField === 'timestamp') {
-      return direction * (new Date(a.timestamp) - new Date(b.timestamp));
+  // 使用钩子提供的排序函数
+  const sortedLogs = sortData(filteredLogs, (a, b, field, direction) => {
+    const dir = direction === 'asc' ? 1 : -1;
+    if (field === 'timestamp') {
+      return dir * (new Date(a.timestamp) - new Date(b.timestamp));
     }
-    return direction * (a[sortField] < b[sortField] ? -1 : 1);
+    return dir * (a[field] < b[field] ? -1 : 1);
   });
 
   // 分页
@@ -136,50 +130,50 @@ const LogTab = () => {
                   className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                 />
               </th>
-              <th 
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                onClick={() => handleSort('timestamp')}
-              >
-                <div className="flex items-center">
-                  Timestamp
-                  <FaSort className="ml-1" />
-                </div>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <SortableHeader
+                  label="Timestamp"
+                  field="timestamp"
+                  currentSortField={sortField}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                />
               </th>
-              <th 
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                onClick={() => handleSort('name')}
-              >
-                <div className="flex items-center">
-                  Activity Name and Description
-                  <FaSort className="ml-1" />
-                </div>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <SortableHeader
+                  label="Activity Name and Description"
+                  field="name"
+                  currentSortField={sortField}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                />
               </th>
-              <th 
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                onClick={() => handleSort('type')}
-              >
-                <div className="flex items-center">
-                  Type
-                  <FaSort className="ml-1" />
-                </div>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <SortableHeader
+                  label="Type"
+                  field="type"
+                  currentSortField={sortField}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                />
               </th>
-              <th 
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                onClick={() => handleSort('status')}
-              >
-                <div className="flex items-center">
-                  Status
-                  <FaSort className="ml-1" />
-                </div>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <SortableHeader
+                  label="Status"
+                  field="status"
+                  currentSortField={sortField}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                />
               </th>
-              <th 
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                onClick={() => handleSort('user')}
-              >
-                <div className="flex items-center">
-                  User
-                  <FaSort className="ml-1" />
-                </div>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <SortableHeader
+                  label="User"
+                  field="user"
+                  currentSortField={sortField}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                />
               </th>
             </tr>
           </thead>
