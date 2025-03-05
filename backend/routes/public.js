@@ -1,6 +1,7 @@
-const express = require("express");
+import express from "express";
+import { pool } from "../config/database.js";
+
 const router = express.Router();
-const db = require("../db");
 
 // Allow Guest to access the public page
 router.get("/home", (req, res) => {
@@ -14,7 +15,7 @@ router.post("/signup", async (req, res) => {
   const { username, email, password } = req.body;
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
-    const result = await db.query(
+    const result = await pool.query(
       "INSERT INTO users (username, email, password, status, user_type) VALUES ($1, $2, $3, 'active', 'Client') RETURNING *",
       [username, email, hashedPassword]
     );
@@ -24,4 +25,4 @@ router.post("/signup", async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

@@ -1,12 +1,13 @@
-const express = require("express");
+import express from "express";
+import { pool } from "../config/database.js";
+
 const router = express.Router();
-const db = require("../db");
 
 // Create a new role
 router.post("/", async (req, res) => {
   const { role_name } = req.body;
   try {
-    const result = await db.query(
+    const result = await pool.query(
       "INSERT INTO roles (role_name) VALUES ($1) RETURNING *",
       [role_name]
     );
@@ -19,7 +20,7 @@ router.post("/", async (req, res) => {
 // Retrieve all roles
 router.get("/", async (req, res) => {
   try {
-    const roles = await db.query("SELECT * FROM roles");
+    const roles = await pool.query("SELECT * FROM roles");
     res.json(roles.rows);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch role list" });
@@ -29,7 +30,7 @@ router.get("/", async (req, res) => {
 // Retrieve a single role
 router.get("/:id", async (req, res) => {
   try {
-    const role = await db.query("SELECT * FROM roles WHERE role_id = $1", [
+    const role = await pool.query("SELECT * FROM roles WHERE role_id = $1", [
       req.params.id,
     ]);
     if (role.rows.length === 0)
@@ -44,7 +45,7 @@ router.get("/:id", async (req, res) => {
 router.put("/:id", async (req, res) => {
   const { role_name } = req.body;
   try {
-    const result = await db.query(
+    const result = await pool.query(
       "UPDATE roles SET role_name = $1 WHERE role_id = $2 RETURNING *",
       [role_name, req.params.id]
     );
@@ -57,7 +58,7 @@ router.put("/:id", async (req, res) => {
 // Delete role (Must check if the role is assigned to users before deletion)
 router.delete("/:id", async (req, res) => {
   try {
-    const userCount = await db.query(
+    const userCount = await pool.query(
       "SELECT COUNT(*) FROM user_roles WHERE role_id = $1",
       [req.params.id]
     );
@@ -67,7 +68,7 @@ router.delete("/:id", async (req, res) => {
         .json({ error: "Cannot delete role, it is still assigned to users" });
     }
 
-    await db.query("DELETE FROM roles WHERE role_id = $1", [req.params.id]);
+    await pool.query("DELETE FROM roles WHERE role_id = $1", [req.params.id]);
     res.json({ message: "Role deleted successfully" });
   } catch (error) {
     res.status(500).json({ error: "Failed to delete role" });
@@ -77,7 +78,7 @@ router.delete("/:id", async (req, res) => {
 // Retrieve all users assigned to a specific role
 router.get("/:id/users", async (req, res) => {
   try {
-    const users = await db.query(
+    const users = await pool.query(
       "SELECT u.user_id, u.username, u.email FROM user_roles ur JOIN users u ON ur.user_id = u.user_id WHERE ur.role_id = $1",
       [req.params.id]
     );
@@ -89,4 +90,4 @@ router.get("/:id/users", async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;
