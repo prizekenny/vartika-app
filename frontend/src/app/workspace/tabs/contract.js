@@ -1,7 +1,18 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { FaFileContract, FaBuilding, FaChartPie, FaMapMarkerAlt, FaBell, FaDollarSign, FaEdit, FaTrash, FaSearch } from 'react-icons/fa';
+import React, { useState, useEffect } from "react";
+import {
+  FaFileContract,
+  FaBuilding,
+  FaChartPie,
+  FaMapMarkerAlt,
+  FaBell,
+  FaDollarSign,
+  FaEdit,
+  FaTrash,
+  FaSearch,
+  FaPlus,
+} from "react-icons/fa";
 import {
   BarChart,
   Bar,
@@ -13,86 +24,605 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
-  ResponsiveContainer
-} from 'recharts';
+  ResponsiveContainer,
+} from "recharts";
+
+// 定义图表颜色
+const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8"];
 
 const ContractTab = () => {
-  // 状态管理
+  // Active tab state
+  const [activeTab, setActiveTab] = useState("overview");
+
+  // State management
   const [contractData, setContractData] = useState({
     overview: {
       draftContracts: { count: 0, total: 0, percentage: 0 },
       newBusinesses: { count: 0, total: 0, percentage: 0 },
-      ongoingContracts: { count: 0, total: 0, percentage: 0 }
+      ongoingContracts: { count: 0, total: 0, percentage: 0 },
     },
     clientTypes: [],
     locations: [],
     reminders: [],
     topClients: [],
-    contracts: []
+    contracts: [],
   });
 
-  // 加载数据
-  useEffect(() => {
-    const loadContractData = async () => {
-      try {
-        const data = await import("../../../../dummy_data/contract.json");
-        setContractData(data);
-      } catch (error) {
-        console.error("Error loading contract data:", error);
+  // 添加即将到期合同的状态
+  const [expiringContracts, setExpiringContracts] = useState([]);
+
+  // Pagination and search state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  // Modal states
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedContract, setSelectedContract] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  // Form state
+  const [formData, setFormData] = useState({
+    subject: "",
+    content: "",
+    amount: "",
+    start_date: "",
+    expiration_date: "",
+    status: "Pending",
+    user_id: "",
+  });
+
+  // 添加用户列表状态
+  const [users, setUsers] = useState([]);
+
+  // 添加高价值客户状态
+  const [topValueClients, setTopValueClients] = useState([]);
+
+  // 添加合同金额分布状态
+  const [amountDistribution, setAmountDistribution] = useState([]);
+
+  // 添加状态分布状态
+  const [statusDistribution, setStatusDistribution] = useState([]);
+
+  // API base URL
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001";
+
+  // Fetch contracts
+  const fetchContracts = async (page = 1, search = "") => {
+    try {
+      setLoading(true);
+      console.log("开始获取合同列表:", { page, search });
+
+      const url = `${API_URL}/api/contracts?page=${page}&limit=10${
+        search ? `&search=${encodeURIComponent(search)}` : ""
+      }`;
+      console.log("请求URL:", url);
+
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        throw new Error("获取合同列表失败");
       }
-    };
-    loadContractData();
+
+      const data = await response.json();
+      console.log("服务器返回数据:", data);
+
+      setContractData((prev) => ({
+        ...prev,
+        contracts: data.contracts || [],
+      }));
+      setTotalPages(data.totalPages || 1);
+      setCurrentPage(data.page || 1);
+
+      console.log("更新状态:", {
+        currentPage: data.page,
+        totalPages: data.totalPages,
+        contractsCount: data.contracts?.length,
+      });
+    } catch (error) {
+      console.error("获取合同列表出错:", error);
+      setContractData((prev) => ({
+        ...prev,
+        contracts: [],
+      }));
+      setTotalPages(1);
+      setCurrentPage(1);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 获取用户列表
+  const fetchUsers = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/users`);
+      if (!response.ok) {
+        throw new Error("获取用户列表失败");
+      }
+      const data = await response.json();
+      setUsers(data);
+    } catch (error) {
+      console.error("获取用户列表出错:", error);
+    }
+  };
+
+  // 在组件加载时获取用户列表
+  useEffect(() => {
+    fetchUsers();
   }, []);
 
-  // 图表颜色配置
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
+  // 获取即将到期的合同
+  const fetchExpiringContracts = async () => {
+    try {
+      console.log("开始获取即将到期合同，API_URL:", API_URL);
+      const url = `${API_URL}/api/contracts/expiring/soon`;
+      console.log("请求URL:", url);
 
-  // 数据处理
-  const topClientsChartData = contractData.topClients.map(client => ({
-    name: client.name,
-    value: client.value
-  }));
+      const response = await fetch(url);
+      console.log("响应状态:", response.status, response.statusText);
 
-  const locationChartData = contractData.locations.map(item => ({
-    name: item.city,
-    value: item.count
-  }));
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error("服务器返回错误:", errorData);
+        throw new Error(
+          `获取即将到期合同失败: ${response.status} ${response.statusText}`
+        );
+      }
 
-  const clientTypeChartData = contractData.clientTypes.map(item => ({
-    name: item.type,
-    value: item.value
-  }));
+      const data = await response.json();
+      console.log("获取到的数据:", data);
+      setExpiringContracts(data);
+    } catch (error) {
+      console.error("获取即将到期合同出错:", error);
+      setExpiringContracts([]); // 出错时设置为空数组
+    }
+  };
 
-  // 标签页状态
-  const [activeTab, setActiveTab] = useState('overview');
+  // 获取高价值客户
+  const fetchTopValueClients = async () => {
+    try {
+      console.log("Starting to fetch top value clients");
+      const url = `${API_URL}/api/contracts/clients/top-value`;
+      console.log("Request URL:", url);
+
+      const response = await fetch(url);
+      console.log("Response status:", response.status, response.statusText);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error("Server returned error:", errorData);
+        throw new Error(
+          `Failed to fetch top value clients: ${response.status} ${response.statusText}`
+        );
+      }
+
+      const data = await response.json();
+      console.log("Received data:", data);
+      setTopValueClients(data);
+    } catch (error) {
+      console.error("Error fetching top value clients:", error);
+      setTopValueClients([]); // Set empty array on error
+    }
+  };
+
+  // 添加获取进行中合同统计的函数
+  const fetchActiveContractsStats = async () => {
+    try {
+      console.log("开始获取进行中合同统计");
+      const url = `${API_URL}/api/contracts/stats/active`;
+      console.log("请求URL:", url);
+
+      const response = await fetch(url);
+      console.log("响应状态:", response.status, response.statusText);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error("服务器返回错误:", errorData);
+        throw new Error(
+          `获取进行中合同统计失败: ${response.status} ${response.statusText}`
+        );
+      }
+
+      const data = await response.json();
+      console.log("获取到的数据:", data);
+
+      setContractData((prev) => ({
+        ...prev,
+        overview: {
+          ...prev.overview,
+          ongoingContracts: {
+            count: data.count,
+            percentage: data.percentage,
+          },
+        },
+      }));
+    } catch (error) {
+      console.error("获取进行中合同统计出错:", error);
+      setContractData((prev) => ({
+        ...prev,
+        overview: {
+          ...prev.overview,
+          ongoingContracts: {
+            count: 0,
+            percentage: 0,
+          },
+        },
+      }));
+    }
+  };
+
+  // 添加获取草稿合同统计的函数
+  const fetchDraftContractsStats = async () => {
+    try {
+      console.log("开始获取草稿合同统计");
+      const url = `${API_URL}/api/contracts/stats/draft`;
+      console.log("请求URL:", url);
+
+      const response = await fetch(url);
+      console.log("响应状态:", response.status, response.statusText);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error("服务器返回错误:", errorData);
+        throw new Error(
+          `获取草稿合同统计失败: ${response.status} ${response.statusText}`
+        );
+      }
+
+      const data = await response.json();
+      console.log("获取到的数据:", data);
+
+      setContractData((prev) => ({
+        ...prev,
+        overview: {
+          ...prev.overview,
+          draftContracts: {
+            count: data.count,
+            percentage: data.percentage,
+          },
+        },
+      }));
+    } catch (error) {
+      console.error("获取草稿合同统计出错:", error);
+      setContractData((prev) => ({
+        ...prev,
+        overview: {
+          ...prev.overview,
+          draftContracts: {
+            count: 0,
+            percentage: 0,
+          },
+        },
+      }));
+    }
+  };
+
+  // 添加获取新业务统计的函数
+  const fetchNewBusinessesStats = async () => {
+    try {
+      console.log("开始获取新业务统计");
+      const url = `${API_URL}/api/contracts/stats/new-businesses`;
+      console.log("请求URL:", url);
+
+      const response = await fetch(url);
+      console.log("响应状态:", response.status, response.statusText);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error("服务器返回错误:", errorData);
+        throw new Error(
+          `获取新业务统计失败: ${response.status} ${response.statusText}`
+        );
+      }
+
+      const data = await response.json();
+      console.log("获取到的数据:", data);
+
+      setContractData((prev) => ({
+        ...prev,
+        overview: {
+          ...prev.overview,
+          newBusinesses: {
+            count: data.count,
+            percentage: data.percentage,
+          },
+        },
+      }));
+    } catch (error) {
+      console.error("获取新业务统计出错:", error);
+      setContractData((prev) => ({
+        ...prev,
+        overview: {
+          ...prev.overview,
+          newBusinesses: {
+            count: 0,
+            percentage: 0,
+          },
+        },
+      }));
+    }
+  };
+
+  // 添加获取合同金额分布的函数
+  const fetchAmountDistribution = async () => {
+    try {
+      console.log("开始获取合同金额分布统计");
+      const url = `${API_URL}/api/contracts/stats/amount-distribution`;
+      console.log("请求URL:", url);
+
+      const response = await fetch(url);
+      console.log("响应状态:", response.status, response.statusText);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error("服务器返回错误:", errorData);
+        throw new Error(
+          `获取合同金额分布统计失败: ${response.status} ${response.statusText}`
+        );
+      }
+
+      const data = await response.json();
+      console.log("获取到的数据:", data);
+
+      // 确保所有区间都存在
+      const categories = ["Low", "Medium Low", "Medium", "Medium High", "High"];
+      const fullData = categories.map((category) => {
+        const found = data.find((item) => item.name === category);
+        return (
+          found || {
+            name: category,
+            value: 0,
+            avgAmount: 0,
+            minAmount: 0,
+            maxAmount: 0,
+            isEmpty: true,
+          }
+        );
+      });
+
+      setAmountDistribution(fullData);
+    } catch (error) {
+      console.error("获取合同金额分布统计出错:", error);
+      // 设置默认的空数据结构
+      const emptyData = [
+        "Low",
+        "Medium Low",
+        "Medium",
+        "Medium High",
+        "High",
+      ].map((category) => ({
+        name: category,
+        value: 0,
+        avgAmount: 0,
+        minAmount: 0,
+        maxAmount: 0,
+        isEmpty: true,
+      }));
+      setAmountDistribution(emptyData);
+    }
+  };
+
+  // 添加获取合同状态分布的函数
+  const fetchStatusDistribution = async () => {
+    try {
+      console.log("开始获取合同状态分布统计");
+      const url = `${API_URL}/api/contracts/stats/status-distribution`;
+      console.log("请求URL:", url);
+
+      const response = await fetch(url);
+      console.log("响应状态:", response.status, response.statusText);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error("服务器返回错误:", errorData);
+        throw new Error(
+          `获取合同状态分布统计失败: ${response.status} ${response.statusText}`
+        );
+      }
+
+      const data = await response.json();
+      console.log("获取到的数据:", data);
+      setStatusDistribution(data);
+    } catch (error) {
+      console.error("获取合同状态分布统计出错:", error);
+      setStatusDistribution([]);
+    }
+  };
+
+  // 在组件加载和 tab 切换时获取数据
+  useEffect(() => {
+    if (activeTab === "overview") {
+      fetchExpiringContracts();
+      fetchTopValueClients();
+      fetchActiveContractsStats();
+      fetchDraftContractsStats();
+      fetchNewBusinessesStats();
+      fetchAmountDistribution();
+      fetchStatusDistribution();
+    }
+  }, [activeTab]);
+
+  // Handle contract creation/update
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const url = selectedContract
+        ? `${API_URL}/api/contracts/${selectedContract.contract_id}`
+        : `${API_URL}/api/contracts`;
+
+      const method = selectedContract ? "PUT" : "POST";
+
+      // 验证是否选择了用户
+      if (!formData.user_id) {
+        throw new Error("Please select a user");
+      }
+
+      // 准备提交的数据
+      const submitData = {
+        ...formData,
+        amount: parseFloat(formData.amount),
+      };
+
+      // 验证日期
+      const startDate = new Date(submitData.start_date);
+      const endDate = new Date(submitData.expiration_date);
+
+      if (startDate >= endDate) {
+        throw new Error("Start date must be earlier than end date");
+      }
+
+      // 验证金额
+      if (isNaN(submitData.amount) || submitData.amount <= 0) {
+        throw new Error("Amount must be greater than 0");
+      }
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(submitData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to save contract");
+      }
+
+      setShowEditModal(false);
+      await fetchContracts(1, searchTerm);
+      setFormData({
+        subject: "",
+        content: "",
+        amount: "",
+        start_date: "",
+        expiration_date: "",
+        status: "Pending",
+        user_id: "",
+      });
+    } catch (error) {
+      console.error("Error saving contract:", error);
+      alert(error.message || "Error saving contract");
+    }
+  };
+
+  // Handle contract deletion
+  const handleDelete = async () => {
+    if (!selectedContract) return;
+
+    try {
+      const response = await fetch(
+        `${API_URL}/api/contracts/${selectedContract.contract_id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (response.ok) {
+        setShowDeleteModal(false);
+        fetchContracts(currentPage, searchTerm);
+      }
+    } catch (error) {
+      console.error("Error deleting contract:", error);
+    }
+  };
+
+  // Effect for initial load and search
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      console.log("搜索词变化，重置到第一页");
+      setCurrentPage(1); // 重置到第一页
+      fetchContracts(1, searchTerm);
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchTerm]);
+
+  // Handle edit click
+  const handleEditClick = (contract) => {
+    setSelectedContract(contract);
+    setFormData({
+      subject: contract.subject,
+      content: contract.content,
+      amount: contract.amount,
+      start_date: contract.start_date.split("T")[0],
+      expiration_date: contract.expiration_date.split("T")[0],
+      status: contract.status,
+      user_id: contract.user_id,
+    });
+    setShowEditModal(true);
+  };
+
+  // Handle new contract click
+  const handleNewContract = () => {
+    setSelectedContract(null);
+    setFormData({
+      subject: "",
+      content: "",
+      amount: "",
+      start_date: "",
+      expiration_date: "",
+      status: "Pending",
+      user_id: "",
+    });
+    setShowEditModal(true);
+  };
+
+  // 修改分页处理
+  const handlePageChange = async (newPage) => {
+    if (
+      newPage === currentPage ||
+      loading ||
+      newPage < 1 ||
+      newPage > totalPages
+    ) {
+      console.log("页码切换被阻止:", {
+        newPage,
+        currentPage,
+        loading,
+        totalPages,
+      });
+      return;
+    }
+
+    try {
+      console.log("开始切换到新页面:", newPage);
+      await fetchContracts(newPage, searchTerm);
+    } catch (error) {
+      console.error("切换页面时出错:", error);
+    }
+  };
 
   return (
     <div className="p-6">
-      {/* 标题 */}
+      {/* Title */}
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">Contract Management</h2>
+        <h2 className="text-2xl font-bold text-gray-800">
+          Contract Management
+        </h2>
       </div>
 
-      {/* 标签页 */}
+      {/* Tabs */}
       <div className="mb-6">
         <div className="border-b">
           <nav className="-mb-px flex space-x-8">
             <button
-              onClick={() => setActiveTab('overview')}
+              onClick={() => setActiveTab("overview")}
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'overview'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                activeTab === "overview"
+                  ? "border-blue-500 text-blue-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
               }`}
             >
               Overview
             </button>
             <button
-              onClick={() => setActiveTab('contracts')}
+              onClick={() => setActiveTab("contracts")}
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'contracts'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                activeTab === "contracts"
+                  ? "border-blue-500 text-blue-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
               }`}
             >
               Contracts
@@ -101,10 +631,10 @@ const ContractTab = () => {
         </div>
       </div>
 
-      {/* 概览页面 */}
-      {activeTab === 'overview' && (
+      {/* Overview page */}
+      {activeTab === "overview" && (
         <div className="space-y-6">
-          {/* 概览卡片 */}
+          {/* Overview cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-white rounded-lg shadow p-6">
               <div className="flex items-center">
@@ -112,10 +642,19 @@ const ContractTab = () => {
                   <FaFileContract className="h-6 w-6 text-blue-600" />
                 </div>
                 <div className="ml-4">
-                  <h3 className="text-lg font-medium text-gray-900">Draft Contracts</h3>
+                  <h3 className="text-lg font-medium text-gray-900">
+                    Draft Contracts
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Contracts with pending status
+                  </p>
                   <div className="mt-1">
-                    <span className="text-2xl font-semibold">{contractData.overview.draftContracts.count}</span>
-                    <span className="ml-2 text-sm text-gray-500">({contractData.overview.draftContracts.percentage}%)</span>
+                    <span className="text-2xl font-semibold">
+                      {contractData.overview.draftContracts.count}
+                    </span>
+                    <span className="ml-2 text-sm text-gray-500">
+                      ({contractData.overview.draftContracts.percentage}%)
+                    </span>
                   </div>
                 </div>
               </div>
@@ -126,10 +665,19 @@ const ContractTab = () => {
                   <FaBuilding className="h-6 w-6 text-green-600" />
                 </div>
                 <div className="ml-4">
-                  <h3 className="text-lg font-medium text-gray-900">New Businesses</h3>
+                  <h3 className="text-lg font-medium text-gray-900">
+                    New Businesses
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Contracts created in last 60 days
+                  </p>
                   <div className="mt-1">
-                    <span className="text-2xl font-semibold">{contractData.overview.newBusinesses.count}</span>
-                    <span className="ml-2 text-sm text-gray-500">({contractData.overview.newBusinesses.percentage}%)</span>
+                    <span className="text-2xl font-semibold">
+                      {contractData.overview.newBusinesses.count}
+                    </span>
+                    <span className="ml-2 text-sm text-gray-500">
+                      ({contractData.overview.newBusinesses.percentage}%)
+                    </span>
                   </div>
                 </div>
               </div>
@@ -140,149 +688,311 @@ const ContractTab = () => {
                   <FaChartPie className="h-6 w-6 text-purple-600" />
                 </div>
                 <div className="ml-4">
-                  <h3 className="text-lg font-medium text-gray-900">Ongoing Contracts</h3>
+                  <h3 className="text-lg font-medium text-gray-900">
+                    Ongoing Contracts
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Contracts with active status
+                  </p>
                   <div className="mt-1">
-                    <span className="text-2xl font-semibold">{contractData.overview.ongoingContracts.count}</span>
-                    <span className="ml-2 text-sm text-gray-500">({contractData.overview.ongoingContracts.percentage}%)</span>
+                    <span className="text-2xl font-semibold">
+                      {contractData.overview.ongoingContracts.count}
+                    </span>
+                    <span className="ml-2 text-sm text-gray-500">
+                      ({contractData.overview.ongoingContracts.percentage}%)
+                    </span>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* 图表区域 */}
+          {/* Charts area */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* 客户类型分布 */}
+            {/* Client type distribution */}
             <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Client Type Distribution</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                Contract Status Distribution
+              </h3>
+              <p className="text-xs text-gray-500 mb-4">
+                Distribution of contracts by status
+              </p>
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
-                      data={clientTypeChartData}
+                      data={statusDistribution}
                       cx="50%"
                       cy="50%"
-                      labelLine={false}
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      innerRadius={60}
                       outerRadius={80}
                       fill="#8884d8"
+                      paddingAngle={5}
                       dataKey="value"
+                      label={({ name, percentage }) =>
+                        `${name} (${percentage}%)`
+                      }
                     >
-                      {clientTypeChartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      {statusDistribution.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={COLORS[index % COLORS.length]}
+                        />
                       ))}
                     </Pie>
-                    <Tooltip />
+                    <Tooltip
+                      formatter={(value, name, props) => [
+                        `${value} contracts (${props.payload.percentage}%)`,
+                        name,
+                      ]}
+                    />
                     <Legend />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
             </div>
 
-            {/* 客户地址分布 */}
+            {/* Contract Amount Distribution */}
             <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Client Location Distribution</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                Contract Amount Distribution
+              </h3>
+              <p className="text-xs text-gray-500 mb-4">
+                Distribution of contracts by amount range
+              </p>
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={locationChartData}>
+                  <BarChart data={amountDistribution}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" />
                     <YAxis />
-                    <Tooltip />
+                    <Tooltip
+                      formatter={(value, name, props) => {
+                        if (props.payload.isEmpty) {
+                          return ["No data available", "Count"];
+                        }
+                        if (name === "value") {
+                          return [`${value} contracts`, "Count"];
+                        }
+                        return [value, name];
+                      }}
+                      labelFormatter={(label) => {
+                        const item = amountDistribution.find(
+                          (d) => d.name === label
+                        );
+                        if (item.isEmpty) {
+                          return `${label}: No data available`;
+                        }
+                        return `${label}: $${item.minAmount.toLocaleString()} - $${item.maxAmount.toLocaleString()}`;
+                      }}
+                    />
                     <Legend />
-                    <Bar dataKey="value" fill="#8884d8" />
+                    <Bar
+                      dataKey="value"
+                      name="Contracts"
+                      fill="#8884d8"
+                      label={(props) => {
+                        if (!props || !props.payload) {
+                          return "";
+                        }
+                        const { value, isEmpty } = props.payload;
+                        if (isEmpty) {
+                          return "No data";
+                        }
+                        return value > 0 ? value : "";
+                      }}
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
             </div>
           </div>
 
-          {/* 提醒和最高价值客户 */}
+          {/* Reminders and top clients */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* 合同到期提醒 */}
+            {/* Contract expiry reminders */}
             <div className="bg-white rounded-lg shadow p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-medium text-gray-900">Contract Expiry Reminders</h3>
+                <h3 className="text-lg font-medium text-gray-900">
+                  Contract Expiry Reminders
+                </h3>
                 <FaBell className="h-5 w-5 text-gray-400" />
               </div>
               <div className="space-y-4">
-                {contractData.reminders.map((reminder, index) => (
-                  <div key={index} className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">{reminder.client}</span>
-                    <span className="text-sm text-red-600">{reminder.expiryDate}</span>
+                {expiringContracts.map((contract) => (
+                  <div
+                    key={contract.contract_id}
+                    className="flex items-center justify-between hover:bg-gray-50 p-2 rounded cursor-pointer"
+                    onClick={() => handleEditClick(contract)}
+                  >
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-gray-900">
+                        {contract.subject}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {contract.username || "Unknown User"}
+                      </span>
+                    </div>
+                    <div className="flex flex-col items-end">
+                      <span className="text-sm text-red-600">
+                        {new Date(
+                          contract.expiration_date
+                        ).toLocaleDateString()}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        Expires in {contract.days_until_expiry} days
+                      </span>
+                    </div>
                   </div>
                 ))}
+                {expiringContracts.length === 0 && (
+                  <div className="text-center text-gray-500 py-4">
+                    No contracts expiring soon
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* 最高价值客户 */}
+            {/* Top value clients */}
             <div className="bg-white rounded-lg shadow p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-medium text-gray-900">Top Value Clients</h3>
+                <h3 className="text-lg font-medium text-gray-900">
+                  Top Value Clients
+                </h3>
                 <FaDollarSign className="h-5 w-5 text-gray-400" />
               </div>
               <div className="space-y-4">
-                {contractData.topClients.map((client, index) => (
-                  <div key={index} className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">{client.name}</span>
-                    <span className="text-sm font-medium">${client.value.toLocaleString()}</span>
+                {topValueClients.map((client) => (
+                  <div
+                    key={client.user_id}
+                    className="flex items-center justify-between hover:bg-gray-50 p-2 rounded"
+                  >
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-gray-900">
+                        {client.username}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {client.total_contracts} contracts
+                      </span>
+                    </div>
+                    <span className="text-sm font-medium text-green-600">
+                      ${client.total_amount.toLocaleString()}
+                    </span>
                   </div>
                 ))}
+                {topValueClients.length === 0 && (
+                  <div className="text-center text-gray-500 py-4">
+                    No client data available
+                  </div>
+                )}
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* 合同列表页面 */}
-      {activeTab === 'contracts' && (
+      {/* Contracts list page */}
+      {activeTab === "contracts" && (
         <div className="bg-white rounded-lg shadow">
-          {/* 搜索栏 */}
-          <div className="p-4 border-b">
-            <div className="relative">
+          {/* Search and Add button */}
+          <div className="p-4 border-b flex justify-between items-center">
+            <div className="relative flex-1 mr-4">
               <input
                 type="text"
                 placeholder="Search contracts..."
                 className="w-full pl-10 pr-4 py-2 border rounded-lg"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
               <FaSearch className="absolute left-3 top-3 text-gray-400" />
             </div>
+            <button
+              onClick={handleNewContract}
+              className="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center"
+            >
+              <FaPlus className="mr-2" /> New Contract
+            </button>
           </div>
 
-          {/* 合同表格 */}
+          {/* Contracts table */}
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">End Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Name
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Subject
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Amount
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Start Date
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    End Date
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {contractData.contracts.map((contract) => (
-                  <tr key={contract.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{contract.id}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{contract.subject}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{contract.client}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{contract.startDate}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{contract.endDate}</td>
+                  <tr
+                    key={contract.contract_id}
+                    className="hover:bg-gray-50 cursor-pointer"
+                    onClick={() => handleEditClick(contract)}
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {contract.username || "Unknown User"}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {contract.subject}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      ${parseFloat(contract.amount).toLocaleString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {new Date(contract.start_date).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {new Date(contract.expiration_date).toLocaleDateString()}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        contract.status === 'Accept' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                      }`}>
+                      <span
+                        className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          contract.status === "Accept"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-yellow-100 text-yellow-800"
+                        }`}
+                      >
                         {contract.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <button className="text-indigo-600 hover:text-indigo-900 mr-3">
+                    <td
+                      className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
+                      onClick={(e) => e.stopPropagation()} // 防止触发行的点击事件
+                    >
+                      <button
+                        onClick={() => handleEditClick(contract)}
+                        className="text-indigo-600 hover:text-indigo-900 mr-3"
+                      >
                         <FaEdit className="h-4 w-4" />
                       </button>
-                      <button className="text-red-600 hover:text-red-900">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation(); // 防止触发行的点击事件
+                          setSelectedContract(contract);
+                          setShowDeleteModal(true);
+                        }}
+                        className="text-red-600 hover:text-red-900"
+                      >
                         <FaTrash className="h-4 w-4" />
                       </button>
                     </td>
@@ -290,6 +1000,259 @@ const ContractTab = () => {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* Pagination */}
+          <div className="px-6 py-4 flex items-center justify-between border-t">
+            <div className="flex-1 flex justify-between sm:hidden">
+              <button
+                onClick={() => handlePageChange(Math.max(currentPage - 1, 1))}
+                disabled={currentPage === 1 || loading}
+                className={`relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${
+                  currentPage === 1 || loading
+                    ? "bg-gray-100 text-gray-400"
+                    : "bg-white text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                Previous
+              </button>
+              <button
+                onClick={() =>
+                  handlePageChange(Math.min(currentPage + 1, totalPages))
+                }
+                disabled={currentPage === totalPages || loading}
+                className={`relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${
+                  currentPage === totalPages || loading
+                    ? "bg-gray-100 text-gray-400"
+                    : "bg-white text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                Next
+              </button>
+            </div>
+            <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm text-gray-700">
+                  Page <span className="font-medium">{currentPage}</span> of{" "}
+                  <span className="font-medium">{totalPages}</span>
+                </p>
+              </div>
+              <div>
+                <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                  <button
+                    onClick={() =>
+                      handlePageChange(Math.max(currentPage - 1, 1))
+                    }
+                    disabled={currentPage === 1 || loading}
+                    className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium ${
+                      currentPage === 1 || loading
+                        ? "text-gray-300"
+                        : "text-gray-500 hover:bg-gray-50"
+                    }`}
+                  >
+                    Previous
+                  </button>
+                  {Array.from({ length: totalPages }, (_, i) => (
+                    <button
+                      key={i + 1}
+                      onClick={() => handlePageChange(i + 1)}
+                      disabled={loading}
+                      className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                        currentPage === i + 1
+                          ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
+                          : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
+                      }`}
+                    >
+                      {i + 1}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() =>
+                      handlePageChange(Math.min(currentPage + 1, totalPages))
+                    }
+                    disabled={currentPage === totalPages || loading}
+                    className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium ${
+                      currentPage === totalPages || loading
+                        ? "text-gray-300"
+                        : "text-gray-500 hover:bg-gray-50"
+                    }`}
+                  >
+                    Next
+                  </button>
+                </nav>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit/Create Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <h3 className="text-lg font-medium text-gray-900">
+                {selectedContract ? "Edit Contract" : "New Contract"}
+              </h3>
+              <form onSubmit={handleSubmit} className="mt-4">
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Select User
+                  </label>
+                  <select
+                    value={formData.user_id}
+                    onChange={(e) =>
+                      setFormData({ ...formData, user_id: e.target.value })
+                    }
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                    required
+                  >
+                    <option value="">Please select a user</option>
+                    {users.map((user) => (
+                      <option key={user.user_id} value={user.user_id}>
+                        {user.username} ({user.email})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Subject
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.subject}
+                    onChange={(e) =>
+                      setFormData({ ...formData, subject: e.target.value })
+                    }
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                    required
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Content
+                  </label>
+                  <textarea
+                    value={formData.content}
+                    onChange={(e) =>
+                      setFormData({ ...formData, content: e.target.value })
+                    }
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                    rows="4"
+                    required
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Amount
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.amount}
+                    onChange={(e) =>
+                      setFormData({ ...formData, amount: e.target.value })
+                    }
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                    required
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Start Date
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.start_date}
+                    onChange={(e) =>
+                      setFormData({ ...formData, start_date: e.target.value })
+                    }
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                    required
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700">
+                    End Date
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.expiration_date}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        expiration_date: e.target.value,
+                      })
+                    }
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                    required
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Status
+                  </label>
+                  <select
+                    value={formData.status}
+                    onChange={(e) =>
+                      setFormData({ ...formData, status: e.target.value })
+                    }
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                  >
+                    <option value="Pending">Pending</option>
+                    <option value="Accept">Accept</option>
+                    <option value="Active">Active</option>
+                    <option value="Expired">Expired</option>
+                  </select>
+                </div>
+                <div className="flex justify-end space-x-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowEditModal(false)}
+                    className="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+                  >
+                    {selectedContract ? "Update" : "Create"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              Confirm Delete
+            </h3>
+            <p className="text-sm text-gray-500">
+              Are you sure you want to delete this contract? This action cannot
+              be undone.
+            </p>
+            <div className="mt-4 flex justify-end space-x-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
+              >
+                Delete
+              </button>
+            </div>
           </div>
         </div>
       )}

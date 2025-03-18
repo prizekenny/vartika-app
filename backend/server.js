@@ -8,8 +8,9 @@ import gmailAuthRoutes from "./routes/gmailAuth.js";
 import gmailRoutes from "./routes/gmail.js";
 import driveAuthRoutes from "./routes/googleDriveAuth.js";
 import googleDriveRoutes from "./routes/googleDrive.js";
-import quickbooksAuthRoutes from "./routes/quickbooksAuth.js"; // ✅ 认证逻辑
-import quickbooksRoutes from "./routes/quickbooks.js"; // ✅ API 访问逻辑
+import quickbooksAuthRoutes from "./routes/quickbooksAuth.js"; // ✅ Authentication logic
+import quickbooksRoutes from "./routes/quickbooks.js"; // ✅ API access logic
+import contractRoutes from "./routes/contracts.js"; // ✅ Contract related routes
 import { loadTokensIntoCache } from "./services/tokenService.js";
 
 const app = express();
@@ -47,10 +48,13 @@ app.use("/auth/drive", driveAuthRoutes);
 // ✅ Google Drive routes (upload, download files)
 app.use("/api/drive", googleDriveRoutes);
 
-// ✅ QuickBooks OAuth 认证
+// ✅ QuickBooks OAuth authentication
 app.use("/auth/quickbooks", quickbooksAuthRoutes);
-// ✅ QuickBooks API (获取财务数据)
+// ✅ QuickBooks API (get financial data)
 app.use("/api/quickbooks", quickbooksRoutes);
+
+// ✅ Contract related routes
+app.use("/api/contracts", contractRoutes);
 
 // 🔹 Load tokens into cache at server startup
 loadTokensIntoCache();
