@@ -312,7 +312,11 @@ export const updateContractStatus = async (contractId, status) => {
  * @returns {Promise<Array>} List of contracts about to expire
  */
 export const getExpiringContracts = async (limit = 6) => {
+  console.log("DEBUG: Entering getExpiringContracts function");
+  console.log("DEBUG: Received limit parameter:", limit);
+
   try {
+    console.log("DEBUG: Entering try block");
     console.log("Starting to fetch expiring contracts with limit:", limit);
 
     const query = `
