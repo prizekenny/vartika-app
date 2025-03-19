@@ -2,12 +2,12 @@
 
 import React from "react";
 import { Tab } from "@headlessui/react";
-import { 
-  FaHome, 
-  FaUsers, 
-  FaCog, 
-  FaBuilding, 
-  FaFileContract, 
+import {
+  FaHome,
+  FaUsers,
+  FaCog,
+  FaBuilding,
+  FaFileContract,
   FaFileInvoice,
   FaExchangeAlt,
   FaFolder,
@@ -15,11 +15,11 @@ import {
   FaChartBar,
   FaHistory,
   FaLayerGroup,
-  FaSignOutAlt
+  FaSignOutAlt,
 } from "react-icons/fa";
 import { useRouter } from "next/navigation";
 
-import DashboardTab from "./tabs/dashboard";
+import DashboardTab from "./tabs/dashboard/dashboard";
 import UserTab from "./tabs/user";
 import SettingTab from "./tabs/setting";
 import ClientTab from "./tabs/client";
@@ -32,7 +32,7 @@ import ReportTab from "./tabs/report";
 import LogTab from "./tabs/log";
 
 function classNames(...classes) {
-  return classes.filter(Boolean).join(' ');
+  return classes.filter(Boolean).join(" ");
 }
 
 function Workspace() {
@@ -44,7 +44,11 @@ function Workspace() {
     { name: "Clients", icon: <FaBuilding />, component: <ClientTab /> },
     { name: "Contracts", icon: <FaFileContract />, component: <ContractTab /> },
     { name: "Invoices", icon: <FaFileInvoice />, component: <InvoiceTab /> },
-    { name: "Transactions", icon: <FaExchangeAlt />, component: <TransactionTab /> },
+    {
+      name: "Transactions",
+      icon: <FaExchangeAlt />,
+      component: <TransactionTab />,
+    },
     { name: "Documents", icon: <FaFolder />, component: <DocumentTab /> },
     { name: "Assignments", icon: <FaTasks />, component: <AssignmentTab /> },
     { name: "Reports", icon: <FaChartBar />, component: <ReportTab /> },
@@ -53,20 +57,23 @@ function Workspace() {
 
   const handleLogout = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/logout`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json'
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/logout`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
         }
-      });
+      );
 
       if (response.ok) {
-        router.push('/login');
+        router.push("/login");
       } else {
-        alert('Logout failed. Please try again.');
+        alert("Logout failed. Please try again.");
       }
     } catch (error) {
-      alert('An error occurred during logout. Please try again.');
+      alert("An error occurred during logout. Please try again.");
     }
   };
 
@@ -91,16 +98,21 @@ function Workspace() {
                   key={index}
                   className={({ selected }) =>
                     classNames(
-                      'flex items-center px-4 py-3 my-1 mx-2 text-left cursor-pointer text-sm font-medium rounded-lg transition-colors duration-150',
+                      "flex items-center px-4 py-3 my-1 mx-2 text-left cursor-pointer text-sm font-medium rounded-lg transition-colors duration-150",
                       selected
-                        ? 'bg-gray-100 text-gray-900 font-semibold'
-                        : 'hover:bg-gray-50 text-gray-600'
+                        ? "bg-gray-100 text-gray-900 font-semibold"
+                        : "hover:bg-gray-50 text-gray-600"
                     )
                   }
                 >
                   {({ selected }) => (
                     <>
-                      <span className={classNames('mr-3 text-lg', selected ? 'text-blue-500' : 'text-gray-400')}>
+                      <span
+                        className={classNames(
+                          "mr-3 text-lg",
+                          selected ? "text-blue-500" : "text-gray-400"
+                        )}
+                      >
                         {tab.icon}
                       </span>
                       {tab.name}

@@ -14,7 +14,18 @@ import contractRoutes from "./routes/contracts.js"; // ✅ Contract related rout
 import { loadTokensIntoCache } from "./services/tokenService.js";
 
 const app = express();
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:3000", // 确保是你的前端 URL
+    credentials: true, // 允许跨域携带 cookies
+  })
+);
+app.use((req, res, next) => {
+  res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
+  res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
+  next();
+});
+
 app.use(express.json());
 
 app.use(
