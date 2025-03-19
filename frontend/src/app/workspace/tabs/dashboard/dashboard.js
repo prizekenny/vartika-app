@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { FaChartBar, FaListUl } from "react-icons/fa";
 
 import TodoList from "./components/TodoList";
-import FinancialSummary from "./components/ FinancialSummary";
+import FinancialSummary from "./components/FinancialSummary";
 
 const DashboardTab = () => {
   // 状态管理
