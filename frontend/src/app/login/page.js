@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Button from "../../components/Button";
 import { FaGoogle, FaFacebook, FaMicrosoft } from "react-icons/fa";
 import { useRouter } from "next/navigation";
@@ -9,6 +9,7 @@ function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -45,29 +46,47 @@ function LoginPage() {
     }
   };
 
-  const handleOAuthLogin = (provider) => {
-    const URL = `${process.env.NEXT_PUBLIC_API_URL}/auth/${provider}`;
-    const authWindow = window.open(URL, "_blank", "width=500,height=600");
+  useEffect(() => {
+    const checkOAuthStatus = async () => {
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/auth/oauth-status`,
+          { credentials: "include" } // 发送 cookies
+        );
+        const data = await response.json();
 
-    console.log("Auth URL:", URL);
+        console.log("📩 OAuth status check:", data);
 
-    const checkAuth = setInterval(() => {
-      if (authWindow.closed) {
-        clearInterval(checkAuth);
-        console.log("🔍 OAuth window closed, checking authentication...");
-
-        // 读取 localStorage 中的 token
-        const token = localStorage.getItem("token");
-        if (token) {
-          console.log("✅ Authenticated! Redirecting...");
-          window.location.href = "/dashboard"; // 进入主页
-        } else {
-          console.log("❌ Authentication failed or canceled.");
+        if (data.success) {
+          clearInterval(interval);
+          console.log("✅ OAuth login detected! Redirecting...");
+          router.push("/workspace");
         }
+      } catch (error) {
+        console.error("⚠️ Error checking OAuth status:", error);
       }
-    }, 500);
-  };
+    };
 
+    const interval = setInterval(checkOAuthStatus, 1000); // **每秒轮询**
+    return () => clearInterval(interval);
+  }, [router]);
+
+  // 🔹 触发 OAuth 登录
+  const handleOAuthLogin = (provider) => {
+    const authWindow = window.open(
+      `${process.env.NEXT_PUBLIC_API_URL}/auth/${provider}`,
+      "_blank",
+      "width=500,height=600"
+    );
+
+    console.log("Main Window Origin:", window.origin);
+    if (!authWindow) {
+      alert("⚠️ OAuth 弹窗被拦截，请允许弹窗并重试。");
+      return;
+    }
+
+    authWindow.focus();
+  };
   return (
     <main className="bg-white min-h-screen flex flex-col justify-center items-center text-black">
       <header className="flex flex-col items-center justify-center mb-6">
