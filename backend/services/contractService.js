@@ -313,7 +313,7 @@ export const updateContractStatus = async (contractId, status) => {
  */
 export const getExpiringContracts = async (limit = 6) => {
   try {
-    console.log("Starting to fetch expiring contracts, API_URL:", API_URL);
+    console.log("Starting to fetch expiring contracts with limit:", limit);
 
     const query = `
       SELECT 
