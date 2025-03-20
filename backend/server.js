@@ -16,7 +16,11 @@ import { loadTokensIntoCache } from "./services/tokenService.js";
 const app = express();
 app.use(
   cors({
-    origin: "http://localhost:3000", // 确保是你的前端 URL
+    origin: [
+      "http://localhost:3000",
+      "https://b.lyu.lol",
+      "https://vartika-app.vercel.app",
+    ], // 确保是你的前端 URL
     credentials: true, // 允许跨域携带 cookies
   })
 );
