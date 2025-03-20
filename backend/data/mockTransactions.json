@@ -1,0 +1,173 @@
+{
+  "income": [
+    {
+      "date": "2024-03-15",
+      "type": "Invoice",
+      "docNum": "INV-2024-001",
+      "name": "Microsoft Corporation",
+      "department": "Enterprise Sales",
+      "memo": "Enterprise software license",
+      "account": "Software License Revenue",
+      "splitAccount": "",
+      "amount": 25000
+    },
+    {
+      "date": "2024-03-14",
+      "type": "Sales Receipt",
+      "docNum": "SR-2024-001",
+      "name": "Apple Inc.",
+      "department": "Retail",
+      "memo": "Hardware sales",
+      "account": "Hardware Sales",
+      "splitAccount": "",
+      "amount": 15000
+    },
+    {
+      "date": "2024-03-13",
+      "type": "Payment",
+      "docNum": "PAY-2024-001",
+      "name": "Amazon Web Services",
+      "department": "Cloud Services",
+      "memo": "Cloud service payment",
+      "account": "Cloud Services Revenue",
+      "splitAccount": "",
+      "amount": 12000
+    },
+    {
+      "date": "2024-03-12",
+      "type": "Invoice",
+      "docNum": "INV-2024-002",
+      "name": "Google LLC",
+      "department": "Digital Marketing",
+      "memo": "Advertising services",
+      "account": "Advertising Revenue",
+      "splitAccount": "",
+      "amount": 18000
+    },
+    {
+      "date": "2024-03-11",
+      "type": "Sales Receipt",
+      "docNum": "SR-2024-002",
+      "name": "Meta Platforms Inc.",
+      "department": "Social Media",
+      "memo": "Social media campaign",
+      "account": "Marketing Services",
+      "splitAccount": "",
+      "amount": 9500
+    },
+    {
+      "date": "2024-03-10",
+      "type": "Payment",
+      "docNum": "PAY-2024-002",
+      "name": "Netflix Inc.",
+      "department": "Entertainment",
+      "memo": "Content licensing",
+      "account": "Content Revenue",
+      "splitAccount": "",
+      "amount": 22000
+    }
+  ],
+  "expense": [
+    {
+      "date": "2024-03-15",
+      "type": "Bill",
+      "docNum": "BILL-2024-001",
+      "name": "Staples Business Advantage",
+      "department": "Office Supplies",
+      "memo": "Office supplies and equipment",
+      "account": "Office Supplies",
+      "splitAccount": "",
+      "amount": -1250.5
+    },
+    {
+      "date": "2024-03-14",
+      "type": "Expense",
+      "docNum": "EXP-2024-001",
+      "name": "Sarah Johnson",
+      "department": "Sales",
+      "memo": "Client meeting in New York",
+      "account": "Travel Expenses",
+      "splitAccount": "",
+      "amount": -2850.75
+    },
+    {
+      "date": "2024-03-13",
+      "type": "Check",
+      "docNum": "CHK-2024-001",
+      "name": "Dell Technologies",
+      "department": "IT",
+      "memo": "Server hardware purchase",
+      "account": "Computer Equipment",
+      "splitAccount": "",
+      "amount": -8500
+    },
+    {
+      "date": "2024-03-12",
+      "type": "Bill",
+      "docNum": "BILL-2024-002",
+      "name": "Verizon Business",
+      "department": "Telecommunications",
+      "memo": "Monthly phone and internet services",
+      "account": "Utilities",
+      "splitAccount": "",
+      "amount": -950.25
+    },
+    {
+      "date": "2024-03-11",
+      "type": "Expense",
+      "docNum": "EXP-2024-002",
+      "name": "Michael Chen",
+      "department": "Engineering",
+      "memo": "Conference attendance - AWS Summit",
+      "account": "Professional Development",
+      "splitAccount": "",
+      "amount": -1750.5
+    },
+    {
+      "date": "2024-03-10",
+      "type": "Check",
+      "docNum": "CHK-2024-002",
+      "name": "Adobe Inc.",
+      "department": "Software",
+      "memo": "Creative Cloud subscription",
+      "account": "Software Licenses",
+      "splitAccount": "",
+      "amount": -2500
+    }
+  ],
+  "adjustment": [
+    {
+      "date": "2024-03-15",
+      "type": "Journal Entry",
+      "docNum": "JE-2024-001",
+      "name": "System",
+      "department": "Accounting",
+      "memo": "Monthly depreciation adjustment",
+      "account": "Accrued Expenses",
+      "splitAccount": "",
+      "amount": -2500.75
+    },
+    {
+      "date": "2024-03-14",
+      "type": "Journal Entry",
+      "docNum": "JE-2024-002",
+      "name": "System",
+      "department": "Accounting",
+      "memo": "Accrued interest adjustment",
+      "account": "Interest Expense",
+      "splitAccount": "",
+      "amount": -850.25
+    },
+    {
+      "date": "2024-03-13",
+      "type": "Journal Entry",
+      "docNum": "JE-2024-003",
+      "name": "System",
+      "department": "Accounting",
+      "memo": "Prepaid expenses adjustment",
+      "account": "Prepaid Expenses",
+      "splitAccount": "",
+      "amount": -1500
+    }
+  ]
+}

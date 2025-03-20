@@ -9,6 +9,7 @@ import {
   reportBalanceSheet,
   reportCashFlow,
   getFinancialOverview,
+  getTransactionList,
 } from "../services/quickbooksService.js";
 
 const router = express.Router();
@@ -122,6 +123,19 @@ router.get("/reports/overview", async (req, res) => {
     const options = req.query; // Get user-defined filters
     const overview = await getFinancialOverview(options);
     res.json(overview);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * 📊 Get Transaction List
+ */
+router.get("/transactions", async (req, res) => {
+  try {
+    const options = req.query; // Get user-defined filters
+    const transactions = await getTransactionList(options);
+    res.json(transactions);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

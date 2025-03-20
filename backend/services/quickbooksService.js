@@ -1,7 +1,7 @@
 import { quickbooksAuthClient } from "../config/quickbooksAuth.js";
 import { getToken, getAllTokensByPlatform } from "../services/tokenService.js";
 
-// ✅ **全局声明 QuickBooks API Base URL** (sandbox/production 自动切换)
+// ✅ **Global declaration of QuickBooks API Base URL** (sandbox/production auto switch)
 const QUICKBOOKS_BASE_URL =
   process.env.QUICKBOOKS_ENV === "sandbox"
     ? "https://sandbox-quickbooks.api.intuit.com"
@@ -11,14 +11,14 @@ const QUICKBOOKS_BASE_URL =
 function getReportValue(report, rowName) {
   try {
     const rows = report.Rows?.Row || [];
-    // 首先尝试在顶层行中查找
+    // First try to find in top-level rows
     let row = rows.find(
       (r) =>
         r.Header?.ColData?.[0]?.value === rowName ||
         r.Summary?.ColData?.[0]?.value === rowName
     );
 
-    // 如果没找到，尝试在子行中查找
+    // If not found, try to find in sub-rows
     if (!row) {
       for (const topRow of rows) {
         if (topRow.Rows?.Row) {
@@ -37,7 +37,7 @@ function getReportValue(report, rowName) {
       return 0;
     }
 
-    // 尝试从不同位置获取值
+    // Try to get value from different positions
     let value = row.Summary?.ColData?.[1]?.value;
     if (!value && value !== 0) {
       value = row.ColData?.[1]?.value;
@@ -77,7 +77,7 @@ function extractOperatingIncome(report) {
   return getReportValue(report, "Operating Income");
 }
 
-// 辅助函数：安全的除法计算，避免 NaN 和 Infinity
+// Helper function: safe division calculation, avoiding NaN and Infinity
 function safeDivision(numerator, denominator) {
   if (!denominator || denominator === 0) return 0;
   const result = numerator / denominator;
@@ -85,40 +85,40 @@ function safeDivision(numerator, denominator) {
   return result;
 }
 
-// 辅助函数：格式化百分比
+// Helper function: formatting percentage
 function formatPercentage(value) {
   if (isNaN(value) || !isFinite(value)) return 0;
-  // 限制小数位数为2位
+  // Limit decimal places to 2
   return Math.round(value * 10000) / 10000;
 }
 
-// 辅助函数：计算同比变化率
+// Helper function: calculating year-over-year change rate
 function calculateYearOverYearChange(current, previous) {
-  // 确保输入值是有效数字
+  // Ensure input values are valid numbers
   current = ensureValidNumber(current);
   previous = ensureValidNumber(previous);
 
-  // 如果两个值都是0，返回0
+  // If both values are 0, return 0
   if (current === 0 && previous === 0) return 0;
 
-  // 如果只有前期为0，但当期不为0，返回1（表示100%增长）
+  // If only previous is 0 but current is not, return 1 (indicating 100% growth)
   if (previous === 0 && current !== 0) return 1;
 
-  // 如果当期为0，前期不为0，返回-1（表示-100%）
+  // If current is 0 but previous is not, return -1 (indicating -100%)
   if (current === 0 && previous !== 0) return -1;
 
-  // 计算变化率
+  // Calculate change rate
   const change = (current - previous) / Math.abs(previous);
   return formatPercentage(change);
 }
 
-// 辅助函数：确保数值有效
+// Helper function: ensure value is valid
 function ensureValidNumber(value) {
-  // 处理特殊字符
+  // Handle special characters
   if (value === undefined || value === null || value === "-" || value === "")
     return 0;
 
-  // 如果是字符串，移除所有逗号和空格
+  // If it's a string, remove all commas and spaces
   if (typeof value === "string") {
     value = value.replace(/,/g, "").trim();
   }
@@ -144,7 +144,7 @@ function extractPreviousPeriodRevenue(report) {
       return 0;
     }
 
-    // 尝试从不同位置获取上期值
+    // Try to get previous period value from different positions
     const value = ensureValidNumber(
       incomeRow.Summary?.ColData?.[2]?.value ||
         incomeRow.ColData?.[2]?.value ||
@@ -176,7 +176,7 @@ function extractPreviousPeriodNetIncome(report) {
       return 0;
     }
 
-    // 尝试从不同位置获取上期值
+    // Try to get previous period value from different positions
     const value = ensureValidNumber(
       netIncomeRow.Summary?.ColData?.[2]?.value ||
         netIncomeRow.ColData?.[2]?.value ||
@@ -476,7 +476,7 @@ function calculateFreeCashFlow(cashFlow) {
 }
 
 /**
- * 📌 **Get QuickBooks API client with stored access token (跳过 `expires_at` 检测)**
+ * 📌 **Get QuickBooks API client with stored access token (skip `expires_at` check)**
  */
 async function getQuickBooksClient() {
   try {
@@ -501,7 +501,7 @@ async function getQuickBooksClient() {
       `🔍 Debug: Using Access Token: ${accessToken}, realmID: ${realmId}`
     );
 
-    // ✅ 直接使用 accessToken
+    // ✅ Directly use accessToken
     quickbooksAuthClient.setToken(accessToken);
 
     return { client: quickbooksAuthClient, realmId, accessToken };
@@ -512,7 +512,7 @@ async function getQuickBooksClient() {
 }
 
 /**
- * 📌 **获取 QuickBooks 公司信息**
+ * 📌 **Get QuickBooks company information**
  */
 async function getCompanyInfo() {
   try {
@@ -536,7 +536,7 @@ async function getCompanyInfo() {
 }
 
 /**
- * 📌 **获取 QuickBooks 的所有发票**
+ * 📌 **Get all QuickBooks invoices**
  */
 async function getInvoices() {
   try {
@@ -796,7 +796,7 @@ async function getFinancialOverview(options = {}) {
       reportCashFlow(options),
     ]);
 
-    // 当前期间的数据
+    // Current period data
     const currentRevenue = ensureValidNumber(extractRevenue(profitLoss));
     const currentNetIncome = ensureValidNumber(extractNetIncome(profitLoss));
     const currentExpenses = ensureValidNumber(extractExpenses(profitLoss));
@@ -807,7 +807,7 @@ async function getFinancialOverview(options = {}) {
       extractOperatingIncome(profitLoss)
     );
 
-    // 上期数据
+    // Previous period data
     const previousRevenue = ensureValidNumber(
       extractPreviousPeriodRevenue(profitLoss)
     );
@@ -874,6 +874,218 @@ async function getFinancialOverview(options = {}) {
   }
 }
 
+/**
+ * 📊 Get Transaction List
+ */
+async function getTransactionList(options = {}) {
+  try {
+    console.log("🔍 Fetching transaction list with options:", options);
+    const { client, realmId, accessToken } = await getQuickBooksClient();
+
+    if (!accessToken) {
+      throw new Error("❌ No access token found");
+    }
+
+    // Calculate date range (last 12 months)
+    const end_date = new Date().toISOString().split("T")[0];
+    const start_date = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0];
+
+    // Build URL with query parameters
+    const url = `${QUICKBOOKS_BASE_URL}/v3/company/${realmId}/reports/TransactionList?start_date=${
+      options.start_date || start_date
+    }&end_date=${
+      options.end_date || end_date
+    }&group_by=Customer&minorversion=75`;
+
+    console.log("🔍 Using URL:", url);
+
+    const response = await client.makeApiCall({
+      url: url,
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: "application/json",
+      },
+    });
+
+    // Log raw response data for debugging
+    console.log(
+      "📥 Raw QuickBooks response data:",
+      JSON.stringify(response.response?.data, null, 2)
+    );
+
+    // Process the data before returning
+    const processedData = processTransactionData(response.response?.data || {});
+
+    // Log processed data for debugging
+    console.log("📊 Processed transaction data:", {
+      incomeCount: processedData.income.length,
+      expenseCount: processedData.expense.length,
+      adjustmentCount: processedData.adjustment.length,
+    });
+
+    return processedData;
+  } catch (error) {
+    console.error("❌ Failed to fetch transaction list:", error);
+    throw error;
+  }
+}
+
+/**
+ * Process transaction data from QuickBooks API
+ * @param {Object} data - Raw data from QuickBooks API
+ * @returns {Object} Processed transaction data
+ */
+function processTransactionData(data) {
+  console.log("📊 Processing transaction data");
+
+  if (!data || !data.Rows || !data.Rows.Row) {
+    console.log("⚠️ No transaction data found in the response");
+    return {
+      income: [],
+      expense: [],
+      adjustment: [],
+    };
+  }
+
+  const transactions = {
+    income: [],
+    expense: [],
+    adjustment: [],
+  };
+
+  // Process each customer group
+  data.Rows.Row.forEach((customerGroup) => {
+    if (!customerGroup.Rows || !customerGroup.Rows.Row) {
+      console.log(
+        "⚠️ No transactions found in customer group:",
+        customerGroup.Header?.ColData?.[0]?.value
+      );
+      return;
+    }
+
+    const customerName =
+      customerGroup.Header?.ColData?.[0]?.value || "Not Specified";
+
+    // Process each transaction for the customer
+    customerGroup.Rows.Row.forEach((row) => {
+      if (row.type !== "Data" || !row.ColData) {
+        console.log("⚠️ Skipping invalid row:", row);
+        return;
+      }
+
+      try {
+        // Find the amount column (usually the last numeric column)
+        let amount = 0;
+        for (let i = row.ColData.length - 1; i >= 0; i--) {
+          const value = row.ColData[i]?.value;
+          if (value && !isNaN(parseFloat(value.replace(/,/g, "")))) {
+            amount = parseFloat(value.replace(/,/g, ""));
+            break;
+          }
+        }
+
+        // Extract transaction data
+        const transaction = {
+          date: row.ColData[0]?.value || "",
+          type: row.ColData[1]?.value || "",
+          docNum: row.ColData[2]?.value || "",
+          name: customerName,
+          memo: row.ColData[4]?.value || "",
+          account: row.ColData[5]?.value || "",
+          amount: amount,
+        };
+
+        // Skip transactions with missing required fields
+        if (!transaction.date || !transaction.type) {
+          console.log(
+            "⚠️ Skipping transaction with missing required fields:",
+            transaction
+          );
+          return;
+        }
+
+        // Log the transaction for debugging
+        console.log("Processing transaction:", {
+          type: transaction.type,
+          amount: transaction.amount,
+          name: transaction.name,
+        });
+
+        // Categorize transaction based on type and amount
+        if (isIncomeTransaction(transaction.type) || transaction.amount > 0) {
+          transactions.income.push(transaction);
+        } else if (
+          isExpenseTransaction(transaction.type) ||
+          transaction.amount < 0
+        ) {
+          transaction.amount = Math.abs(transaction.amount);
+          transactions.expense.push(transaction);
+        } else {
+          transactions.adjustment.push(transaction);
+        }
+      } catch (error) {
+        console.error("❌ Error processing transaction row:", error);
+      }
+    });
+  });
+
+  // Sort transactions by date (newest first)
+  const sortByDate = (a, b) => new Date(b.date) - new Date(a.date);
+  transactions.income.sort(sortByDate);
+  transactions.expense.sort(sortByDate);
+  transactions.adjustment.sort(sortByDate);
+
+  // Log summary for debugging
+  console.log("Transaction summary:", {
+    income: `${
+      transactions.income.length
+    } transactions, total: $${transactions.income.reduce(
+      (sum, t) => sum + t.amount,
+      0
+    )}`,
+    expense: `${
+      transactions.expense.length
+    } transactions, total: $${transactions.expense.reduce(
+      (sum, t) => sum + t.amount,
+      0
+    )}`,
+    adjustment: `${transactions.adjustment.length} transactions`,
+  });
+
+  return transactions;
+}
+
+// Income transaction types
+function isIncomeTransaction(type) {
+  const incomeTypes = [
+    "Invoice",
+    "Sales Receipt",
+    "Payment",
+    "Deposit",
+    "Credit Memo",
+    "Time Charge",
+    "Billable Expense Charge",
+  ];
+  return incomeTypes.includes(type);
+}
+
+// Expense transaction types
+function isExpenseTransaction(type) {
+  const expenseTypes = [
+    "Bill",
+    "Expense",
+    "Check",
+    "Bill Payment",
+    "Purchase Order",
+    "Credit Card Expense",
+    "Cash Expense",
+  ];
+  return expenseTypes.includes(type);
+}
+
 export {
   getCompanyInfo,
   getInvoices,
@@ -908,4 +1120,6 @@ export {
   extractEndingCash,
   calculateFreeCashFlow,
   calculateCashRatio,
+  getTransactionList,
+  processTransactionData,
 };
