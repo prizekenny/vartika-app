@@ -11,12 +11,8 @@ import googleDriveRoutes from "./routes/googleDrive.js";
 import quickbooksAuthRoutes from "./routes/quickbooksAuth.js"; // ✅ 认证逻辑
 import quickbooksRoutes from "./routes/quickbooks.js"; // ✅ API 访问逻辑
 import { loadTokensIntoCache } from "./services/tokenService.js";
-import http from "http";
-import setupWebSocket from "./websocket/socketServer";
 
 const app = express();
-const server = http.createServer(app);
-
 app.use(cors());
 app.use(express.json());
 
@@ -59,9 +55,6 @@ app.use("/api/quickbooks", quickbooksRoutes);
 // 🔹 Load tokens into cache at server startup
 loadTokensIntoCache();
 
-// 設置 WebSocket
-setupWebSocket(server);
-
 const BASE_URL = process.env.BASE_URL || "http://localhost:5001";
 const PORT = process.env.PORT || 5001;
-server.listen(PORT, () => console.log(`🚀 Server running at ${BASE_URL}:${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Server running at ${BASE_URL}:${PORT}`));
