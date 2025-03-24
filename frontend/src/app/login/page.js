@@ -18,17 +18,20 @@ function LoginPage() {
         alert("Please fill in both email and password.");
         return;
       }
-      
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          email,
-          password
-        })
-      });
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/login`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email,
+            password,
+          }),
+        }
+      );
 
       const data = await response.json();
 
@@ -43,7 +46,26 @@ function LoginPage() {
   };
 
   const handleOAuthLogin = (provider) => {
-    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/${provider}`;
+    const URL = `${process.env.NEXT_PUBLIC_API_URL}/auth/${provider}`;
+    const authWindow = window.open(URL, "_blank", "width=500,height=600");
+
+    console.log("Auth URL:", URL);
+
+    const checkAuth = setInterval(() => {
+      if (authWindow.closed) {
+        clearInterval(checkAuth);
+        console.log("🔍 OAuth window closed, checking authentication...");
+
+        // 读取 localStorage 中的 token
+        const token = localStorage.getItem("token");
+        if (token) {
+          console.log("✅ Authenticated! Redirecting...");
+          window.location.href = "/dashboard"; // 进入主页
+        } else {
+          console.log("❌ Authentication failed or canceled.");
+        }
+      }
+    }, 500);
   };
 
   return (
@@ -112,7 +134,7 @@ function LoginPage() {
           <div className="flex space-x-4">
             <button
               type="button"
-              onClick={() => handleOAuthLogin('google')}
+              onClick={() => handleOAuthLogin("google")}
               className="flex items-center justify-center p-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
               aria-label="Login with Google"
             >
@@ -120,7 +142,7 @@ function LoginPage() {
             </button>
             <button
               type="button"
-              onClick={() => handleOAuthLogin('microsoft')}
+              onClick={() => handleOAuthLogin("microsoft")}
               className="flex items-center justify-center p-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
               aria-label="Login with Microsoft"
             >
@@ -128,7 +150,7 @@ function LoginPage() {
             </button>
             <button
               type="button"
-              onClick={() => handleOAuthLogin('facebook')}
+              onClick={() => handleOAuthLogin("facebook")}
               className="flex items-center justify-center p-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
               aria-label="Login with Facebook"
             >

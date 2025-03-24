@@ -73,10 +73,18 @@ router.get(
           [req.user.user_id]
         );
       }
+
       res.json({
         success: true,
         user: req.user,
       });
+
+      // res.send(`
+      //   <script>
+      //     localStorage.setItem("token", "${req.user.token}");
+      //     window.close(); // 🔹 关闭 OAuth 窗口，触发前端监听
+      //   </script>
+      // `);
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
