@@ -11,11 +11,14 @@ export const pool = new Pool({
   host: process.env.DB_HOST,
   port: process.env.DB_PORT,
   database: process.env.DB_NAME,
-  // Add SSL configuration based on the environment
-  ssl:
-    process.env.DB_SSLMODE === "require"
-      ? { rejectUnauthorized: false }
-      : false,
+  // If using SSL (e.g., on Heroku)
+  // ssl:
+  //   process.env.NODE_ENV === "production"
+  //     ? {
+  //         rejectUnauthorized: false,
+  //       }
+  //     : false,
+  ssl: { rejectUnauthorized: false }, // ⚠️ 确保 NeonDB 的 SSL 连接
 });
 
 // Test database connection

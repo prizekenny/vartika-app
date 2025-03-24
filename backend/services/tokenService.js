@@ -182,7 +182,7 @@ async function getGoogleDriveToken() {
  * 📌 **Get the latest QuickBooks token (single user)**
  */
 async function getQuickBooksToken() {
-  const tokens = await getAllTokensByPlatform("quickbooks");
+  const tokens = getAllTokensByPlatform("quickbooks");
   return tokens.length > 0 ? tokens[0] : null;
 }
 
