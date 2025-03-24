@@ -7,6 +7,7 @@ DROP TABLE IF EXISTS role_permissions CASCADE;
 DROP TABLE IF EXISTS permissions CASCADE;
 DROP TABLE IF EXISTS roles CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS clients CASCADE;
 
 -- Users table
 CREATE TABLE users (
@@ -51,6 +52,24 @@ CREATE TABLE user_roles (
     role_id UUID REFERENCES roles(role_id),
     PRIMARY KEY (user_id, role_id)
 );
+
+-- Clients table
+CREATE TABLE IF NOT EXISTS clients (
+    client_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL,
+    company_name VARCHAR(100),
+    contact_person VARCHAR(100),
+    contact_email VARCHAR(100),
+    contact_phone VARCHAR(20),
+    address TEXT,
+    client_type VARCHAR(50),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+);
+
+-- Create index for better query performance
+CREATE INDEX IF NOT EXISTS idx_clients_user_id ON clients(user_id);
 
 -- Insert default roles
 INSERT INTO roles (role_name) VALUES 
