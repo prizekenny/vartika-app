@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Button from "../../components/Button";
 import { FaGoogle, FaFacebook, FaMicrosoft } from "react-icons/fa";
 import { useRouter } from "next/navigation";
@@ -9,6 +9,7 @@ function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -18,17 +19,20 @@ function LoginPage() {
         alert("Please fill in both email and password.");
         return;
       }
-      
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          email,
-          password
-        })
-      });
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/login`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email,
+            password,
+          }),
+        }
+      );
 
       const data = await response.json();
 
@@ -42,10 +46,47 @@ function LoginPage() {
     }
   };
 
-  const handleOAuthLogin = (provider) => {
-    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/${provider}`;
-  };
+  useEffect(() => {
+    const checkOAuthStatus = async () => {
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/auth/oauth-status`,
+          { credentials: "include" } // 发送 cookies
+        );
+        const data = await response.json();
 
+        console.log("📩 OAuth status check:", data);
+
+        if (data.success) {
+          clearInterval(interval);
+          console.log("✅ OAuth login detected! Redirecting...");
+          router.push("/workspace");
+        }
+      } catch (error) {
+        console.error("⚠️ Error checking OAuth status:", error);
+      }
+    };
+
+    const interval = setInterval(checkOAuthStatus, 1000); // **每秒轮询**
+    return () => clearInterval(interval);
+  }, [router]);
+
+  // 🔹 触发 OAuth 登录
+  const handleOAuthLogin = (provider) => {
+    const authWindow = window.open(
+      `${process.env.NEXT_PUBLIC_API_URL}/auth/${provider}`,
+      "_blank",
+      "width=500,height=600"
+    );
+
+    console.log("Main Window Origin:", window.origin);
+    if (!authWindow) {
+      alert("⚠️ OAuth 弹窗被拦截，请允许弹窗并重试。");
+      return;
+    }
+
+    authWindow.focus();
+  };
   return (
     <main className="bg-white min-h-screen flex flex-col justify-center items-center text-black">
       <header className="flex flex-col items-center justify-center mb-6">
@@ -112,7 +153,7 @@ function LoginPage() {
           <div className="flex space-x-4">
             <button
               type="button"
-              onClick={() => handleOAuthLogin('google')}
+              onClick={() => handleOAuthLogin("google")}
               className="flex items-center justify-center p-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
               aria-label="Login with Google"
             >
@@ -120,7 +161,7 @@ function LoginPage() {
             </button>
             <button
               type="button"
-              onClick={() => handleOAuthLogin('microsoft')}
+              onClick={() => handleOAuthLogin("microsoft")}
               className="flex items-center justify-center p-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
               aria-label="Login with Microsoft"
             >
@@ -128,7 +169,7 @@ function LoginPage() {
             </button>
             <button
               type="button"
-              onClick={() => handleOAuthLogin('facebook')}
+              onClick={() => handleOAuthLogin("facebook")}
               className="flex items-center justify-center p-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
               aria-label="Login with Facebook"
             >
