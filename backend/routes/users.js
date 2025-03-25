@@ -5,175 +5,160 @@ import { pool } from "../config/database.js";
 
 const router = express.Router();
 
-// Create a new user
-router.post("/", async (req, res) => {
-  const { username, email, password, phone, status, user_type } = req.body;
-  try {
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const result = await pool.query(
-      "INSERT INTO users (username, email, password, phone, status, user_type) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
-      [username, email, hashedPassword, phone, status, user_type]
-    );
-    res.status(201).json(result.rows[0]);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to create user", details: error });
-  }
-});
-
-// Bulk create users
-router.post("/bulk", async (req, res) => {
-  const { users } = req.body;
-  try {
-    for (const user of users) {
-      const hashedPassword = await bcrypt.hash(user.password, 10);
-      await pool.query(
-        "INSERT INTO users (username, email, password, phone, status, user_type) VALUES ($1, $2, $3, $4, $5, $6)",
-        [
-          user.username,
-          user.email,
-          hashedPassword,
-          user.phone,
-          user.status,
-          user.user_type,
-        ]
-      );
-    }
-    res.status(201).json({ message: "Bulk user creation successful" });
-  } catch (error) {
-    res
-      .status(500)
-      .json({ error: "Failed to create users in bulk", details: error });
-  }
-});
-
-// Retrieve all users
+// Get all users (with roles)
 router.get("/", async (req, res) => {
   try {
-    const users = await pool.query(
-      "SELECT user_id, username, email, phone, status, user_type FROM users"
-    );
-    res.json(users.rows);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to fetch user list" });
-  }
-});
-
-// Retrieve a single user
-router.get("/:id", async (req, res) => {
-  try {
-    const user = await pool.query("SELECT * FROM users WHERE user_id = $1", [
-      req.params.id,
-    ]);
-    if (user.rows.length === 0)
-      return res.status(404).json({ error: "User not found" });
-    res.json(user.rows[0]);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to fetch user information" });
-  }
-});
-
-// Update user information
-router.put("/:id", async (req, res) => {
-  const { username, phone } = req.body;
-  try {
     const result = await pool.query(
-      "UPDATE users SET username = $1, phone = $2, updated_at = NOW() WHERE user_id = $3 RETURNING *",
-      [username, phone, req.params.id]
+      `SELECT u.user_id, u.username, u.email, u.phone, u.status, u.user_type, 
+              u.created_at, u.last_login_time,
+              array_agg(r.role_name) as roles
+       FROM users u
+       LEFT JOIN user_roles ur ON u.user_id = ur.user_id
+       LEFT JOIN roles r ON ur.role_id = r.role_id
+       GROUP BY u.user_id
+       ORDER BY u.created_at DESC`
     );
-    res.json(result.rows[0]);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to update user" });
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error fetching users:", err);
+    res.status(500).json({ error: err.message });
   }
 });
 
-// Update user status (activate/deactivate/ban)
-router.patch("/:id/status", async (req, res) => {
-  const { status } = req.body;
+// Create new user
+router.post("/", async (req, res) => {
   try {
-    await pool.query("UPDATE users SET status = $1 WHERE user_id = $2", [
-      status,
-      req.params.id,
-    ]);
-    res.json({ message: "User status updated successfully" });
-  } catch (error) {
-    res.status(500).json({ error: "Failed to update user status" });
+    const { username, email, password, phone, user_type, roles, status } =
+      req.body;
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+
+      const userResult = await client.query(
+        `INSERT INTO users (username, email, password, phone, user_type, status, auth_provider)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         RETURNING user_id`,
+        [username, email, hashedPassword, phone, user_type, status, "local"]
+      );
+
+      const userId = userResult.rows[0].user_id;
+
+      if (roles && roles.length > 0) {
+        const roleQuery = await client.query(
+          "SELECT role_id FROM roles WHERE role_name = ANY($1)",
+          [roles]
+        );
+
+        for (const role of roleQuery.rows) {
+          await client.query(
+            "INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2)",
+            [userId, role.role_id]
+          );
+        }
+      }
+
+      await client.query("COMMIT");
+      res.status(201).json({ message: "User created successfully" });
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
-// Delete a user
+// Update user info
+router.put("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { username, email, phone, user_type, status, roles } = req.body;
+
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+
+      const userResult = await client.query(
+        `UPDATE users 
+         SET username = COALESCE($1, username),
+             email = COALESCE($2, email),
+             phone = COALESCE($3, phone),
+             user_type = COALESCE($4, user_type),
+             status = COALESCE($5, status),
+             updated_at = NOW()
+         WHERE user_id = $6
+         RETURNING *`,
+        [username, email, phone, user_type, status, id]
+      );
+
+      if (userResult.rows.length === 0) {
+        throw new Error("User not found");
+      }
+
+      if (roles) {
+        await client.query("DELETE FROM user_roles WHERE user_id = $1", [id]);
+
+        const roleQuery = await client.query(
+          "SELECT role_id FROM roles WHERE role_name = ANY($1)",
+          [roles]
+        );
+
+        for (const role of roleQuery.rows) {
+          await client.query(
+            "INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2)",
+            [id, role.role_id]
+          );
+        }
+      }
+
+      await client.query("COMMIT");
+      res.json({ message: "User updated successfully" });
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
+  } catch (err) {
+    console.error("Update error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Delete user
 router.delete("/:id", async (req, res) => {
   try {
-    await pool.query("DELETE FROM users WHERE user_id = $1", [req.params.id]);
-    res.json({ message: "User deleted successfully" });
-  } catch (error) {
-    res.status(500).json({ error: "Failed to delete user" });
-  }
-});
-
-// Get the currently logged-in user
-router.get("/me", async (req, res) => {
-  try {
-    const token = req.headers.authorization?.split(" ")[1];
-    if (!token) return res.status(401).json({ error: "Unauthorized" });
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await pool.query(
-      "SELECT user_id, username, email, phone, status FROM users WHERE user_id = $1",
-      [decoded.user_id]
-    );
-
-    res.json(user.rows[0]);
-  } catch (error) {
-    res.status(401).json({ error: "Failed to retrieve current user" });
-  }
-});
-
-// Reset user password
-router.patch("/:id/reset-password", async (req, res) => {
-  const { new_password } = req.body;
-  try {
-    const hashedPassword = await bcrypt.hash(new_password, 10);
-    await pool.query("UPDATE users SET password = $1 WHERE user_id = $2", [
-      hashedPassword,
-      req.params.id,
-    ]);
-    res.json({ message: "Password reset successfully" });
-  } catch (error) {
-    res.status(500).json({ error: "Failed to reset password" });
-  }
-});
-
-// Assign a role to a user
-router.post("/:id/roles", async (req, res) => {
-  const { role_id } = req.body;
-  try {
-    await pool.query(
-      "INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2)",
-      [req.params.id, role_id]
-    );
-    res.json({ message: "Role assigned successfully" });
-  } catch (error) {
-    res.status(500).json({ error: "Failed to assign role" });
-  }
-});
-
-// Bulk assign roles
-router.post("/roles/bulk", async (req, res) => {
-  const { assignments } = req.body;
-  try {
-    for (const { user_id, role_id } of assignments) {
-      await pool.query(
-        "INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
-        [user_id, role_id]
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      await client.query("DELETE FROM user_roles WHERE user_id = $1", [
+        req.params.id,
+      ]);
+      const result = await client.query(
+        "DELETE FROM users WHERE user_id = $1 RETURNING *",
+        [req.params.id]
       );
+
+      if (result.rows.length === 0) throw new Error("User not found");
+
+      await client.query("COMMIT");
+      res.json({ message: "User deleted successfully" });
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
     }
-    res.json({ message: "Bulk role assignment successful" });
-  } catch (error) {
-    res.status(500).json({ error: "Failed to assign roles in bulk" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
-// Get roles of a user
+// Get user roles
 router.get("/:id/roles", async (req, res) => {
   try {
     const result = await pool.query(
@@ -183,19 +168,6 @@ router.get("/:id/roles", async (req, res) => {
     res.json(result.rows.map((row) => row.role_name));
   } catch (error) {
     res.status(500).json({ error: "Failed to retrieve user roles" });
-  }
-});
-
-// Remove a role from a user
-router.delete("/:id/roles/:role_id", async (req, res) => {
-  try {
-    await pool.query(
-      "DELETE FROM user_roles WHERE user_id = $1 AND role_id = $2",
-      [req.params.id, req.params.role_id]
-    );
-    res.json({ message: "Role removed successfully" });
-  } catch (error) {
-    res.status(500).json({ error: "Failed to remove role" });
   }
 });
 
