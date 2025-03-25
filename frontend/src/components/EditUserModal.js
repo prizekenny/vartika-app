@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Button from "./Button";
 import axios from "axios";
 
 const API_BASE_URL = "http://localhost:5001/api/users";
 
-const AddUserModal = ({ isOpen, setShowAddUserForm, fetchUsers }) => {
+const EditUserModal = ({ isOpen, user, setShowEditUserForm, fetchUsers }) => {
   const [formData, setFormData] = useState({
     username: "",
     email: "",
@@ -17,32 +17,37 @@ const AddUserModal = ({ isOpen, setShowAddUserForm, fetchUsers }) => {
 
   const roles = ["SuperAdmin", "Admin", "Employee", "Client", "Guest"];
 
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        username: user.username || "",
+        email: user.email || "",
+        phone: user.phone || "",
+        password: "",
+        user_type: user.user_type || "Client",
+        status: user.status || "active",
+        roles: user.roles || ["Client"],
+      });
+    }
+  }, [user]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(API_BASE_URL, formData);
-      setFormData({
-        username: "",
-        email: "",
-        phone: "",
-        password: "",
-        user_type: "Client",
-        status: "active",
-        roles: ["Client"],
-      });
-      setShowAddUserForm(false);
+      await axios.put(`${API_BASE_URL}/${user.user_id}`, formData);
+      setShowEditUserForm(false);
       fetchUsers();
     } catch (error) {
-      console.error("Error adding user:", error);
+      console.error("Error updating user:", error);
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !user) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
       <div className="bg-white rounded-lg p-6 w-[480px]">
-        <h2 className="text-xl font-semibold mb-4">Add New User</h2>
+        <h2 className="text-xl font-semibold mb-4">Edit User</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <InputField
             label="User Name"
@@ -69,7 +74,7 @@ const AddUserModal = ({ isOpen, setShowAddUserForm, fetchUsers }) => {
             }
           />
           <InputField
-            label="Password"
+            label="Password (Leave empty if no change)"
             type="password"
             value={formData.password}
             onChange={(e) =>
@@ -78,7 +83,7 @@ const AddUserModal = ({ isOpen, setShowAddUserForm, fetchUsers }) => {
           />
           <DropdownField
             label="Role"
-            value={formData.roles[0]}
+            value={formData.roles[0] ?? ""}
             options={roles}
             onChange={(e) =>
               setFormData({ ...formData, roles: [e.target.value] })
@@ -86,7 +91,7 @@ const AddUserModal = ({ isOpen, setShowAddUserForm, fetchUsers }) => {
           />
           <DropdownField
             label="Status"
-            value={formData.status}
+            value={formData.status ?? ""}
             options={["active", "inactive"]}
             onChange={(e) =>
               setFormData({ ...formData, status: e.target.value })
@@ -96,13 +101,13 @@ const AddUserModal = ({ isOpen, setShowAddUserForm, fetchUsers }) => {
           <div className="flex justify-end gap-3 mt-6">
             <Button
               variant="default"
-              onClick={() => setShowAddUserForm(false)}
+              onClick={() => setShowEditUserForm(false)}
               className="px-6 py-2"
             >
               Cancel
             </Button>
             <Button variant="primary" type="submit" className="px-6 py-2">
-              Submit
+              Save Changes
             </Button>
           </div>
         </form>
@@ -116,7 +121,6 @@ const InputField = ({ label, type, value, onChange }) => (
     <label className="block text-sm font-medium mb-1">{label}</label>
     <input
       type={type}
-      placeholder={`Enter ${label.toLowerCase()}`}
       className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500"
       value={value}
       onChange={onChange}
@@ -141,4 +145,4 @@ const DropdownField = ({ label, value, options, onChange }) => (
   </div>
 );
 
-export default AddUserModal;
+export default EditUserModal;

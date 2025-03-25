@@ -8,7 +8,7 @@ const router = express.Router();
 router.get("/", async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT u.user_id, u.username, u.email, u.status, u.user_type, 
+      `SELECT u.user_id, u.username, u.email, u.phone, u.status, u.user_type, 
               u.created_at, u.last_login_time,
               array_agg(r.role_name) as roles
        FROM users u
@@ -19,50 +19,31 @@ router.get("/", async (req, res) => {
     );
     res.json(result.rows);
   } catch (err) {
+    console.error("Error fetching users:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// Get user by ID
-router.get("/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const result = await pool.query(
-      "SELECT user_id, username, email, status, user_type, last_login_time FROM users WHERE user_id = $1",
-      [id]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    res.json(result.rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Create new user (admin only)
+// Create new user
 router.post("/", async (req, res) => {
   try {
-    const { username, email, password, user_type, roles } = req.body;
+    const { username, email, password, phone, user_type, roles, status } =
+      req.body;
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
 
-      // 1. Create user
       const userResult = await client.query(
-        `INSERT INTO users (username, email, password, user_type, auth_provider)
-         VALUES ($1, $2, $3, $4, $5)
+        `INSERT INTO users (username, email, password, phone, user_type, status, auth_provider)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
          RETURNING user_id`,
-        [username, email, hashedPassword, user_type, "local"]
+        [username, email, hashedPassword, phone, user_type, status, "local"]
       );
 
       const userId = userResult.rows[0].user_id;
 
-      // 2. Assign roles
       if (roles && roles.length > 0) {
         const roleQuery = await client.query(
           "SELECT role_id FROM roles WHERE role_name = ANY($1)",
@@ -94,34 +75,32 @@ router.post("/", async (req, res) => {
 router.put("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { username, email, user_type, status, roles } = req.body;
+    const { username, email, phone, user_type, status, roles } = req.body;
 
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
 
-      // 1. Update user details (removed updated_at field)
       const userResult = await client.query(
         `UPDATE users 
          SET username = COALESCE($1, username),
              email = COALESCE($2, email),
-             user_type = COALESCE($3, user_type),
-             status = COALESCE($4, status)
-         WHERE user_id = $5
+             phone = COALESCE($3, phone),
+             user_type = COALESCE($4, user_type),
+             status = COALESCE($5, status),
+             updated_at = NOW()
+         WHERE user_id = $6
          RETURNING *`,
-        [username, email, user_type, status, id]
+        [username, email, phone, user_type, status, id]
       );
 
       if (userResult.rows.length === 0) {
         throw new Error("User not found");
       }
 
-      // 2. Update roles if provided
       if (roles) {
-        // Remove existing roles
         await client.query("DELETE FROM user_roles WHERE user_id = $1", [id]);
 
-        // Add new roles
         const roleQuery = await client.query(
           "SELECT role_id FROM roles WHERE role_name = ANY($1)",
           [roles]
@@ -144,6 +123,7 @@ router.put("/:id", async (req, res) => {
       client.release();
     }
   } catch (err) {
+    console.error("Update error:", err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -156,11 +136,7 @@ router.delete("/:id", async (req, res) => {
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
-
-      // 1. Remove user roles
       await client.query("DELETE FROM user_roles WHERE user_id = $1", [id]);
-
-      // 2. Delete user
       const result = await client.query(
         "DELETE FROM users WHERE user_id = $1 RETURNING *",
         [id]
