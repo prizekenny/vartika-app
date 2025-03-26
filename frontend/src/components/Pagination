@@ -1,0 +1,71 @@
+import React from 'react';
+
+const Pagination = ({ currentPage, pageCount, onPageChange }) => {
+  const pages = [];
+  const maxPagesToShow = 5;
+
+  if (pageCount <= maxPagesToShow) {
+    for (let i = 1; i <= pageCount; i++) {
+      pages.push(i);
+    }
+  } else {
+    pages.push(1);
+
+    if (currentPage > 3) {
+      pages.push('...');
+    }
+
+    const startPage = Math.max(2, currentPage - 1);
+    const endPage = Math.min(pageCount - 1, currentPage + 1);
+
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+
+    if (currentPage < pageCount - 2) {
+      pages.push('...');
+    }
+
+    pages.push(pageCount);
+  }
+
+  return (
+    <div className="flex justify-center mt-6 space-x-2">
+      <button
+        onClick={() => onPageChange(Math.max(currentPage - 1, 1))}
+        disabled={currentPage === 1}
+        className="px-3 py-1 border rounded-lg disabled:opacity-50 hover:bg-gray-50"
+      >
+        {'<'}
+      </button>
+      {pages.map((page, index) =>
+        page === '...' ? (
+          <span key={index} className="px-3 py-1">
+            ...
+          </span>
+        ) : (
+          <button
+            key={page}
+            onClick={() => onPageChange(page)}
+            className={`px-3 py-1 border rounded-lg ${
+              currentPage === page
+                ? 'bg-purple-600 text-white'
+                : 'hover:bg-gray-50'
+            }`}
+          >
+            {page}
+          </button>
+        )
+      )}
+      <button
+        onClick={() => onPageChange(Math.min(currentPage + 1, pageCount))}
+        disabled={currentPage === pageCount}
+        className="px-3 py-1 border rounded-lg disabled:opacity-50 hover:bg-gray-50"
+      >
+        {'>'}
+      </button>
+    </div>
+  );
+};
+
+export default Pagination;
