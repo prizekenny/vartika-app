@@ -17,40 +17,37 @@ export default function TransactionTab() {
    */
   const fetchTransactions = async () => {
     try {
-      // 1. Define the API endpoint for QuickBooks
+      // 暂时注释掉 API 调用相关代码
+      /*
       const apiUrl =
-        "https://api.quickbooks.com/v3/company/{company_id}/reports/TransactionList"; // Replace {company_id} with actual company ID
+        "https://api.quickbooks.com/v3/company/{company_id}/reports/TransactionList";
 
-      // 2. Set up headers for the API request
       const headers = {
         "Content-Type": "application/json",
-        Authorization: `Bearer <your_access_token>`, // Replace with actual OAuth token
+        Authorization: `Bearer <your_access_token>`,
       };
 
-      // 3. Send the GET request
       const response = await fetch(apiUrl, { method: "GET", headers });
 
-      // 4. Check if the response is successful
       if (!response.ok) {
         throw new Error(`Error: ${response.status} - ${response.statusText}`);
       }
 
-      // 5. Parse the response and extract transaction data
       const data = await response.json();
       const transactionsData = data.QueryResponse
         ? data.QueryResponse.Transaction
         : [];
 
-      // 6. Update the state with the fetched data
       setTransactions(transactionsData);
-    } catch (error) {
-      // 7. Handle errors and fallback to dummy data
-      console.error("Failed to fetch transactions:", error);
-      alert("Failed to load transactions. Displaying sample data instead.");
+      */
 
-      // 8. Import dummy data from JSON file
+      // 直接加载测试数据
       const dummyData = await import("../../../../dummy_data/transaction.json");
       setTransactions(dummyData.default);
+    } catch (error) {
+      console.error("Failed to load transactions:", error);
+      // 如果加载测试数据也失败了，设置为空数组
+      setTransactions([]);
     }
   };
 

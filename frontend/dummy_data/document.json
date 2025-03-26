@@ -1,0 +1,98 @@
+{
+  "documents": [
+    {
+      "name": "Q1 2025 Financial Report.pdf",
+      "size": "2.4 MB",
+      "type": "application/pdf",
+      "uploadTime": "2025-02-24T15:30:00"
+    },
+    {
+      "name": "Client Agreement Template.docx",
+      "size": "358 KB",
+      "type": "application/msword",
+      "uploadTime": "2025-02-23T10:15:00"
+    },
+    {
+      "name": "Marketing Strategy 2025.pptx",
+      "size": "4.7 MB",
+      "type": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      "uploadTime": "2025-02-22T14:20:00"
+    },
+    {
+      "name": "Budget Analysis.xlsx",
+      "size": "1.2 MB",
+      "type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "uploadTime": "2025-02-21T09:45:00"
+    },
+    {
+      "name": "Project Timeline.xlsx",
+      "size": "845 KB",
+      "type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "uploadTime": "2025-02-20T16:10:00"
+    },
+    {
+      "name": "Employee Handbook.pdf",
+      "size": "3.1 MB",
+      "type": "application/pdf",
+      "uploadTime": "2025-02-19T11:25:00"
+    },
+    {
+      "name": "Sales Report - Jan 2025.xlsx",
+      "size": "1.8 MB",
+      "type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "uploadTime": "2025-02-18T13:40:00"
+    },
+    {
+      "name": "Product Roadmap.pptx",
+      "size": "2.9 MB",
+      "type": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      "uploadTime": "2025-02-17T10:05:00"
+    },
+    {
+      "name": "Client Proposal Template.docx",
+      "size": "425 KB",
+      "type": "application/msword",
+      "uploadTime": "2025-02-16T15:50:00"
+    },
+    {
+      "name": "Tax Documents 2024.pdf",
+      "size": "5.2 MB",
+      "type": "application/pdf",
+      "uploadTime": "2025-02-15T09:15:00"
+    },
+    {
+      "name": "Annual Report 2024.pdf",
+      "size": "6.8 MB",
+      "type": "application/pdf",
+      "uploadTime": "2025-02-14T16:20:00"
+    },
+    {
+      "name": "Company Policies.docx",
+      "size": "520 KB",
+      "type": "application/msword",
+      "uploadTime": "2025-02-13T11:30:00"
+    },
+    {
+      "name": "Q4 2024 Presentation.pptx",
+      "size": "3.5 MB",
+      "type": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      "uploadTime": "2025-02-12T14:45:00"
+    },
+    {
+      "name": "Expense Report Template.xlsx",
+      "size": "280 KB",
+      "type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "uploadTime": "2025-02-11T09:20:00"
+    },
+    {
+      "name": "Meeting Minutes.docx",
+      "size": "180 KB",
+      "type": "application/msword",
+      "uploadTime": "2025-02-10T15:40:00"
+    }
+  ],
+  "pagination": {
+    "itemsPerPage": 10,
+    "totalItems": 15
+  }
+}

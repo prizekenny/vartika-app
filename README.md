@@ -1,4 +1,4 @@
-# Project Name
+# Project Name - vartika-app
 
 Backend API Server
 

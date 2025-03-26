@@ -2,6 +2,22 @@
 
 import React from "react";
 import { Tab } from "@headlessui/react";
+import { 
+  FaHome, 
+  FaUsers, 
+  FaCog, 
+  FaBuilding, 
+  FaFileContract, 
+  FaFileInvoice,
+  FaExchangeAlt,
+  FaFolder,
+  FaTasks,
+  FaChartBar,
+  FaHistory,
+  FaLayerGroup,
+  FaSignOutAlt
+} from "react-icons/fa";
+import { useRouter } from "next/navigation";
 
 import DashboardTab from "./tabs/dashboard";
 import UserTab from "./tabs/user";
@@ -15,52 +31,98 @@ import AssignmentTab from "./tabs/assignment";
 import ReportTab from "./tabs/report";
 import LogTab from "./tabs/log";
 
+function classNames(...classes) {
+  return classes.filter(Boolean).join(' ');
+}
+
 function Workspace() {
+  const router = useRouter();
   const tabs = [
-    { name: "Dashboard", component: <DashboardTab /> },
-    { name: "Users", component: <UserTab /> },
-    { name: "Settings", component: <SettingTab /> },
-    { name: "Clients", component: <ClientTab /> },
-    { name: "Contracts", component: <ContractTab /> },
-    { name: "Invoices", component: <InvoiceTab /> },
-    { name: "Transactions (Use Case 2)", component: <TransactionTab /> },
-    { name: "Documents", component: <DocumentTab /> },
-    { name: "Assignments", component: <AssignmentTab /> },
-    { name: "Reports", component: <ReportTab /> },
-    { name: "Activity Logs", component: <LogTab /> },
+    { name: "Dashboard", icon: <FaHome />, component: <DashboardTab /> },
+    { name: "Users", icon: <FaUsers />, component: <UserTab /> },
+    { name: "Settings", icon: <FaCog />, component: <SettingTab /> },
+    { name: "Clients", icon: <FaBuilding />, component: <ClientTab /> },
+    { name: "Contracts", icon: <FaFileContract />, component: <ContractTab /> },
+    { name: "Invoices", icon: <FaFileInvoice />, component: <InvoiceTab /> },
+    { name: "Transactions", icon: <FaExchangeAlt />, component: <TransactionTab /> },
+    { name: "Documents", icon: <FaFolder />, component: <DocumentTab /> },
+    { name: "Assignments", icon: <FaTasks />, component: <AssignmentTab /> },
+    { name: "Reports", icon: <FaChartBar />, component: <ReportTab /> },
+    { name: "Activity Logs", icon: <FaHistory />, component: <LogTab /> },
   ];
+
+  const handleLogout = async () => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/logout`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        router.push('/login');
+      } else {
+        alert('Logout failed. Please try again.');
+      }
+    } catch (error) {
+      alert('An error occurred during logout. Please try again.');
+    }
+  };
 
   return (
     <main className="bg-gray-50 min-h-screen flex text-black">
       <Tab.Group as="div" className="flex w-full">
         {/* Left Side: Header + Tabs */}
-        <div className="w-1/4 bg-white shadow-lg flex flex-col">
+        <div className="w-1/5 bg-white shadow-md flex flex-col">
           {/* Header */}
-          <header className="bg-blue-500 text-white py-4 px-6 h-36 flex justify-center items-center">
-            <h1 className="text-2xl font-bold">Vartika</h1>
+          <header className="bg-gray-900 text-white py-8 px-6">
+            <div className="flex items-center justify-center space-x-3">
+              <FaLayerGroup className="text-3xl text-blue-400" />
+              <h1 className="text-2xl font-bold tracking-wide">Vartika</h1>
+            </div>
           </header>
 
           {/* Tabs */}
-          <Tab.List className="flex flex-col flex-1">
-            {tabs.map((tab, index) => (
-              <Tab
-                key={index}
-                className={({ selected }) =>
-                  `px-4 py-3 text-left cursor-pointer text-sm font-medium ${
-                    selected
-                      ? "bg-blue-100 text-blue-600 font-semibold border-l-4 border-blue-500"
-                      : "hover:bg-gray-100 text-gray-600"
-                  }`
-                }
-              >
-                {tab.name}
-              </Tab>
-            ))}
-          </Tab.List>
+          <div className="flex flex-col flex-1">
+            <Tab.List className="flex flex-col flex-1 py-4">
+              {tabs.map((tab, index) => (
+                <Tab
+                  key={index}
+                  className={({ selected }) =>
+                    classNames(
+                      'flex items-center px-4 py-3 my-1 mx-2 text-left cursor-pointer text-sm font-medium rounded-lg transition-colors duration-150',
+                      selected
+                        ? 'bg-gray-100 text-gray-900 font-semibold'
+                        : 'hover:bg-gray-50 text-gray-600'
+                    )
+                  }
+                >
+                  {({ selected }) => (
+                    <>
+                      <span className={classNames('mr-3 text-lg', selected ? 'text-blue-500' : 'text-gray-400')}>
+                        {tab.icon}
+                      </span>
+                      {tab.name}
+                    </>
+                  )}
+                </Tab>
+              ))}
+            </Tab.List>
+
+            {/* Logout Button */}
+            <button
+              onClick={handleLogout}
+              className="flex items-center px-4 py-3 mx-2 mb-4 text-left text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-red-600 rounded-lg transition-colors duration-150"
+            >
+              <FaSignOutAlt className="mr-3 text-lg opacity-75" />
+              Logout
+            </button>
+          </div>
         </div>
 
         {/* Right Side: Tab Panels */}
-        <div className="flex-1 bg-white shadow-lg p-6">
+        <div className="flex-1 bg-white p-8">
           <Tab.Panels>
             {tabs.map((tab, index) => (
               <Tab.Panel key={index} className="focus:outline-none">

@@ -1,0 +1,61 @@
+{
+  "todos": [
+    { "id": 1, "text": "Complete Q1 Financial Report", "starred": false },
+    { "id": 2, "text": "Prepare Board Meeting Materials", "starred": true },
+    { "id": 3, "text": "Review Project Budget Proposal", "starred": false },
+    { "id": 4, "text": "Update Business Development Plan", "starred": false },
+    { "id": 5, "text": "Quarterly Investor Communication", "starred": true },
+    { "id": 6, "text": "Evaluate Market Opportunities", "starred": false }
+  ],
+  "revenueData": [
+    { "month": "Jan", "revenue": 4000, "expenses": 2400 },
+    { "month": "Feb", "revenue": 3000, "expenses": 1398 },
+    { "month": "Mar", "revenue": 2000, "expenses": 9800 },
+    { "month": "Apr", "revenue": 2780, "expenses": 3908 },
+    { "month": "May", "revenue": 1890, "expenses": 4800 },
+    { "month": "Jun", "revenue": 2390, "expenses": 3800 }
+  ],
+  "marketShareData": [
+    { "name": "Product A", "value": 400 },
+    { "name": "Product B", "value": 300 },
+    { "name": "Product C", "value": 300 },
+    { "name": "Product D", "value": 200 }
+  ],
+  "growthData": [
+    { "month": "Jan", "growth": 20 },
+    { "month": "Feb", "growth": 35 },
+    { "month": "Mar", "growth": 25 },
+    { "month": "Apr", "growth": 45 },
+    { "month": "May", "growth": 40 },
+    { "month": "Jun", "growth": 50 }
+  ],
+  "expenseBreakdown": [
+    { "name": "Operations", "value": 35 },
+    { "name": "Marketing", "value": 25 },
+    { "name": "R&D", "value": 20 },
+    { "name": "Admin", "value": 20 }
+  ],
+  "financialMetrics": {
+    "revenue": {
+      "value": "$2.4M",
+      "change": "+12.5%",
+      "positive": true
+    },
+    "expenses": {
+      "value": "$1.1M",
+      "change": "-5.2%",
+      "positive": true
+    },
+    "profit": {
+      "value": "$1.3M",
+      "change": "+15.8%",
+      "positive": true
+    },
+    "margin": {
+      "value": "54.2%",
+      "change": "+3.2%",
+      "positive": true
+    }
+  },
+  "colors": ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"]
+}

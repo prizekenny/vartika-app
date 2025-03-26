@@ -1,0 +1,233 @@
+{
+  "statistics": {
+    "unpaidTotal": "$45,750",
+    "last30DaysReceived": "$78,250"
+  },
+  "invoices": [
+    {
+      "id": 1,
+      "date": "2025-02-24",
+      "number": "INV-2025-001",
+      "customer": "Tech Solutions Inc.",
+      "amount": "$3,500",
+      "status": "Pending",
+      "statusType": "pending"
+    },
+    {
+      "id": 2,
+      "date": "2025-02-23",
+      "number": "INV-2025-002",
+      "customer": "Global Systems Ltd.",
+      "amount": "$2,800",
+      "status": "Deposited",
+      "statusType": "paid"
+    },
+    {
+      "id": 3,
+      "date": "2025-02-22",
+      "number": "INV-2025-003",
+      "customer": "Digital Services Co.",
+      "amount": "$4,200",
+      "status": "Overdue 3 days",
+      "statusType": "overdue"
+    },
+    {
+      "id": 4,
+      "date": "2025-02-21",
+      "number": "INV-2025-004",
+      "customer": "Innovation Labs",
+      "amount": "$1,950",
+      "status": "Deposited",
+      "statusType": "paid"
+    },
+    {
+      "id": 5,
+      "date": "2025-02-20",
+      "number": "INV-2025-005",
+      "customer": "Future Tech Inc.",
+      "amount": "$5,300",
+      "status": "Pending",
+      "statusType": "pending"
+    },
+    {
+      "id": 6,
+      "date": "2025-02-19",
+      "number": "INV-2025-006",
+      "customer": "Smart Solutions",
+      "amount": "$2,100",
+      "status": "Overdue 5 days",
+      "statusType": "overdue"
+    },
+    {
+      "id": 7,
+      "date": "2025-02-18",
+      "number": "INV-2025-007",
+      "customer": "Cloud Nine Ltd.",
+      "amount": "$3,800",
+      "status": "Deposited",
+      "statusType": "paid"
+    },
+    {
+      "id": 8,
+      "date": "2025-02-17",
+      "number": "INV-2025-008",
+      "customer": "Data Systems Corp.",
+      "amount": "$4,500",
+      "status": "Pending",
+      "statusType": "pending"
+    },
+    {
+      "id": 9,
+      "date": "2025-02-16",
+      "number": "INV-2025-009",
+      "customer": "Quantum Computing Inc.",
+      "amount": "$6,700",
+      "status": "Overdue 7 days",
+      "statusType": "overdue"
+    },
+    {
+      "id": 10,
+      "date": "2025-02-15",
+      "number": "INV-2025-010",
+      "customer": "AI Solutions Ltd.",
+      "amount": "$3,200",
+      "status": "Deposited",
+      "statusType": "paid"
+    },
+    {
+      "id": 11,
+      "date": "2025-02-14",
+      "number": "INV-2025-011",
+      "customer": "Blockchain Tech",
+      "amount": "$4,800",
+      "status": "Pending",
+      "statusType": "pending"
+    },
+    {
+      "id": 12,
+      "date": "2025-02-13",
+      "number": "INV-2025-012",
+      "customer": "Security Systems Co.",
+      "amount": "$2,900",
+      "status": "Deposited",
+      "statusType": "paid"
+    },
+    {
+      "id": 13,
+      "date": "2025-02-12",
+      "number": "INV-2025-013",
+      "customer": "Network Solutions",
+      "amount": "$5,100",
+      "status": "Overdue 10 days",
+      "statusType": "overdue"
+    },
+    {
+      "id": 14,
+      "date": "2025-02-11",
+      "number": "INV-2025-014",
+      "customer": "Mobile Apps Inc.",
+      "amount": "$3,400",
+      "status": "Pending",
+      "statusType": "pending"
+    },
+    {
+      "id": 15,
+      "date": "2025-02-10",
+      "number": "INV-2025-015",
+      "customer": "Web Services Ltd.",
+      "amount": "$4,600",
+      "status": "Deposited",
+      "statusType": "paid"
+    },
+    {
+      "id": 16,
+      "date": "2025-02-09",
+      "number": "INV-2025-016",
+      "customer": "Cloud Storage Co.",
+      "amount": "$2,700",
+      "status": "Overdue 13 days",
+      "statusType": "overdue"
+    },
+    {
+      "id": 17,
+      "date": "2025-02-08",
+      "number": "INV-2025-017",
+      "customer": "Data Analytics Inc.",
+      "amount": "$5,900",
+      "status": "Pending",
+      "statusType": "pending"
+    },
+    {
+      "id": 18,
+      "date": "2025-02-07",
+      "number": "INV-2025-018",
+      "customer": "Software Solutions",
+      "amount": "$3,700",
+      "status": "Deposited",
+      "statusType": "paid"
+    },
+    {
+      "id": 19,
+      "date": "2025-02-06",
+      "number": "INV-2025-019",
+      "customer": "IoT Systems Ltd.",
+      "amount": "$4,300",
+      "status": "Overdue 16 days",
+      "statusType": "overdue"
+    },
+    {
+      "id": 20,
+      "date": "2025-02-05",
+      "number": "INV-2025-020",
+      "customer": "DevOps Corp.",
+      "amount": "$3,100",
+      "status": "Deposited",
+      "statusType": "paid"
+    },
+    {
+      "id": 21,
+      "date": "2025-02-04",
+      "number": "INV-2025-021",
+      "customer": "ML Research Co.",
+      "amount": "$6,200",
+      "status": "Pending",
+      "statusType": "pending"
+    },
+    {
+      "id": 22,
+      "date": "2025-02-03",
+      "number": "INV-2025-022",
+      "customer": "Big Data Solutions",
+      "amount": "$4,900",
+      "status": "Overdue 19 days",
+      "statusType": "overdue"
+    },
+    {
+      "id": 23,
+      "date": "2025-02-02",
+      "number": "INV-2025-023",
+      "customer": "Virtual Reality Inc.",
+      "amount": "$5,500",
+      "status": "Deposited",
+      "statusType": "paid"
+    },
+    {
+      "id": 24,
+      "date": "2025-02-01",
+      "number": "INV-2025-024",
+      "customer": "Cyber Security Ltd.",
+      "amount": "$3,900",
+      "status": "Pending",
+      "statusType": "pending"
+    },
+    {
+      "id": 25,
+      "date": "2025-01-31",
+      "number": "INV-2025-025",
+      "customer": "Edge Computing Co.",
+      "amount": "$4,700",
+      "status": "Deposited",
+      "statusType": "paid"
+    }
+  ]
+}
