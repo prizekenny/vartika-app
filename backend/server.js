@@ -13,6 +13,7 @@ import googleDriveRoutes from "./routes/googleDrive.js";
 import quickbooksAuthRoutes from "./routes/quickbooksAuth.js"; // Authentication logic
 import quickbooksRoutes from "./routes/quickbooks.js"; // API access logic
 import { loadTokensIntoCache } from "./services/tokenService.js";
+import clientsRouter from "./routes/Clients.js";
 
 const app = express();
 app.use(
@@ -66,6 +67,9 @@ app.use("/api/drive", googleDriveRoutes);
 app.use("/auth/quickbooks", quickbooksAuthRoutes);
 // QuickBooks API (fetch financial data)
 app.use("/api/quickbooks", quickbooksRoutes);
+
+// Register routes
+app.use('/api/clients', clientsRouter);
 
 // Load tokens into cache at server startup
 loadTokensIntoCache();

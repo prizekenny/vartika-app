@@ -12,13 +12,13 @@ export const pool = new Pool({
   port: process.env.DB_PORT,
   database: process.env.DB_NAME,
   // If using SSL (e.g., on Heroku)
-  // ssl:
-  //   process.env.NODE_ENV === "production"
-  //     ? {
-  //         rejectUnauthorized: false,
-  //       }
-  //     : false,
-  ssl: { rejectUnauthorized: false }, // ⚠️ 确保 NeonDB 的 SSL 连接
+  ssl:
+    process.env.NODE_ENV === "production"
+      ? {
+          rejectUnauthorized: false,
+        }
+      : false,
+  //ssl: { rejectUnauthorized: false }, // ⚠️ 确保 NeonDB 的 SSL 连接
 });
 
 // Test database connection

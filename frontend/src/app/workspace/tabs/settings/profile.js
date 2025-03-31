@@ -7,6 +7,7 @@ const ProfileTab = () => {
     lastName: "",
     email: "",
     phone: "",
+    address: "",
   });
 
   const handlePhotoUpload = (event) => {
@@ -124,6 +125,17 @@ const ProfileTab = () => {
               onChange={handleInputChange}
               className="w-full border p-3 rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Phone"
+            />
+          </div>
+          <div className="col-span-2">
+            <label className="block text-sm font-semibold mb-1">Address</label>
+            <input
+              type="text"
+              name="address"
+              value={userDetails.address}
+              onChange={handleInputChange}
+              className="w-full border p-3 rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter your address"
             />
           </div>
         </div>

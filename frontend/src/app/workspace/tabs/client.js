@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Table,
     Button,
@@ -15,163 +15,102 @@ import {
 } from 'antd';
 import { EditOutlined, DeleteOutlined, UserAddOutlined, ReloadOutlined } from '@ant-design/icons';
 import { FaSearch, FaUser, FaBuilding } from 'react-icons/fa';
+import axios from 'axios';
+
+// 配置 axios
+axios.defaults.baseURL = 'http://localhost:5001';
+axios.defaults.headers.common['Content-Type'] = 'application/json';
+
+// 添加請求攔截器用於調試
+axios.interceptors.request.use(request => {
+    console.log('Starting Request:', request);
+    return request;
+});
+
+axios.interceptors.response.use(
+    response => {
+        console.log('Response:', response);
+        return response;
+    },
+    error => {
+        console.error('Request Error:', error);
+        return Promise.reject(error);
+    }
+);
+
+const API_BASE_URL = "http://localhost:5001/api/clients";
 
 const ClientTab = () => {
-  const [clients, setClients] = useState([]);
+    const [clients, setClients] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [websocket, setWebsocket] = useState(null);
     const [isModalVisible, setIsModalVisible] = useState(false);
-  const [editingClient, setEditingClient] = useState(null);
+    const [editingClient, setEditingClient] = useState(null);
     const [form] = Form.useForm();
-    const [connectionStatus, setConnectionStatus] = useState('connecting');
-    const [reconnectAttempts, setReconnectAttempts] = useState(0);
-    const [isReconnecting, setIsReconnecting] = useState(false);
 
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage] = useState(10);
 
-  // Search state
-  const [searchTerm, setSearchTerm] = useState('');
+    // Search state
+    const [searchTerm, setSearchTerm] = useState('');
 
-  // Setup WebSocket connection with reconnection logic
-  const setupWebSocket = useCallback(() => {
-    if (isReconnecting) return;
-    
-    setIsReconnecting(true);
-    const ws = new WebSocket('ws://localhost:5001');
-    
-    ws.onopen = () => {
-      console.log('WebSocket connection established');
-      setConnectionStatus('connected');
-      setReconnectAttempts(0);
-      setIsReconnecting(false);
-      
-      // Send a ping every 30 seconds to keep the connection alive
-      const pingInterval = setInterval(() => {
-        if (ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({ type: 'PING' }));
-        }
-      }, 30000);
-      
-      // Store the interval ID for cleanup
-      ws.pingInterval = pingInterval;
-    };
-    
-    ws.onmessage = (event) => {
-      try {
-        const message = JSON.parse(event.data);
-        
-        switch (message.type) {
-          case 'INITIAL_DATA':
-            // Transform backend data to match our frontend structure
-            const transformedData = message.data.map(client => ({
-              id: client.user_id,
-              name: client.username || '',
-              type: client.client_type || 'Individual',
-              contact: client.email || '',
-              address: client.address || '',
-              phone: client.phone || '',
-              openTime: client.open_time || '9:00 AM - 5:00 PM',
-              status: client.status || 'active',
-              remark: client.remark || ''
-            }));
-            setClients(transformedData);
-            setLoading(false);
-            break;
-          case 'UPDATE':
-            handleClientUpdate(message.data);
-            break;
-          case 'DELETE':
-            handleClientDelete(message.data.userId || message.data.user_id);
-            break;
-          case 'CREATE':
-            handleClientCreate(message.data);
-            break;
-          case 'ERROR':
-            notification.error({
-              message: 'Operation Failed',
-              description: message.message || 'An error occurred during the operation'
+    // Fetch clients from the API
+    const fetchClients = async () => {
+        setLoading(true);
+        try {
+            console.log('Fetching clients from:', API_BASE_URL);
+            const response = await axios.get(API_BASE_URL, {
+                timeout: 5000, // 設置超時時間
+                headers: {
+                    'Accept': 'application/json'
+                }
             });
-            break;
-          case 'PONG':
-            // Handle server pong response if needed
-            break;
-          default:
-            console.log('Unknown message type:', message.type);
+            
+            console.log('API Response:', response.data);
+            
+            if (response.data) {
+                const transformedData = response.data.map(client => ({
+                    id: client.user_id,
+                    name: client.username,
+                    company_name: client.company_name,
+                    type: client.client_type || 'Individual',
+                    email: client.email,
+                    phone: client.phone,
+                    status: client.status || 'active',
+                    address: client.address || '',
+                    openTime: client.open_time || '9:00 AM - 5:00 PM',
+                    remark: client.remark || ''
+                }));
+                
+                console.log('Transformed Data:', transformedData);
+                setClients(transformedData);
+            }
+        } catch (error) {
+            console.error('Error details:', {
+                message: error.message,
+                response: error.response,
+                request: error.request
+            });
+            
+            notification.error({
+                message: '載入失敗',
+                description: error.response?.data?.message || '無法連接到服務器，請稍後再試。'
+            });
+        } finally {
+            setLoading(false);
         }
-      } catch (error) {
-        console.error('Error parsing message:', error);
-      }
     };
-    
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-      setConnectionStatus('error');
-      notification.error({
-        message: 'Connection Error',
-        description: 'Failed to connect to the server. Will try to reconnect automatically.'
-      });
-    };
-    
-    ws.onclose = () => {
-      console.log('WebSocket connection closed');
-      setConnectionStatus('disconnected');
-      
-      // Clear the ping interval
-      if (ws.pingInterval) {
-        clearInterval(ws.pingInterval);
-      }
-      
-      // Attempt to reconnect with exponential backoff
-      if (reconnectAttempts < 5) {
-        const timeout = Math.min(1000 * (2 ** reconnectAttempts), 30000);
-        setTimeout(() => {
-          setReconnectAttempts(prev => prev + 1);
-          setIsReconnecting(false);
-          setupWebSocket();
-        }, timeout);
-      } else {
-        notification.error({
-          message: 'Connection Lost',
-          description: 'Failed to reconnect to the server. Please refresh the page.'
-        });
-        setIsReconnecting(false);
-      }
-    };
-    
-    setWebsocket(ws);
-    
-    return ws;
-  }, [reconnectAttempts, isReconnecting]);
 
-  // Initialize WebSocket connection
-  useEffect(() => {
-    const ws = setupWebSocket();
-    
-    return () => {
-      if (ws) {
-        ws.close();
-      }
-    };
-  }, [setupWebSocket]);
-
-  // Manual reconnect function
-  const handleReconnect = () => {
-    if (websocket) {
-      websocket.close();
-    }
-    setReconnectAttempts(0);
-    setIsReconnecting(false);
-    setupWebSocket();
-  };
+    // Load clients on component mount
+    useEffect(() => {
+        fetchClients();
+    }, []);
 
     const columns = [
         {
             title: 'Client',
             dataIndex: 'name',
             key: 'name',
-            sorter: (a, b) => a.name.localeCompare(b.name),
             render: (text, record) => (
                 <div className="flex items-center">
                     <div className="flex-shrink-0 h-8 w-8">
@@ -186,7 +125,10 @@ const ClientTab = () => {
                         )}
                     </div>
                     <div className="ml-3">
-                        <div className="text-sm font-medium text-gray-900">{text}</div>
+                        <div className="text-sm font-medium text-gray-900">
+                            {record.company_name || text}
+                        </div>
+                        <div className="text-sm text-gray-500">{record.email}</div>
                     </div>
                 </div>
             ),
@@ -195,6 +137,7 @@ const ClientTab = () => {
             title: 'Type',
             dataIndex: 'type',
             key: 'type',
+            width: '24',
             render: (text) => (
                 <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
                     text === 'Individual' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
@@ -207,11 +150,7 @@ const ClientTab = () => {
             title: 'ID',
             dataIndex: 'id',
             key: 'id',
-        },
-        {
-            title: 'Contact',
-            dataIndex: 'contact',
-            key: 'contact',
+            width: '20',
         },
         {
             title: 'Address',
@@ -222,16 +161,19 @@ const ClientTab = () => {
             title: 'Phone',
             dataIndex: 'phone',
             key: 'phone',
+            width: '36',
         },
         {
             title: 'Open Time',
             dataIndex: 'openTime',
             key: 'openTime',
+            width: '28',
         },
         {
             title: 'Status',
             dataIndex: 'status',
             key: 'status',
+            width: '24',
             filters: [
                 { text: 'Active', value: 'active' },
                 { text: 'Inactive', value: 'inactive' },
@@ -241,7 +183,7 @@ const ClientTab = () => {
                 <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
                     text === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                 }`}>
-                    {text}
+                    {text === 'active' ? 'Active' : 'Inactive'}
                 </span>
             ),
         },
@@ -277,15 +219,17 @@ const ClientTab = () => {
     ];
 
     const showEditModal = (client) => {
+        console.log('Editing client:', client);
         setEditingClient(client);
         form.setFieldsValue({
             username: client.name,
-            email: client.contact,
+            email: client.email,
             phone: client.phone,
-            address: client.address,
             type: client.type,
-            openTime: client.openTime,
             status: client.status,
+            address: client.address,
+            company_name: client.company_name,
+            openTime: client.openTime || '9:00 AM - 5:00 PM',
             remark: client.remark
         });
         setIsModalVisible(true);
@@ -294,169 +238,91 @@ const ClientTab = () => {
     const handleModalOk = async () => {
         try {
             const values = await form.validateFields();
-            if (websocket && websocket.readyState === WebSocket.OPEN) {
-                const data = {
-                    type: editingClient ? 'UPDATE' : 'CREATE',
-                    userId: editingClient?.id,
-                    username: values.username,
-                    email: values.email,
-                    phone: values.phone,
-                    address: values.address,
-                    client_type: values.type,
-                    open_time: values.openTime,
-                    status: values.status,
-                    remark: values.remark
-                };
-                
-                websocket.send(JSON.stringify(data));
-                setIsModalVisible(false);
-                form.resetFields();
-                setEditingClient(null);
-                
-                // Optimistic update for better UX
-                if (editingClient) {
-                    setClients(prevClients =>
-                        prevClients.map(client => {
-                            if (client.id === editingClient.id) {
-                                return {
-                                    ...client,
-                                    name: values.username,
-                                    contact: values.email,
-                                    phone: values.phone,
-                                    address: values.address,
-                                    type: values.type,
-                                    openTime: values.openTime,
-                                    status: values.status,
-                                    remark: values.remark
-                                };
-                            }
-                            return client;
-                        })
-                    );
-                } else {
-                    // For new clients, we'll wait for the server to send the CREATE event with the ID
-                    setLoading(true);
+            const clientData = {
+                user_id: editingClient?.id,
+                username: values.username,
+                email: values.email,
+                phone: values.phone,
+                client_type: values.type,
+                status: values.status,
+                address: values.address,
+                company_name: values.company_name,
+                open_time: values.openTime,
+                remark: values.remark
+            };
+            
+            console.log('Sending data:', clientData);
+            
+            if (editingClient) {
+                const response = await axios.put(`${API_BASE_URL}/${editingClient.id}`, clientData);
+                console.log('Update response:', response);
+                if (response.status === 200) {
+                    message.success("Client Updated");
+                    fetchClients();
+                    setIsModalVisible(false);
+                    form.resetFields();
+                    setEditingClient(null);
                 }
             } else {
-                notification.error({
-                    message: 'Connection Lost',
-                    description: 'Connection to server lost. Please try reconnecting.'
-                });
+                await axios.post(API_BASE_URL, clientData);
+                message.success("New Client Created");
             }
         } catch (error) {
-            console.error('Validation failed:', error);
-        }
-    };
-
-    const handleClientUpdate = (updatedClient) => {
-        setClients(prevClients =>
-            prevClients.map(client => {
-                if (client.id === updatedClient.userId || 
-                    client.id === updatedClient.user_id) {
-                    return {
-                        ...client,
-                        name: updatedClient.username || client.name,
-                        contact: updatedClient.email || client.contact,
-                        phone: updatedClient.phone || client.phone,
-                        status: updatedClient.status || client.status,
-                        address: updatedClient.address || client.address,
-                        openTime: updatedClient.open_time || client.openTime,
-                        remark: updatedClient.remark || client.remark,
-                        type: updatedClient.client_type || client.type
-                    };
-                }
-                return client;
-            })
-        );
-        message.success('Client updated successfully');
-    };
-
-    const handleClientDelete = (userId) => {
-        setClients(prevClients =>
-            prevClients.filter(client => client.id !== userId)
-        );
-        message.success('Client deleted successfully');
-    };
-
-    const handleClientCreate = (newClient) => {
-        const transformedClient = {
-            id: newClient.user_id || newClient.userId,
-            name: newClient.username || '',
-            type: newClient.client_type || 'Individual',
-            contact: newClient.email || '',
-            address: newClient.address || '',
-            phone: newClient.phone || '',
-            openTime: newClient.open_time || '9:00 AM - 5:00 PM',
-            status: newClient.status || 'active',
-            remark: newClient.remark || ''
-        };
-        setClients(prevClients => [...prevClients, transformedClient]);
-        setLoading(false);
-        message.success('Client created successfully');
-    };
-
-    const handleDelete = (userId) => {
-        if (websocket && websocket.readyState === WebSocket.OPEN) {
-            websocket.send(JSON.stringify({
-                type: 'DELETE',
-                userId: userId
-            }));
+            console.error("Error details:", {
+                message: error.message,
+                response: error.response?.data,
+                status: error.response?.status
+            });
             
-            // Optimistic update
-            setClients(prevClients => 
-                prevClients.filter(client => client.id !== userId)
-            );
-        } else {
             notification.error({
-                message: 'Connection Lost',
-                description: 'Connection to server lost. Please try reconnecting.'
+                message: '更新失敗',
+                description: error.response?.data?.message || '更新客戶資料時發生錯誤'
             });
         }
     };
 
-  // Filter client list
-  const filteredClients = clients.filter(client => {
-    const matchesSearch = 
-      (client.name && client.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (client.contact && client.contact.toLowerCase().includes(searchTerm.toLowerCase()));
-    return matchesSearch;
-  });
+    const handleDelete = async (userId) => {
+        try {
+            await axios.delete(`${API_BASE_URL}/${userId}`);
+            message.success("Client deleted");
+            fetchClients(); // 重新載入數據
+        } catch (error) {
+            console.error("Error deleting client:", error);
+            notification.error({
+                message: 'Delete failed',
+                description: error.response?.data?.message || 'Delete process failed'
+            });
+        }
+    };
 
-  // Handle search
-  const handleSearch = (e) => {
-    e.preventDefault();
-    console.log('Searching for:', searchTerm);
-  };
+    // Filter client list
+    const filteredClients = clients.filter(client => {
+        const matchesSearch = 
+            (client.name && client.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (client.email && client.email.toLowerCase().includes(searchTerm.toLowerCase()));
+        return matchesSearch;
+    });
 
-  // Handle pagination
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+    // Handle search
+    const handleSearch = (e) => {
+        e.preventDefault();
+        console.log('Searching for:', searchTerm);
+    };
 
-  return (
+    // Handle pagination
+    const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+    return (
         <div className="max-w-[1400px] mx-auto p-4">
-            {/* Title and connection status */}
+            {/* Title */}
             <div className="mb-4 flex justify-between items-center">
                 <h2 className="text-xl font-bold text-gray-800">Clients</h2>
-                <div className="flex items-center">
-                    <span className="mr-2">
-                        Status: 
-                        <span className={`ml-1 ${
-                            connectionStatus === 'connected' ? 'text-green-600' : 
-                            connectionStatus === 'connecting' ? 'text-yellow-600' : 
-                            'text-red-600'
-                        }`}>
-                            {connectionStatus === 'connected' ? 'Connected' : 
-                             connectionStatus === 'connecting' ? 'Connecting...' : 
-                             'Disconnected'}
-                        </span>
-                    </span>
-                    <Button 
-                        icon={<ReloadOutlined />} 
-                        onClick={handleReconnect}
-                        disabled={connectionStatus === 'connected' || isReconnecting}
-                    >
-                        {isReconnecting ? 'Reconnecting...' : 'Reconnect'}
-                    </Button>
-                </div>
+                <Button 
+                    icon={<ReloadOutlined />} 
+                    onClick={fetchClients}
+                >
+                    Refresh
+                </Button>
             </div>
 
             {/* Search bar */}
@@ -492,11 +358,13 @@ const ClientTab = () => {
                         form.setFieldsValue({
                             type: 'Individual',
                             status: 'active',
-                            openTime: '9:00 AM - 5:00 PM'
+                            registerTime: new Date().toLocaleDateString(),
+                            address: '',
+                            openTime: '9:00 AM - 5:00 PM',
+                            remark: ''
                         });
                         setIsModalVisible(true);
                     }}
-                    disabled={connectionStatus !== 'connected'}
                 >
                     Add New Client
                 </Button>
@@ -517,8 +385,8 @@ const ClientTab = () => {
                         showSizeChanger: false
                     }}
                     locale={{
-                        emptyText: connectionStatus !== 'connected' ? 
-                            'Connection to server lost. Please reconnect.' : 
+                        emptyText: loading ? 
+                            'Loading client data...' : 
                             'No client data available.'
                     }}
                 />
@@ -535,7 +403,6 @@ const ClientTab = () => {
                     setEditingClient(null);
                 }}
                 width={700}
-                okButtonProps={{ disabled: connectionStatus !== 'connected' }}
             >
                 <Form
                     form={form}
@@ -544,7 +411,17 @@ const ClientTab = () => {
                     <Form.Item
                         name="username"
                         label="Name"
-                        rules={[{ required: true, message: 'Please input client name!' }]}
+                        rules={[{ required: true, message: '請輸入客戶名稱！' }]}
+                    >
+                        <Input />
+                    </Form.Item>
+                    <Form.Item
+                        name="company_name"
+                        label="Company Name"
+                        rules={[{ 
+                            required: ({ getFieldValue }) => getFieldValue('type') === 'Company',
+                            message: '公司類型客戶必須輸入公司名稱！'
+                        }]}
                     >
                         <Input />
                     </Form.Item>
@@ -570,14 +447,14 @@ const ClientTab = () => {
                         <Input />
                     </Form.Item>
                     <Form.Item
-                        name="address"
-                        label="Address"
+                        name="phone"
+                        label="Phone"
                     >
                         <Input />
                     </Form.Item>
                     <Form.Item
-                        name="phone"
-                        label="Phone"
+                        name="address"
+                        label="Address"
                     >
                         <Input />
                     </Form.Item>
@@ -602,7 +479,7 @@ const ClientTab = () => {
                         name="remark"
                         label="Remark"
                     >
-                        <Input.TextArea rows={3} />
+                        <Input.TextArea />
                     </Form.Item>
                 </Form>
             </Modal>
