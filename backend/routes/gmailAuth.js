@@ -2,6 +2,7 @@ import express from "express";
 import passport from "passport";
 import fs from "fs";
 import { updateToken } from "../services/tokenService.js";
+import auditLog from "../middlewares/auditLog.js";
 
 const router = express.Router();
 
@@ -10,6 +11,7 @@ const router = express.Router();
  */
 router.get(
   "/",
+  auditLog("gmail_oauth_start"),
   passport.authenticate("google-gmail", {
     scope: ["profile", "email", "https://mail.google.com/"],
     accessType: "offline",
@@ -22,6 +24,7 @@ router.get(
  */
 router.get(
   "/callback",
+  auditLog("gmail_oauth_callback"),
   passport.authenticate("google-gmail", { failureRedirect: "/login" }),
   async (req, res) => {
     try {
@@ -39,7 +42,6 @@ router.get(
         return res.status(400).json({ error: "No refresh_token received" });
       }
 
-      // ✅ Store or update refresh_token using updateToken function
       await updateToken(userEmail, "gmail", null, refreshToken, null, null);
 
       console.log(`✅ Stored refresh_token for Gmail: ${userEmail}`);

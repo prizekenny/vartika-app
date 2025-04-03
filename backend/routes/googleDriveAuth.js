@@ -1,6 +1,7 @@
 import express from "express";
 import passport from "passport";
 import { updateToken } from "../services/tokenService.js";
+import auditLog from "../middlewares/auditLog.js";
 
 const router = express.Router();
 
@@ -9,6 +10,7 @@ const router = express.Router();
  */
 router.get(
   "/",
+  auditLog("google_drive_oauth_start"),
   passport.authenticate("google-drive", {
     scope: ["profile", "email", "https://www.googleapis.com/auth/drive"],
     accessType: "offline",
@@ -21,6 +23,7 @@ router.get(
  */
 router.get(
   "/callback",
+  auditLog("google_drive_oauth_callback"),
   passport.authenticate("google-drive", { failureRedirect: "/login" }),
   async (req, res) => {
     try {

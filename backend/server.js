@@ -11,6 +11,7 @@ import googleDriveRoutes from "./routes/googleDrive.js";
 import quickbooksAuthRoutes from "./routes/quickbooksAuth.js"; // ✅ 认证逻辑
 import quickbooksRoutes from "./routes/quickbooks.js"; // ✅ API 访问逻辑
 import { loadTokensIntoCache } from "./services/tokenService.js";
+import logRoutes from "./routes/logs.js";
 
 const app = express();
 app.use(
@@ -62,6 +63,9 @@ app.use("/api/drive", googleDriveRoutes);
 app.use("/auth/quickbooks", quickbooksAuthRoutes);
 // ✅ QuickBooks API (获取财务数据)
 app.use("/api/quickbooks", quickbooksRoutes);
+
+// ✅ Logs API routes
+app.use("/api/logs", logRoutes);
 
 // 🔹 Load tokens into cache at server startup
 loadTokensIntoCache();

@@ -1,242 +1,141 @@
 import { quickbooksAuthClient } from "../config/quickbooksAuth.js";
-import { getToken, getAllTokensByPlatform } from "../services/tokenService.js";
 
-// ✅ **全局声明 QuickBooks API Base URL** (sandbox/production 自动切换)
+import { updateToken } from "./tokenService.js";
+import axios from "axios";
+
 const QUICKBOOKS_BASE_URL =
   process.env.QUICKBOOKS_ENV === "sandbox"
     ? "https://sandbox-quickbooks.api.intuit.com"
     : "https://quickbooks.api.intuit.com";
 
-/**
- * 📌 **Get QuickBooks API client with stored access token (跳过 `expires_at` 检测)**
- */
-async function getQuickBooksClient() {
-  try {
-    const tokenData = await getToken("vartika.portal@gmail.com", "quickbooks");
-
-    console.log("🔍 Debug: Retrieved Token Data:", tokenData);
-
-    if (!tokenData || !tokenData.access_token) {
-      throw new Error("❌ No QuickBooks access token found. Please authorize.");
+class QuickBooksClient {
+  constructor(token) {
+    if (!token || !token.access_token || !token.realm_id) {
+      throw new Error("Invalid QuickBooks token");
     }
-
-    const accessToken = tokenData.access_token;
-    const realmId = tokenData.realm_id;
-
-    if (!realmId) {
-      throw new Error(
-        "❌ QuickBooks realmId is missing. Reauthorization required."
-      );
-    }
-
-    console.log(
-      `🔍 Debug: Using Access Token: ${accessToken}, realmID: ${realmId}`
-    );
-
-    // ✅ 直接使用 accessToken
-    quickbooksAuthClient.setToken(accessToken);
-
-    return { client: quickbooksAuthClient, realmId, accessToken };
-  } catch (error) {
-    console.error("❌ Failed to get QuickBooks client:", error);
-    throw error;
+    this.accessToken = token.access_token;
+    this.refreshToken = token.refresh_token;
+    this.realmId = token.realm_id;
+    this.expiresAt = token.expires_at;
+    this.userEmail = token.user_email;
+    this.client = quickbooksAuthClient;
+    this.client.setToken(this.accessToken);
   }
-}
 
-/**
- * 📌 **获取 QuickBooks 公司信息**
- */
-async function getCompanyInfo() {
-  try {
-    const { client, realmId, accessToken } = await getQuickBooksClient();
-
-    const response = await client.makeApiCall({
-      url: `${QUICKBOOKS_BASE_URL}/v3/company/${realmId}/companyinfo/${realmId}`,
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        Accept: "application/json",
-      },
-    });
-
-    const data = response.json ? response.json : response.response?.data;
-    return data;
-  } catch (error) {
-    console.error("❌ Failed to fetch company info:", error);
-    throw error;
-  }
-}
-
-/**
- * 📌 **获取 QuickBooks 的所有发票**
- */
-async function getInvoices() {
-  try {
-    console.log("🔍 Debug: Fetching QuickBooks invoices...");
-    const { client, realmId, accessToken } = await getQuickBooksClient();
-
-    if (!accessToken) {
-      throw new Error("❌ No Access Token Found.");
-    }
-
-    const response = await client.makeApiCall({
-      url: `${QUICKBOOKS_BASE_URL}/v3/company/${realmId}/query?query=SELECT * FROM Invoice`,
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        Accept: "application/json",
-      },
-    });
-
-    const data = response.json ? response.json : response.response?.data;
-    return data;
-  } catch (error) {
-    console.error("❌ Failed to fetch invoices:", error);
-    throw error;
-  }
-}
-
-/**
- * 🔍 Check if QuickBooks is authorized via API
- */
-async function isAuthorized() {
-  try {
-    console.log("🔍 Debug: Checking QuickBooks Authorization...");
-
-    // ✅ Use `getQuickBooksClient()` to ensure correct token retrieval
-    const { client, realmId, accessToken } = await getQuickBooksClient();
-
-    if (!accessToken) {
-      console.log("❌ No Access Token Found.");
-      return { authorized: false, error: "No valid access token found" };
-    }
-
-    // ✅ Test API call to check authorization
-    const response = await client.makeApiCall({
-      url: `${QUICKBOOKS_BASE_URL}/v3/company/${realmId}/companyinfo/${realmId}`,
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        Accept: "application/json",
-      },
-    });
-
-    const data = response.json ? response.json : response.response?.data;
-
-    console.log(`✅ QuickBooks API authorized for company:`, data);
-    return { authorized: true, company: data };
-  } catch (error) {
-    console.error(`❌ QuickBooks authorization failed:`, error);
-    return { authorized: false, error: "Invalid or expired token" };
-  }
-}
-
-/**
- * 📊 Retrieve Profit and Loss Report
- */
-async function reportProfitAndLoss(options = {}) {
-  try {
-    console.log("🔍 Fetching Profit and Loss Report...");
-
-    const { client, realmId, accessToken } = await getQuickBooksClient();
-
-    if (!accessToken) {
-      throw new Error("❌ No Access Token Found.");
-    }
-
-    const response = await client.makeApiCall({
-      url: `${QUICKBOOKS_BASE_URL}/v3/company/${realmId}/reports/ProfitAndLoss`,
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        Accept: "application/json",
-      },
-      params: options, // Pass user-provided options
-    });
-
-    console.log(
-      "✅ Profit and Loss Report retrieved:",
-      response.response?.data
-    );
-    return response.response?.data;
-  } catch (error) {
-    console.error("❌ Failed to fetch Profit and Loss Report:", error);
-    throw error;
-  }
-}
-
-/**
- * 📊 Retrieve Profit and Loss Detail Report
- */
-async function reportProfitAndLossDetail(options = {}) {
-  try {
-    console.log("🔍 Fetching Profit and Loss Detail Report...");
-
-    const { client, realmId, accessToken } = await getQuickBooksClient();
-
-    if (!accessToken) {
-      throw new Error("❌ No Access Token Found.");
-    }
-
-    const response = await client.makeApiCall({
-      url: `${QUICKBOOKS_BASE_URL}/v3/company/${realmId}/reports/ProfitAndLossDetail`,
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        Accept: "application/json",
-      },
-      params: options, // Pass user-provided options
-    });
-
-    console.log(
-      "✅ Profit and Loss Detail Report retrieved:",
-      response.response?.data
-    );
-    return response.response?.data;
-  } catch (error) {
-    console.error("❌ Failed to fetch Profit and Loss Detail Report:", error);
-    throw error;
-  }
-}
-
-/**
- * 🔍 Get all authorized QuickBooks users from cache
- */
-async function getAllAuthorizedUsers() {
-  const allTokens = await getAllTokensByPlatform("quickbooks");
-  const authorizedUsers = [];
-
-  for (const token of allTokens) {
-    try {
-      const { client, realmId, accessToken } = await getQuickBooksClient(
-        token.user_email
-      );
-      await client.makeApiCall({
-        url: `${QUICKBOOKS_BASE_URL}/v3/company/${realmId}/companyinfo/${realmId}`,
-        method: "GET",
+  async #refreshAccessToken() {
+    const res = await axios.post(
+      "https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer",
+      new URLSearchParams({
+        grant_type: "refresh_token",
+        refresh_token: this.refreshToken,
+      }),
+      {
         headers: {
-          Authorization: `Bearer ${accessToken}`,
-          Accept: "application/json",
+          Authorization: `Basic ${Buffer.from(
+            `${process.env.QUICKBOOKS_CLIENT_ID}:${process.env.QUICKBOOKS_CLIENT_SECRET}`
+          ).toString("base64")}`,
+          "Content-Type": "application/x-www-form-urlencoded",
         },
-      });
+      }
+    );
 
-      authorizedUsers.push(token.user_email);
-    } catch (error) {
-      console.error(
-        `❌ QuickBooks API authorization failed for ${token.user_email}:`,
-        error
-      );
+    const newToken = res.data;
+    const newExpiresAt = new Date(Date.now() + newToken.expires_in * 1000);
+    await updateToken(
+      this.userEmail,
+      "quickbooks",
+      newToken.access_token,
+      newToken.refresh_token || this.refreshToken,
+      this.realmId,
+      newExpiresAt
+    );
+
+    this.accessToken = newToken.access_token;
+    this.refreshToken = newToken.refresh_token || this.refreshToken;
+    this.expiresAt = newExpiresAt;
+    this.client.setToken(this.accessToken);
+
+    console.log(
+      `✅ Token refreshed for ${this.userEmail} (${this.realmId}) (${newExpiresAt})`
+    );
+  }
+
+  async #ensureValidToken() {
+    if (
+      !this.expiresAt ||
+      new Date() >= new Date(this.expiresAt) - 5 * 60 * 1000
+    ) {
+      await this.#refreshAccessToken();
     }
   }
 
-  return authorizedUsers;
+  async getCompanyInfo() {
+    await this.#ensureValidToken();
+    const response = await this.client.makeApiCall({
+      url: `${QUICKBOOKS_BASE_URL}/v3/company/${this.realmId}/companyinfo/${this.realmId}`,
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${this.accessToken}`,
+        Accept: "application/json",
+      },
+    });
+    return response.json || response.response?.data;
+  }
+
+  async getInvoices() {
+    await this.#ensureValidToken();
+    const response = await this.client.makeApiCall({
+      url: `${QUICKBOOKS_BASE_URL}/v3/company/${this.realmId}/query?query=SELECT * FROM Invoice`,
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${this.accessToken}`,
+        Accept: "application/json",
+      },
+    });
+    return response.json || response.response?.data;
+  }
+
+  async isAuthorized() {
+    await this.#ensureValidToken();
+    const response = await this.client.makeApiCall({
+      url: `${QUICKBOOKS_BASE_URL}/v3/company/${this.realmId}/companyinfo/${this.realmId}`,
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${this.accessToken}`,
+        Accept: "application/json",
+      },
+    });
+    const data = response.json || response.response?.data;
+    return { authorized: true, company: data };
+  }
+
+  async reportProfitAndLoss(options = {}) {
+    await this.#ensureValidToken();
+    const response = await this.client.makeApiCall({
+      url: `${QUICKBOOKS_BASE_URL}/v3/company/${this.realmId}/reports/ProfitAndLoss`,
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${this.accessToken}`,
+        Accept: "application/json",
+      },
+      params: options,
+    });
+    return response.response?.data;
+  }
+
+  async reportProfitAndLossDetail(options = {}) {
+    await this.#ensureValidToken();
+    const response = await this.client.makeApiCall({
+      url: `${QUICKBOOKS_BASE_URL}/v3/company/${this.realmId}/reports/ProfitAndLossDetail`,
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${this.accessToken}`,
+        Accept: "application/json",
+      },
+      params: options,
+    });
+    return response.response?.data;
+  }
 }
 
-export {
-  getCompanyInfo,
-  getInvoices,
-  isAuthorized,
-  getAllAuthorizedUsers,
-  reportProfitAndLoss,
-  reportProfitAndLossDetail,
-};
+export { QuickBooksClient };

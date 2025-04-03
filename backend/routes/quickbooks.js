@@ -1,21 +1,19 @@
 import express from "express";
-import {
-  getCompanyInfo,
-  getInvoices,
-  isAuthorized,
-  getAllAuthorizedUsers,
-  reportProfitAndLoss,
-  reportProfitAndLossDetail,
-} from "../services/quickbooksService.js";
+import { getQuickBooksToken } from "../services/tokenService.js";
+import { QuickBooksClient } from "../services/quickbooksService.js";
+import auditLog from "../middlewares/auditLog.js";
 
 const router = express.Router();
 
 /**
- * 📌 **Get QuickBooks company information**
+ * 📌 获取公司信息
  */
-router.get("/company", async (req, res) => {
+router.get("/company", auditLog("get_company_info"), async (req, res) => {
   try {
-    const data = await getCompanyInfo();
+    const token = await getQuickBooksToken();
+    const qb = new QuickBooksClient(token);
+
+    const data = await qb.getCompanyInfo();
     res.json(data);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -23,11 +21,14 @@ router.get("/company", async (req, res) => {
 });
 
 /**
- * 📌 **Get all invoices from QuickBooks**
+ * 📌 获取发票
  */
-router.get("/invoices", async (req, res) => {
+router.get("/invoices", auditLog("get_invoices"), async (req, res) => {
   try {
-    const data = await getInvoices();
+    const token = await getQuickBooksToken();
+    const qb = new QuickBooksClient(token);
+
+    const data = await qb.getInvoices();
     res.json(data);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -35,11 +36,52 @@ router.get("/invoices", async (req, res) => {
 });
 
 /**
- * 🔍 Check if QuickBooks is authorized
+ * 📌 获取 Profit and Loss Report
  */
-router.get("/authorized", async (req, res) => {
+router.get(
+  "/reports/profit-and-loss",
+  auditLog("get_profit_and_loss", (req) => req.query),
+  async (req, res) => {
+    try {
+      const token = await getQuickBooksToken();
+      const qb = new QuickBooksClient(token);
+
+      const data = await qb.reportProfitAndLoss(req.query);
+      res.json(data);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+);
+
+/**
+ * 📌 获取 Profit and Loss Detail Report
+ */
+router.get(
+  "/reports/profit-and-loss-detail",
+  auditLog("get_profit_and_loss_detail", (req) => req.query),
+  async (req, res) => {
+    try {
+      const token = await getQuickBooksToken();
+      const qb = new QuickBooksClient(token);
+
+      const data = await qb.reportProfitAndLossDetail(req.query);
+      res.json(data);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+);
+
+/**
+ * 📌 检查是否授权
+ */
+router.get("/authorized", auditLog("check_authorization"), async (req, res) => {
   try {
-    const result = await isAuthorized();
+    const token = await getQuickBooksToken();
+    const qb = new QuickBooksClient(token);
+
+    const result = await qb.isAuthorized();
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -47,41 +89,19 @@ router.get("/authorized", async (req, res) => {
 });
 
 /**
- * 📊 Get Profit and Loss Report
+ * 📌 获取所有 QuickBooks 授权用户（仅供管理或调试）
  */
-router.get("/reports/profit-and-loss", async (req, res) => {
-  try {
-    const options = req.query; // Get user-defined filters
-    const report = await reportProfitAndLoss(options);
-    res.json(report);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+router.get(
+  "/authorized-users",
+  auditLog("get_authorized_users"),
+  async (req, res) => {
+    try {
+      const users = await getAllTokensByPlatform("quickbooks");
+      res.json(users);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   }
-});
-
-/**
- * 📊 Get Profit and Loss Detail Report
- */
-router.get("/reports/profit-and-loss-detail", async (req, res) => {
-  try {
-    const options = req.query; // Get user-defined filters
-    const report = await reportProfitAndLossDetail(options);
-    res.json(report);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-/**
- * ✅ Get all authorized QuickBooks users
- */
-router.get("/authorized-users", async (req, res) => {
-  try {
-    const authorizedUsers = await getAllAuthorizedUsers();
-    res.json({ authorizedUsers });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+);
 
 export default router;

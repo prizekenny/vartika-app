@@ -5,13 +5,14 @@ import {
 } from "../config/quickbooksAuth.js";
 import { pool } from "../config/database.js";
 import { updateToken } from "../services/tokenService.js";
+import auditLog from "../middlewares/auditLog.js";
 
 const router = express.Router();
 
 /**
  * ✅ **Redirect users to QuickBooks OAuth**
  */
-router.get("/", (req, res) => {
+router.get("/", auditLog("quickbooks_oauth_start"), (req, res) => {
   const authURL = getQuickBooksAuthURL();
   res.redirect(authURL);
 });
@@ -19,57 +20,62 @@ router.get("/", (req, res) => {
 /**
  * ✅ **Handle QuickBooks OAuth callback**
  */
-router.get("/callback", async (req, res) => {
-  try {
-    const { userEmail, accessToken, refreshToken, realmId } =
-      await handleQuickBooksCallback({ url: req.url });
+router.get(
+  "/callback",
+  auditLog("quickbooks_oauth_callback"),
+  async (req, res) => {
+    try {
+      const { userEmail, accessToken, refreshToken, realmId } =
+        await handleQuickBooksCallback({ url: req.url });
 
-    // ⚠️ Extract email properly
-    if (!userEmail) {
-      console.warn("⚠️ No email found in QuickBooks OAuth response.");
-      return res.status(400).json({ error: "User email is required" });
-    }
+      // ⚠️ Extract email properly
+      if (!userEmail) {
+        console.warn("⚠️ No email found in QuickBooks OAuth response.");
+        return res.status(400).json({ error: "User email is required" });
+      }
 
-    // ✅ Store or update QuickBooks tokens in the database
-    await updateToken(
-      userEmail,
-      "quickbooks",
-      accessToken,
-      refreshToken,
-      realmId,
-      null
-    );
+      // ✅ Store or update QuickBooks tokens in the database
+      await updateToken(
+        userEmail,
+        "quickbooks",
+        accessToken,
+        refreshToken,
+        realmId,
+        null
+      );
 
-    console.log(`✅ Stored QuickBooks refresh_token for: ${userEmail}`);
+      console.log(`✅ Stored QuickBooks refresh_token for: ${userEmail}`);
 
-    // Set session flag to indicate successful OAuth
-    if (req.session) {
-      req.session.quickbooks_oauth_success = true;
-      req.session.quickbooks_email = userEmail;
-      req.session.quickbooks_timestamp = Date.now();
-    }
+      // Set session flag to indicate successful OAuth
+      if (req.session) {
+        req.session.quickbooks_oauth_success = true;
+        req.session.quickbooks_email = userEmail;
+        req.session.quickbooks_timestamp = Date.now();
+      }
 
-    // Return HTML that closes the popup and notifies the parent window
-    res.setHeader("Content-Type", "text/html");
-    res.send(`
+      // Return HTML that closes the popup and notifies the parent window
+      res.setHeader("Content-Type", "text/html");
+      res.send(`
          <script>
           window.close();
         </script>
     `);
-  } catch (error) {
-    console.error("❌ QuickBooks OAuth callback failed:", error);
-    res.status(500).json({ error: "Failed to authenticate with QuickBooks" });
+    } catch (error) {
+      console.error("❌ QuickBooks OAuth callback failed:", error);
+      res.status(500).json({ error: "Failed to authenticate with QuickBooks" });
+    }
   }
-});
+);
 
 /**
  * ✅ **Check QuickBooks OAuth status**
  * Returns authorization status and company information
  */
-router.get("/status", async (req, res) => {
+router.get("/status", auditLog("quickbooks_oauth_status"), async (req, res) => {
   try {
     // Check for recent OAuth success from session
-    const recentOAuthSuccess = req.session && req.session.quickbooks_oauth_success;
+    const recentOAuthSuccess =
+      req.session && req.session.quickbooks_oauth_success;
     const userEmail = req.session?.quickbooks_email || req.user?.email || null;
 
     if (!userEmail) {

@@ -1,5 +1,6 @@
 import { pool } from "../config/database.js";
 import NodeCache from "node-cache";
+import axios from "axios";
 
 const tokenCache = new NodeCache({ stdTTL: 3600 }); // Cache tokens for 1 hour
 
@@ -11,6 +12,8 @@ async function loadTokensIntoCache() {
     const result = await pool.query("SELECT * FROM api_tokens");
     result.rows.forEach((row) => {
       tokenCache.set(`${row.user_email}-${row.platform}`, {
+        user_email: row.user_email,
+        platform: row.platform,
         access_token: row.access_token,
         refresh_token: row.refresh_token,
         realm_id: row.realm_id,
@@ -37,12 +40,12 @@ async function getToken(user_email, platform) {
   console.log(`🔍 Debug: getToken() - Fetching from cache:`, tokenData); // ✅ 先检查缓存
 
   if (!tokenData) {
-    console.log(`❌ No token for ${email}, reloading cache.`);
+    console.log(`❌ No token for ${user_email}, reloading cache.`);
     await loadTokensIntoCache(); // Reload cache from database
   }
 
   if (!tokenData) {
-    console.log(`❌ Still no token for ${email} after reloading cache.`);
+    console.log(`❌ Still no token for ${user_email} after reloading cache.`);
     return null;
   }
 
@@ -141,6 +144,8 @@ async function updateToken(
 
     // Update the cache
     tokenCache.set(cacheKey, {
+      user_email,
+      platform,
       access_token,
       refresh_token,
       realm_id,
@@ -181,9 +186,25 @@ async function getGoogleDriveToken() {
 /**
  * 📌 **Get the latest QuickBooks token (single user)**
  */
+// ✅ getQuickBooksToken 自动取用第一条 quickbooks token
 async function getQuickBooksToken() {
-  const tokens = await getAllTokensByPlatform("quickbooks");
-  return tokens.length > 0 ? tokens[0] : null;
+  const quickbooksKeys = tokenCache
+    .keys()
+    .filter((key) => key.endsWith("-quickbooks"));
+  if (quickbooksKeys.length === 0)
+    throw new Error("No QuickBooks token found in cache.");
+
+  const cacheKey = quickbooksKeys[0];
+  let token = tokenCache.get(cacheKey);
+
+  if (!token) {
+    await loadTokensIntoCache();
+    token = tokenCache.get(cacheKey);
+    if (!token)
+      throw new Error("No token found, please authorize QuickBooks first.");
+  }
+
+  return token;
 }
 
 export {

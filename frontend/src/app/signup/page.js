@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import Button from "../../components/Button";
+import Button from "../../components/common/Button";
 import { FaGoogle, FaFacebook, FaMicrosoft } from "react-icons/fa";
 import { useRouter } from "next/navigation";
 
@@ -18,7 +18,7 @@ function SignUpPage() {
 
     try {
       console.log("Starting signup process...");
-      
+
       // Validate input fields
       if (!username || !email || !password || !confirmPassword) {
         alert("Please fill in all required fields.");
@@ -38,22 +38,25 @@ function SignUpPage() {
       }
 
       console.log("Using API URL:", process.env.NEXT_PUBLIC_API_URL);
-      
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/register`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json"
-        },
-        body: JSON.stringify({
-          username,
-          email,
-          password
-        })
-      });
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/register`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            username,
+            email,
+            password,
+          }),
+        }
+      );
 
       console.log("Response received:", response.status);
-      
+
       const data = await response.json();
       console.log("Response data:", data);
 

@@ -1,11 +1,12 @@
 import express from "express";
 import { pool } from "../config/database.js";
 import bcrypt from "bcrypt";
+import auditLog from "../middlewares/auditLog.js";
 
 const router = express.Router();
 
 // Get all users
-router.get("/", async (req, res) => {
+router.get("/", auditLog("list_users"), async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT u.user_id, u.username, u.email, u.status, u.user_type, 
@@ -24,26 +25,30 @@ router.get("/", async (req, res) => {
 });
 
 // Get user by ID
-router.get("/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const result = await pool.query(
-      "SELECT user_id, username, email, status, user_type, last_login_time FROM users WHERE user_id = $1",
-      [id]
-    );
+router.get(
+  "/:id",
+  auditLog("get_user_by_id", (req) => ({ userId: req.params.id })),
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const result = await pool.query(
+        "SELECT user_id, username, email, status, user_type, last_login_time FROM users WHERE user_id = $1",
+        [id]
+      );
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: "User not found" });
+      if (result.rows.length === 0) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.json(result.rows[0]);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
     }
-
-    res.json(result.rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
   }
-});
+);
 
 // Create new user (admin only)
-router.post("/", async (req, res) => {
+router.post("/", auditLog("create_user"), async (req, res) => {
   try {
     const { username, email, password, user_type, roles } = req.body;
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -91,96 +96,104 @@ router.post("/", async (req, res) => {
 });
 
 // Update user
-router.put("/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { username, email, user_type, status, roles } = req.body;
-
-    const client = await pool.connect();
+router.put(
+  "/:id",
+  auditLog("update_user", (req) => ({ userId: req.params.id })),
+  async (req, res) => {
     try {
-      await client.query("BEGIN");
+      const { id } = req.params;
+      const { username, email, user_type, status, roles } = req.body;
 
-      // 1. Update user details (removed updated_at field)
-      const userResult = await client.query(
-        `UPDATE users 
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+
+        // 1. Update user details (removed updated_at field)
+        const userResult = await client.query(
+          `UPDATE users 
          SET username = COALESCE($1, username),
              email = COALESCE($2, email),
              user_type = COALESCE($3, user_type),
              status = COALESCE($4, status)
          WHERE user_id = $5
          RETURNING *`,
-        [username, email, user_type, status, id]
-      );
-
-      if (userResult.rows.length === 0) {
-        throw new Error("User not found");
-      }
-
-      // 2. Update roles if provided
-      if (roles) {
-        // Remove existing roles
-        await client.query("DELETE FROM user_roles WHERE user_id = $1", [id]);
-
-        // Add new roles
-        const roleQuery = await client.query(
-          "SELECT role_id FROM roles WHERE role_name = ANY($1)",
-          [roles]
+          [username, email, user_type, status, id]
         );
 
-        for (const role of roleQuery.rows) {
-          await client.query(
-            "INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2)",
-            [id, role.role_id]
-          );
+        if (userResult.rows.length === 0) {
+          throw new Error("User not found");
         }
-      }
 
-      await client.query("COMMIT");
-      res.json({ message: "User updated successfully" });
+        // 2. Update roles if provided
+        if (roles) {
+          // Remove existing roles
+          await client.query("DELETE FROM user_roles WHERE user_id = $1", [id]);
+
+          // Add new roles
+          const roleQuery = await client.query(
+            "SELECT role_id FROM roles WHERE role_name = ANY($1)",
+            [roles]
+          );
+
+          for (const role of roleQuery.rows) {
+            await client.query(
+              "INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2)",
+              [id, role.role_id]
+            );
+          }
+        }
+
+        await client.query("COMMIT");
+        res.json({ message: "User updated successfully" });
+      } catch (err) {
+        await client.query("ROLLBACK");
+        throw err;
+      } finally {
+        client.release();
+      }
     } catch (err) {
-      await client.query("ROLLBACK");
-      throw err;
-    } finally {
-      client.release();
+      res.status(500).json({ error: err.message });
     }
-  } catch (err) {
-    res.status(500).json({ error: err.message });
   }
-});
+);
 
 // Delete user
-router.delete("/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const client = await pool.connect();
+router.delete(
+  "/:id",
+  auditLog("delete_user", (req) => ({ userId: req.params.id })),
+  async (req, res) => {
     try {
-      await client.query("BEGIN");
+      const { id } = req.params;
 
-      // 1. Remove user roles
-      await client.query("DELETE FROM user_roles WHERE user_id = $1", [id]);
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
 
-      // 2. Delete user
-      const result = await client.query(
-        "DELETE FROM users WHERE user_id = $1 RETURNING *",
-        [id]
-      );
+        // 1. Remove user roles
+        await client.query("DELETE FROM user_roles WHERE user_id = $1", [id]);
 
-      if (result.rows.length === 0) {
-        throw new Error("User not found");
+        // 2. Delete user
+        const result = await client.query(
+          "DELETE FROM users WHERE user_id = $1 RETURNING *",
+          [id]
+        );
+
+        if (result.rows.length === 0) {
+          throw new Error("User not found");
+        }
+
+        await client.query("COMMIT");
+        res.json({ message: "User deleted successfully" });
+      } catch (err) {
+        await client.query("ROLLBACK");
+        throw err;
+      } finally {
+        client.release();
       }
-
-      await client.query("COMMIT");
-      res.json({ message: "User deleted successfully" });
     } catch (err) {
-      await client.query("ROLLBACK");
-      throw err;
-    } finally {
-      client.release();
+      res.status(500).json({ error: err.message });
     }
-  } catch (err) {
-    res.status(500).json({ error: err.message });
   }
-});
+);
 
 export default router;
