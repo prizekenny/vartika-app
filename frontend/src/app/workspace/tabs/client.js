@@ -78,7 +78,7 @@ const ClientTab = () => {
                     phone: client.phone,
                     status: client.status || 'active',
                     address: client.address || '',
-                    openTime: client.open_time || '9:00 AM - 5:00 PM',
+                    openTime: new Date(client.register_time).toLocaleDateString(),
                     remark: client.remark || ''
                 }));
                 
@@ -229,7 +229,7 @@ const ClientTab = () => {
             status: client.status,
             address: client.address,
             company_name: client.company_name,
-            openTime: client.openTime || '9:00 AM - 5:00 PM',
+            openTime: client.openTime,
             remark: client.remark
         });
         setIsModalVisible(true);
@@ -247,7 +247,6 @@ const ClientTab = () => {
                 status: values.status,
                 address: values.address,
                 company_name: values.company_name,
-                open_time: values.openTime,
                 remark: values.remark
             };
             
@@ -461,9 +460,8 @@ const ClientTab = () => {
                     <Form.Item
                         name="openTime"
                         label="Open Time"
-                        initialValue="9:00 AM - 5:00 PM"
                     >
-                        <Input />
+                        <Input disabled={true} />
                     </Form.Item>
                     <Form.Item
                         name="status"

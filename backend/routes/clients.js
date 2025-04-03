@@ -131,11 +131,10 @@ router.put('/:id', async (req, res) => {
             status, 
             address,
             company_name,
-            open_time,
             remark 
         } = req.body;
 
-        console.log('Updating client:', { id, ...req.body }); // 添加調試日誌
+        console.log('Updating client:', { id, ...req.body });
 
         // 更新 users 表
         await client.query(`
@@ -148,16 +147,15 @@ router.put('/:id', async (req, res) => {
             WHERE user_id = $5
         `, [username, email, phone, status, id]);
 
-        // 更新 clients 表
+        // 更新 clients 表 (移除 open_time 欄位)
         await client.query(`
             UPDATE clients
             SET company_name = $1,
                 client_type = $2,
                 address = $3,
-                open_time = $4,
                 updated_at = CURRENT_TIMESTAMP
-            WHERE user_id = $5
-        `, [company_name, client_type, address, open_time, id]);
+            WHERE user_id = $4
+        `, [company_name, client_type, address, id]);
 
         await client.query('COMMIT');
         
