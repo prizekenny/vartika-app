@@ -54,12 +54,7 @@ router.post("/login", (req, res, next) => {
 // Google OAuth routes
 router.get(
   "/google",
-  passport.authenticate("google-login", {
-    scope: ["profile", "email"],
-    accessType: "offline",
-    prompt: "consent",
-    includeGrantedScopes: false,
-  })
+  passport.authenticate("google-login", { scope: ["profile", "email"] })
 );
 
 // Also update last_login_time for Google login
@@ -71,31 +66,25 @@ router.get(
   async (req, res) => {
     console.log("Google login callback");
     try {
-      if (!req.user || !req.user.email) {
-        console.error("❌ No token received from Google OAuth: ", req.user);
-        return res.status(400).send("OAuth token missing.");
-      }
-
-      console.log("Google OAuth token received, user:", req.user);
-
       if (req.user) {
         // Update last_login_time
         await pool.query(
           "UPDATE users SET last_login_time = NOW() WHERE user_id = $1",
           [req.user.user_id]
         );
-
-        req.session.oauth_logged_in = true;
       }
 
-      res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
-      res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
-      res.setHeader("Content-Type", "text/html");
-      res.send(`;
-         <script>
-          window.close();
-        </script>
-      `);
+      res.json({
+        success: true,
+        user: req.user,
+      });
+
+      // res.send(`
+      //   <script>
+      //     localStorage.setItem("token", "${req.user.token}");
+      //     window.close(); // 🔹 关闭 OAuth 窗口，触发前端监听
+      //   </script>
+      // `);
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
@@ -125,18 +114,10 @@ router.get("/logout", (req, res, next) => {
       if (err) {
         return next(err);
       }
-      req.session.oauth_logged_in = false;
       res.clearCookie("connect.sid"); // 清除 session cookie
       res.json({ message: "Logged out successfully" });
     });
   });
-});
-
-router.get("/oauth-status", (req, res) => {
-  if (req.session.oauth_logged_in) {
-    return res.json({ success: true, message: "OAuth login successful" });
-  }
-  return res.json({ success: false, message: "Waiting for OAuth login..." });
 });
 
 export default router;

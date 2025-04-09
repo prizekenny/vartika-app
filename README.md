@@ -18,7 +18,7 @@ psql -U postgres -f backend/database/create_db.sql
 2. Initialize database schema:
 
 ```
-psql -U postgres -d your_database_name -f backend/database/schema.sql
+psql -U postgres -d vartika_portal_db -f backend\database\schema.sql
 ```
 
 ## Backend Server Setup

@@ -1,64 +1,92 @@
 import express from "express";
 import { pool } from "../config/database.js";
-import { isAdmin } from "../middleware/auth.js";
 
 const router = express.Router();
 
-// 获取所有角色
-router.get("/", isAdmin, async (req, res) => {
+// Create a new role
+router.post("/", async (req, res) => {
+  const { role_name } = req.body;
   try {
     const result = await pool.query(
-      "SELECT * FROM roles ORDER BY created_at DESC"
+      "INSERT INTO roles (role_name) VALUES ($1) RETURNING *",
+      [role_name]
     );
-    res.json(result.rows);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to create role", details: error });
   }
 });
 
-// 为用户分配角色
-router.post("/assign", isAdmin, async (req, res) => {
-  const { userId, roleId } = req.body;
+// Retrieve all roles
+router.get("/", async (req, res) => {
   try {
-    await pool.query(
-      "INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2)",
-      [userId, roleId]
-    );
-    res.json({ message: "角色分配成功" });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    const roles = await pool.query("SELECT * FROM roles");
+    res.json(roles.rows);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch role list" });
   }
 });
 
-// 移除用户的角色
-router.delete("/remove", isAdmin, async (req, res) => {
-  const { userId, roleId } = req.body;
+// Retrieve a single role
+router.get("/:id", async (req, res) => {
   try {
-    await pool.query(
-      "DELETE FROM user_roles WHERE user_id = $1 AND role_id = $2",
-      [userId, roleId]
-    );
-    res.json({ message: "角色移除成功" });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    const role = await pool.query("SELECT * FROM roles WHERE role_id = $1", [
+      req.params.id,
+    ]);
+    if (role.rows.length === 0)
+      return res.status(404).json({ error: "Role not found" });
+    res.json(role.rows[0]);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch role information" });
   }
 });
 
-// 获取用户的所有角色
-router.get("/user/:userId", async (req, res) => {
+// Update role name
+router.put("/:id", async (req, res) => {
+  const { role_name } = req.body;
   try {
     const result = await pool.query(
-      `
-            SELECT r.* 
-            FROM roles r
-            JOIN user_roles ur ON r.role_id = ur.role_id
-            WHERE ur.user_id = $1
-        `,
-      [req.params.userId]
+      "UPDATE roles SET role_name = $1 WHERE role_id = $2 RETURNING *",
+      [role_name, req.params.id]
     );
-    res.json(result.rows);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.json(result.rows[0]);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update role" });
+  }
+});
+
+// Delete role (Must check if the role is assigned to users before deletion)
+router.delete("/:id", async (req, res) => {
+  try {
+    const userCount = await pool.query(
+      "SELECT COUNT(*) FROM user_roles WHERE role_id = $1",
+      [req.params.id]
+    );
+    if (parseInt(userCount.rows[0].count) > 0) {
+      return res
+        .status(400)
+        .json({ error: "Cannot delete role, it is still assigned to users" });
+    }
+
+    await pool.query("DELETE FROM roles WHERE role_id = $1", [req.params.id]);
+    res.json({ message: "Role deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to delete role" });
+  }
+});
+
+// Retrieve all users assigned to a specific role
+router.get("/:id/users", async (req, res) => {
+  try {
+    const users = await pool.query(
+      "SELECT u.user_id, u.username, u.email FROM user_roles ur JOIN users u ON ur.user_id = u.user_id WHERE ur.role_id = $1",
+      [req.params.id]
+    );
+    res.json(users.rows);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "Failed to fetch users assigned to this role" });
   }
 });
 
