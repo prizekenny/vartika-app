@@ -1,6 +1,7 @@
 import express from 'express';
 import pkg from 'pg';
 import { pool } from "../config/database.js";
+import notification from "../utils/notification.js";
 
 
 const router = express.Router();
@@ -54,9 +55,22 @@ router.get('/:id', async (req, res) => {
     try {
         const { id } = req.params;
         const result = await pool.query(`
-            SELECT u.user_id, u.username, u.email, u.phone, u.status, 
-                   u.address, u.client_type, u.open_time, u.remark
+            SELECT 
+                u.user_id, 
+                u.username, 
+                u.email, 
+                u.phone, 
+                u.status,
+                c.address, 
+                c.client_type, 
+                c.created_at as register_time,
+                c.company_name,
+                c.contact_person,
+                c.contact_email,
+                c.contact_phone,
+                c.remark
             FROM users u
+            LEFT JOIN clients c ON u.user_id = c.user_id
             WHERE u.user_id = $1
         `, [id]);
         
@@ -67,26 +81,32 @@ router.get('/:id', async (req, res) => {
         res.status(200).json(result.rows[0]);
     } catch (error) {
         console.error('Error fetching client:', error);
-        res.status(500).json({ message: 'Failed to fetch client' });
+        res.status(500).json({ message: 'Failed to fetch client', error: error.message });
     }
 });
 
 // Create a new client
 router.post('/', async (req, res) => {
-    const client = pool.connect();
+    const client = await pool.connect();
     try {
         await client.query('BEGIN');
         
-        const { username, email, phone, address, client_type, open_time, status, remark } = req.body;
+        const { username, email, phone, address, client_type, status, company_name, remark } = req.body;
         
-        // Insert into users table
+        // Insert into users table (移除address欄位)
         const userResult = await client.query(`
-            INSERT INTO users (username, email, password, phone, status, user_type, address, client_type, open_time, remark)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            INSERT INTO users (username, email, password, phone, status, user_type)
+            VALUES ($1, $2, $3, $4, $5, $6)
             RETURNING user_id
-        `, [username, email, 'default_password', phone, status || 'active', 'Client', address, client_type, open_time, remark]);
+        `, [username, email, 'default_password', phone, status || 'active', 'Client']);
         
         const userId = userResult.rows[0].user_id;
+        
+        // 插入到 clients 表
+        await client.query(`
+            INSERT INTO clients (user_id, company_name, client_type, address, remark)
+            VALUES ($1, $2, $3, $4, $5)
+        `, [userId, company_name, client_type, address, remark]);
         
         // Assign Client role
         await client.query(`
@@ -104,7 +124,7 @@ router.post('/', async (req, res) => {
             status,
             address,
             client_type,
-            open_time,
+            company_name,
             remark
         });
     } catch (error) {
@@ -147,15 +167,16 @@ router.put('/:id', async (req, res) => {
             WHERE user_id = $5
         `, [username, email, phone, status, id]);
 
-        // 更新 clients 表 (移除 open_time 欄位)
+        // 更新 clients 表 (包含 remark 欄位)
         await client.query(`
             UPDATE clients
             SET company_name = $1,
                 client_type = $2,
                 address = $3,
+                remark = $4,
                 updated_at = CURRENT_TIMESTAMP
-            WHERE user_id = $4
-        `, [company_name, client_type, address, id]);
+            WHERE user_id = $5
+        `, [company_name, client_type, address, remark, id]);
 
         await client.query('COMMIT');
         
@@ -178,25 +199,54 @@ router.put('/:id', async (req, res) => {
 
 // Delete a client
 router.delete('/:id', async (req, res) => {
+    const clientConnection = await pool.connect();
     try {
+        await clientConnection.query('BEGIN');
+        
         const { id } = req.params;
         
-        await pool.query(`
+        // 1. 先刪除 clients 表中的記錄
+        console.log(`嘗試刪除 clients 表中的記錄，user_id: ${id}`);
+        await clientConnection.query(`
+            DELETE FROM clients WHERE user_id = $1
+        `, [id]);
+        
+        // 然後刪除 user_roles 表中的相關記錄
+        await clientConnection.query(`
             DELETE FROM user_roles WHERE user_id = $1
         `, [id]);
         
-        const result = await pool.query(`
+        // 3. 最後刪除 users 表中的記錄
+        console.log(`嘗試刪除 users 表中的記錄，user_id: ${id}`);
+        const result = await clientConnection.query(`
             DELETE FROM users WHERE user_id = $1 RETURNING user_id
         `, [id]);
         
         if (result.rows.length === 0) {
-            return res.status(404).json({ message: 'Client not found' });
+            await clientConnection.query('ROLLBACK');
+            return res.status(404).json({ message: '找不到指定客戶' });
         }
         
-        res.status(200).json({ message: 'Client deleted successfully', user_id: id });
+        await clientConnection.query('COMMIT');
+        console.log(`成功刪除客戶，user_id: ${id}`);
+        
+        res.status(200).json({ 
+            message: '客戶刪除成功', 
+            user_id: id 
+        });
     } catch (error) {
-        console.error('Error deleting client:', error);
-        res.status(500).json({ message: 'Failed to delete client', error: error.message });
+        await clientConnection.query('ROLLBACK');
+        console.error('刪除客戶時發生錯誤:', error);
+        
+        // 返回詳細錯誤信息，便於調試
+        res.status(500).json({ 
+            message: '刪除客戶失敗', 
+            error: error.message,
+            detail: error.detail,
+            code: error.code
+        });
+    } finally {
+        clientConnection.release();
     }
 });
 

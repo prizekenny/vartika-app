@@ -63,6 +63,7 @@ CREATE TABLE IF NOT EXISTS clients (
     contact_phone VARCHAR(20),
     address TEXT,
     client_type VARCHAR(50),
+    remark TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     FOREIGN KEY (user_id) REFERENCES users(user_id)

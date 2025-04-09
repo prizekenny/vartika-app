@@ -263,8 +263,15 @@ const ClientTab = () => {
                     setEditingClient(null);
                 }
             } else {
-                await axios.post(API_BASE_URL, clientData);
-                message.success("New Client Created");
+                const response = await axios.post(API_BASE_URL, clientData);
+                console.log('Create response:', response);
+                if (response.status === 201) {
+                    message.success("New Client Created");
+                    fetchClients();
+                    setIsModalVisible(false);
+                    form.resetFields();
+                    setEditingClient(null);
+                }
             }
         } catch (error) {
             console.error("Error details:", {
@@ -417,10 +424,6 @@ const ClientTab = () => {
                     <Form.Item
                         name="company_name"
                         label="Company Name"
-                        rules={[{ 
-                            required: ({ getFieldValue }) => getFieldValue('type') === 'Company',
-                            message: '公司類型客戶必須輸入公司名稱！'
-                        }]}
                     >
                         <Input />
                     </Form.Item>
