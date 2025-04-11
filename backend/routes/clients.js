@@ -1,7 +1,6 @@
 import express from 'express';
 import pkg from 'pg';
 import { pool } from "../config/database.js";
-import notification from "../utils/notification.js";
 
 
 const router = express.Router();
