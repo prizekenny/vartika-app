@@ -35,9 +35,11 @@ function getQuickBooksAuthURL() {
 async function handleQuickBooksCallback({ url }) {
   try {
     const authResponse = await quickbooksAuthClient.createToken(url);
-    const accessToken = authResponse.getJson().access_token;
-    const refreshToken = authResponse.getJson().refresh_token;
     const userInfo = await quickbooksAuthClient.getUserInfo();
+    const tokenData = authResponse.getJson();
+    const accessToken = tokenData.access_token;
+    const refreshToken = tokenData.refresh_token;
+    const expiresIn = tokenData.expires_in;
 
     console.log("✅ QuickBooks Auth Response:", authResponse.getJson());
     console.log("✅ QuickBooks User Info:", userInfo.json);
@@ -55,7 +57,13 @@ async function handleQuickBooksCallback({ url }) {
       );
     }
 
-    return { userEmail, accessToken, refreshToken, realmId };
+    return {
+      userEmail,
+      accessToken,
+      refreshToken,
+      realmId,
+      expiresIn: tokenData.expires_in,
+    };
   } catch (error) {
     console.error("❌ QuickBooks OAuth error:", error);
     throw error;

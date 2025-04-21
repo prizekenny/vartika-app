@@ -59,3 +59,17 @@ INSERT INTO roles (role_name) VALUES
     ('Employee'),
     ('Client'),
     ('Guest');
+
+-- Contracts table
+CREATE TABLE contracts (
+    contract_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    subject VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    amount DECIMAL(15, 2) NOT NULL,
+    start_date TIMESTAMP NOT NULL,
+    expiration_date TIMESTAMP NOT NULL,
+    status VARCHAR(20) CHECK (status IN ('Accept', 'Pending', 'Active', 'Expired')) DEFAULT 'Pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);

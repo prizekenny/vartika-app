@@ -152,7 +152,12 @@ async function updateToken(
       expires_at,
     });
 
-    console.log(`✅ Token updated for ${user_email} (${platform})`);
+    console.log(
+      `✅ Token updated for ${user_email} (${platform}), and cached. ${getToken(
+        user_email,
+        platform
+      )}`
+    );
   } catch (error) {
     console.error(
       `❌ Failed to update token for ${user_email} (${platform}):`,

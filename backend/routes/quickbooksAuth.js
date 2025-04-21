@@ -25,14 +25,23 @@ router.get(
   auditLog("quickbooks_oauth_callback"),
   async (req, res) => {
     try {
-      const { userEmail, accessToken, refreshToken, realmId } =
+      const { userEmail, accessToken, refreshToken, realmId, expiresIn } =
         await handleQuickBooksCallback({ url: req.url });
+
+      console.log(
+        "✅ QuickBooks callback route triggered:",
+        req.url,
+        "; expiresIn:",
+        expiresIn
+      );
 
       // ⚠️ Extract email properly
       if (!userEmail) {
         console.warn("⚠️ No email found in QuickBooks OAuth response.");
         return res.status(400).json({ error: "User email is required" });
       }
+
+      const expiresAt = new Date(Date.now() + expiresIn * 1000);
 
       // ✅ Store or update QuickBooks tokens in the database
       await updateToken(
@@ -41,7 +50,7 @@ router.get(
         accessToken,
         refreshToken,
         realmId,
-        null
+        expiresAt
       );
 
       console.log(`✅ Stored QuickBooks refresh_token for: ${userEmail}`);

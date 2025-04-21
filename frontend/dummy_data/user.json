@@ -1,96 +1,39 @@
 {
   "users": [
     {
-      "id": 1,
-      "name": "John Smith",
-      "role": "Super Admin",
-      "phone": "+1 (416) 555-0123",
+      "user_id": "550e8400-e29b-41d4-a716-446655440000",
+      "username": "John Smith",
       "email": "john.smith@example.com",
-      "country": "Canada",
-      "status": true
+      "phone": "+1 (416) 555-0123",
+      "status": "active",
+      "user_type": "SuperAdmin",
+      "roles": ["SuperAdmin"],
+      "last_login_time": "2024-03-08T12:34:56Z",
+      "created_at": "2024-01-01T10:00:00Z"
     },
     {
-      "id": 2,
-      "name": "Emma Wilson",
-      "role": "Admin",
-      "phone": "+1 (647) 555-0456",
+      "user_id": "6a1e1b00-22ff-4a17-9a0f-7a4e4e85a72d",
+      "username": "Emma Wilson",
       "email": "emma.wilson@example.com",
-      "country": "USA",
-      "status": true
+      "phone": "+1 (647) 555-0456",
+      "status": "active",
+      "user_type": "Admin",
+      "roles": ["Admin"],
+      "last_login_time": "2024-03-07T10:22:30Z",
+      "created_at": "2024-01-15T09:30:00Z"
     },
     {
-      "id": 3,
-      "name": "Michael Brown",
-      "role": "Employee",
-      "phone": "+1 (905) 555-0789",
+      "user_id": "2c7df50c-5cfd-43c9-9dd8-f4e0f541fcfa",
+      "username": "Michael Brown",
       "email": "michael.brown@example.com",
-      "country": "UK",
-      "status": false
-    },
-    {
-      "id": 4,
-      "name": "Sarah Davis",
-      "role": "Client",
-      "phone": "+1 (289) 555-0321",
-      "email": "sarah.davis@example.com",
-      "country": "Australia",
-      "status": true
-    },
-    {
-      "id": 5,
-      "name": "James Miller",
-      "role": "Employee",
-      "phone": "+1 (437) 555-0654",
-      "email": "james.miller@example.com",
-      "country": "Canada",
-      "status": true
-    },
-    {
-      "id": 6,
-      "name": "Lisa Anderson",
-      "role": "Admin",
-      "phone": "+1 (647) 555-0987",
-      "email": "lisa.anderson@example.com",
-      "country": "USA",
-      "status": true
-    },
-    {
-      "id": 7,
-      "name": "David Taylor",
-      "role": "Employee",
-      "phone": "+1 (416) 555-0147",
-      "email": "david.taylor@example.com",
-      "country": "UK",
-      "status": false
-    },
-    {
-      "id": 8,
-      "name": "Jennifer Thomas",
-      "role": "Client",
-      "phone": "+1 (905) 555-0258",
-      "email": "jennifer.thomas@example.com",
-      "country": "France",
-      "status": true
-    },
-    {
-      "id": 9,
-      "name": "Robert Martinez",
-      "role": "Employee",
-      "phone": "+1 (289) 555-0369",
-      "email": "robert.martinez@example.com",
-      "country": "Canada",
-      "status": true
-    },
-    {
-      "id": 10,
-      "name": "Jessica Garcia",
-      "role": "Admin",
-      "phone": "+1 (437) 555-0741",
-      "email": "jessica.garcia@example.com",
-      "country": "USA",
-      "status": true
+      "phone": "+1 (905) 555-0789",
+      "status": "inactive",
+      "user_type": "Employee",
+      "roles": ["Employee"],
+      "last_login_time": "2024-03-06T09:15:10Z",
+      "created_at": "2024-02-10T14:20:00Z"
     }
   ],
-  "roles": ["Super Admin", "Admin", "Employee", "Client"],
+  "roles": ["SuperAdmin", "Admin", "Employee", "Client", "Guest"],
   "countries": ["Canada", "USA", "UK", "Australia", "France"]
 }
