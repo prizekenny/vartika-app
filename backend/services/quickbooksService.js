@@ -91,7 +91,7 @@ class QuickBooksClient {
         Accept: "application/json",
       },
     });
-    return response.json || response.response?.data;
+    return response.response?.data?.QueryResponse || { Invoice: [] };
   }
 
   async isAuthorized() {
@@ -811,6 +811,21 @@ class QuickBooksClient {
     if (!d || d === 0) return 0;
     const result = n / d;
     return isNaN(result) || !isFinite(result) ? 0 : result;
+  }
+
+  async downloadInvoicePdf(invoiceId) {
+    await this.#ensureValidToken();
+    const response = await this.client.makeApiCall({
+      url: `${QUICKBOOKS_BASE_URL}/v3/company/${this.realmId}/invoice/${invoiceId}/pdf`,
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${this.accessToken}`,
+        Accept: "application/pdf",
+      },
+      responseType: "arraybuffer",
+    });
+
+    return response.response?.data;
   }
 }
 

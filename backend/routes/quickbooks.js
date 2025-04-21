@@ -167,4 +167,26 @@ router.get("/transactions", async (req, res) => {
   }
 });
 
+/**
+ * 📥 Download Invoice PDF
+ */
+router.get("/invoices/:id/pdf", async (req, res) => {
+  try {
+    const token = await getQuickBooksToken();
+    const qb = new QuickBooksClient(token);
+    const invoiceId = req.params.id;
+    const pdfBuffer = await qb.downloadInvoicePdf(invoiceId);
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename=invoice_${invoiceId}.pdf`
+    );
+    res.send(pdfBuffer);
+  } catch (error) {
+    console.error("❌ Failed to download invoice PDF:", error);
+    res.status(500).json({ error: "Failed to download invoice PDF" });
+  }
+});
+
 export default router;
