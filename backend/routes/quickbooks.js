@@ -24,17 +24,21 @@ router.get("/company", auditLog("get_company_info"), async (req, res) => {
 /**
  * 📌 获取发票
  */
-router.get("/invoices", auditLog("get_invoices"), async (req, res) => {
-  try {
-    const token = await getQuickBooksToken();
-    const qb = new QuickBooksClient(token);
+router.get(
+  "/invoices",
+  auditLog("get_invoices", (req) => req.query),
+  async (req, res) => {
+    try {
+      const token = await getQuickBooksToken();
+      const qb = new QuickBooksClient(token);
 
-    const data = await qb.getInvoices();
-    res.json(data);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+      const data = await qb.getInvoices(req.query);
+      res.json(data);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   }
-});
+);
 
 /**
  * 📌 获取 Profit and Loss Report

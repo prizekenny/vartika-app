@@ -81,16 +81,72 @@ class QuickBooksClient {
     return response.json || response.response?.data;
   }
 
-  async getInvoices() {
+  async getInvoices(params = {}) {
     await this.#ensureValidToken();
+
+    console.log("📊 Fetching invoices from QuickBooks: params: ", params);
+    const {
+      search = "",
+      startDate,
+      endDate,
+      minTotal,
+      maxTotal,
+      page = 1,
+      pageSize = 10,
+    } = params;
+
+    let query = "SELECT * FROM Invoice";
+
+    const toNumber = (val) => {
+      const num = Number(val);
+      return isNaN(num) || val === "" ? null : num;
+    };
+
+    const filters = [];
+
+    const min = toNumber(minTotal);
+    const max = toNumber(maxTotal);
+
+    if (search) {
+      filters.push(`CustomerRef.FullName LIKE '%${search}%'`);
+    }
+    if (startDate) {
+      filters.push(`TxnDate >= '${startDate}'`);
+    }
+    if (endDate) {
+      filters.push(`TxnDate <= '${endDate}'`);
+    }
+    if (min !== null) {
+      filters.push(`TotalAmt >= ${min}`);
+    }
+    if (max !== null) {
+      filters.push(`TotalAmt <= ${max}`);
+    }
+
+    if (filters.length > 0) {
+      query += " WHERE " + filters.join(" AND ");
+    }
+
+    query += ` ORDER BY TxnDate DESC`;
+    query += ` STARTPOSITION ${(page - 1) * pageSize + 1}`;
+    query += ` MAXRESULTS ${pageSize}`;
+    query = `SELECT * FROM Invoice ORDER BY TxnDate DESC STARTPOSITION 1 MAXRESULTS 1000`;
+    const url = `${QUICKBOOKS_BASE_URL}/v3/company/${
+      this.realmId
+    }/query?query=${encodeURIComponent(query)}&minorversion=75`;
+
+    console.log("📊 Query: ", query);
+    console.log("📊 Query URL: ", url);
+
     const response = await this.client.makeApiCall({
-      url: `${QUICKBOOKS_BASE_URL}/v3/company/${this.realmId}/query?query=SELECT * FROM Invoice`,
+      url,
       method: "GET",
       headers: {
         Authorization: `Bearer ${this.accessToken}`,
         Accept: "application/json",
       },
     });
+
     return response.response?.data?.QueryResponse || { Invoice: [] };
   }
 

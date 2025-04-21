@@ -5,8 +5,8 @@ export const getCompanyInfo = () => {
   return safeApiGet("/api/quickbooks/company");
 };
 
-export const getInvoices = () => {
-  return safeApiGet("/api/quickbooks/invoices");
+export const getInvoices = (params) => {
+  return safeApiGet("/api/quickbooks/invoices", { params });
 };
 
 export const checkAuthorization = () => {
