@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Pagination from "../../../components/common/Pagination";
 import {
   FaFileContract,
   FaBuilding,
@@ -1003,85 +1004,12 @@ const ContractTab = () => {
           </div>
 
           {/* Pagination */}
-          <div className="px-6 py-4 flex items-center justify-between border-t">
-            <div className="flex-1 flex justify-between sm:hidden">
-              <button
-                onClick={() => handlePageChange(Math.max(currentPage - 1, 1))}
-                disabled={currentPage === 1 || loading}
-                className={`relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${
-                  currentPage === 1 || loading
-                    ? "bg-gray-100 text-gray-400"
-                    : "bg-white text-gray-700 hover:bg-gray-50"
-                }`}
-              >
-                Previous
-              </button>
-              <button
-                onClick={() =>
-                  handlePageChange(Math.min(currentPage + 1, totalPages))
-                }
-                disabled={currentPage === totalPages || loading}
-                className={`relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${
-                  currentPage === totalPages || loading
-                    ? "bg-gray-100 text-gray-400"
-                    : "bg-white text-gray-700 hover:bg-gray-50"
-                }`}
-              >
-                Next
-              </button>
-            </div>
-            <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm text-gray-700">
-                  Page <span className="font-medium">{currentPage}</span> of{" "}
-                  <span className="font-medium">{totalPages}</span>
-                </p>
-              </div>
-              <div>
-                <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                  <button
-                    onClick={() =>
-                      handlePageChange(Math.max(currentPage - 1, 1))
-                    }
-                    disabled={currentPage === 1 || loading}
-                    className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium ${
-                      currentPage === 1 || loading
-                        ? "text-gray-300"
-                        : "text-gray-500 hover:bg-gray-50"
-                    }`}
-                  >
-                    Previous
-                  </button>
-                  {Array.from({ length: totalPages }, (_, i) => (
-                    <button
-                      key={i + 1}
-                      onClick={() => handlePageChange(i + 1)}
-                      disabled={loading}
-                      className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                        currentPage === i + 1
-                          ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
-                          : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
-                      }`}
-                    >
-                      {i + 1}
-                    </button>
-                  ))}
-                  <button
-                    onClick={() =>
-                      handlePageChange(Math.min(currentPage + 1, totalPages))
-                    }
-                    disabled={currentPage === totalPages || loading}
-                    className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium ${
-                      currentPage === totalPages || loading
-                        ? "text-gray-300"
-                        : "text-gray-500 hover:bg-gray-50"
-                    }`}
-                  >
-                    Next
-                  </button>
-                </nav>
-              </div>
-            </div>
+          <div className="px-6 py-4 flex items-center justify-end border-t">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
           </div>
         </div>
       )}

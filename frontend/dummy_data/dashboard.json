@@ -1,11 +1,35 @@
 {
   "todos": [
-    { "id": 1, "text": "Complete Q1 Financial Report", "starred": false },
-    { "id": 2, "text": "Prepare Board Meeting Materials", "starred": true },
-    { "id": 3, "text": "Review Project Budget Proposal", "starred": false },
-    { "id": 4, "text": "Update Business Development Plan", "starred": false },
-    { "id": 5, "text": "Quarterly Investor Communication", "starred": true },
-    { "id": 6, "text": "Evaluate Market Opportunities", "starred": false }
+    {
+      "id": 1,
+      "text": "Prepare Annual Financial Statements for Wilson & Partners",
+      "starred": false
+    },
+    {
+      "id": 2,
+      "text": "Prepare Tax Filing for Harris Consulting",
+      "starred": true
+    },
+    {
+      "id": 3,
+      "text": "Review Quarterly Financial Reports for McLaren Holdings",
+      "starred": false
+    },
+    {
+      "id": 4,
+      "text": "Update Client Portfolio for Thompson & Associates",
+      "starred": false
+    },
+    {
+      "id": 5,
+      "text": "Communicate with Investors of Fairmont Ltd.",
+      "starred": true
+    },
+    {
+      "id": 6,
+      "text": "Evaluate New Investment Opportunities for GreenTech Innovations",
+      "starred": false
+    }
   ],
   "revenueData": [
     { "month": "Jan", "revenue": 4000, "expenses": 2400 },
@@ -16,10 +40,10 @@
     { "month": "Jun", "revenue": 2390, "expenses": 3800 }
   ],
   "marketShareData": [
-    { "name": "Product A", "value": 400 },
-    { "name": "Product B", "value": 300 },
-    { "name": "Product C", "value": 300 },
-    { "name": "Product D", "value": 200 }
+    { "name": "Wilson & Partners", "value": 400 },
+    { "name": "Harris Consulting", "value": 300 },
+    { "name": "McLaren Holdings", "value": 300 },
+    { "name": "Thompson & Associates", "value": 200 }
   ],
   "growthData": [
     { "month": "Jan", "growth": 20 },
@@ -30,7 +54,7 @@
     { "month": "Jun", "growth": 50 }
   ],
   "expenseBreakdown": [
-    { "name": "Operations", "value": 35 },
+    { "name": "Salaries", "value": 35 },
     { "name": "Marketing", "value": 25 },
     { "name": "R&D", "value": 20 },
     { "name": "Admin", "value": 20 }

@@ -6,6 +6,7 @@ import { FaSearch, FaUserPlus, FaTrash, FaEdit } from "react-icons/fa";
 import { getUsers, updateUser, deleteUser } from "@/api/users";
 import AddUserModal from "../../../components/AddUserModal";
 import EditUserModal from "../../../components/EditUserModal";
+import Pagination from "../../../components/common/Pagination"; // 导入分页组件
 
 const UserTab = () => {
   const [users, setUsers] = useState([]);
@@ -105,70 +106,6 @@ const UserTab = () => {
   const indexOfFirstUser = indexOfLastUser - usersPerPage;
   const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
   const pageCount = Math.ceil(filteredUsers.length / usersPerPage);
-
-  const renderPagination = () => {
-    const pages = [];
-    const maxPagesToShow = 5;
-
-    if (pageCount <= maxPagesToShow) {
-      for (let i = 1; i <= pageCount; i++) {
-        pages.push(i);
-      }
-    } else {
-      pages.push(1);
-      if (currentPage > 3) pages.push("...");
-
-      const startPage = Math.max(2, currentPage - 1);
-      const endPage = Math.min(pageCount - 1, currentPage + 1);
-
-      for (let i = startPage; i <= endPage; i++) {
-        pages.push(i);
-      }
-
-      if (currentPage < pageCount - 2) pages.push("...");
-      pages.push(pageCount);
-    }
-
-    return (
-      <div className="flex justify-center mt-4 space-x-2">
-        <button
-          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-          disabled={currentPage === 1}
-          className="px-3 py-1 border rounded-lg disabled:opacity-50 hover:bg-gray-50"
-        >
-          {"<"}
-        </button>
-        {pages.map((page, index) =>
-          page === "..." ? (
-            <span key={index} className="px-3 py-1">
-              ...
-            </span>
-          ) : (
-            <button
-              key={page}
-              onClick={() => setCurrentPage(page)}
-              className={`px-3 py-1 border rounded-lg ${
-                currentPage === page
-                  ? "bg-purple-600 text-white"
-                  : "hover:bg-gray-50"
-              }`}
-            >
-              {page}
-            </button>
-          )
-        )}
-        <button
-          onClick={() =>
-            setCurrentPage((prev) => Math.min(prev + 1, pageCount))
-          }
-          disabled={currentPage === pageCount}
-          className="px-3 py-1 border rounded-lg disabled:opacity-50 hover:bg-gray-50"
-        >
-          {">"}
-        </button>
-      </div>
-    );
-  };
 
   return (
     <div className="p-6">
@@ -303,7 +240,11 @@ const UserTab = () => {
           {Math.min(indexOfLastUser, filteredUsers.length)} of{" "}
           {filteredUsers.length} entries
         </div>
-        {renderPagination()}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={pageCount}
+          onPageChange={setCurrentPage}
+        />
       </div>
     </div>
   );

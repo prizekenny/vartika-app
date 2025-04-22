@@ -47,7 +47,7 @@ const ProfileTab = () => {
           <div
             className="w-16 h-16 bg-gray-200 rounded-full mr-4"
             style={{
-              backgroundImage: `url(${profilePhoto})`,
+              backgroundImage: `url(${profilePhoto || "/avatar.jpg"})`, // 默认使用 public/avatar.jpg
               backgroundSize: "cover",
             }}
           ></div>
