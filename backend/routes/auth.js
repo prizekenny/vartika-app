@@ -11,6 +11,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "default_jwt_secret";
 const router = express.Router();
 
 let oauthLoginSuccess = false; // ✅ 使用全局变量
+let oauthUser = null;
 
 // Test route - just for API testing
 router.get("/test", (req, res) => {
@@ -88,7 +89,7 @@ router.get(
   })
 );
 
-// Also update last_login_time for Google login
+// Google OAuth callback
 router.get(
   "/google/callback",
   passport.authenticate("google-login", {
@@ -110,18 +111,15 @@ router.get(
           "UPDATE users SET last_login_time = NOW() WHERE user_id = $1",
           [req.user.user_id]
         );
-
-        oauthLoginSuccess = true; // ✅ 设置全局状态
       }
 
-      // Get user roles
+      // Get user roles from database (still keeping this functionality)
       const rolesResult = await pool.query(
         "SELECT r.role_name FROM user_roles ur JOIN roles r ON ur.role_id = r.role_id WHERE ur.user_id = $1",
         [req.user.user_id]
       );
       req.user.roles = rolesResult.rows.map((r) => r.role_name);
       if (req.user.roles.length === 0) req.user.roles = ["guest"];
-      //req.session.user = req.user;
 
       const tokenPayload = {
         user_id: req.user.user_id,
@@ -130,12 +128,16 @@ router.get(
       };
       const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: "1d" });
 
+      oauthUser = {
+        user: req.user,
+        token,
+      };
+
       res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
       res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
       res.setHeader("Content-Type", "text/html");
       res.send(`
          <script>
-           window.opener.postMessage({ token: "${token}" }, "*");
            window.close();
          </script>
       `);
@@ -156,13 +158,28 @@ router.get("/logout", (req, res) => {
   res.json({ message: "Logged out successfully" });
 });
 
-// ✅ 替代 session 状态检测方式
-router.get("/oauth-status", (req, res) => {
-  if (oauthLoginSuccess) {
-    oauthLoginSuccess = false;
-    return res.json({ success: true, message: "OAuth login successful" });
+// 替代 session 状态检测方式
+router.get("/oauth-status", async (req, res) => {
+  if (oauthUser) {
+    // If oauthUser has been set, return the stored user and token
+    const response = {
+      success: true,
+      message: "OAuth login successful",
+      token: oauthUser.token,
+      user: oauthUser.user,
+    };
+
+    // Clear the oauthUser after sending the response
+    oauthUser = null;
+
+    return res.json(response);
   }
-  return res.json({ success: false, message: "Waiting for OAuth login..." });
+
+  // 如果 OAuth 登录还没有完成
+  return res.json({
+    success: false,
+    message: "Waiting for OAuth login...",
+  });
 });
 
 export default router;

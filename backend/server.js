@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import session from "express-session";
 import passport from "./config/passport.js";
 import userRoutes from "./routes/users.js";
 import rolesRoutes from "./routes/roles.js";
@@ -36,7 +37,17 @@ app.use(express.json());
 
 console.log("🌍 NODE_ENV:", process.env.NODE_ENV);
 
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET, // 用于加密会话的密钥
+    resave: false, // 是否在每次请求时重新保存会话
+    saveUninitialized: true, // 是否保存未初始化的会话
+    cookie: { secure: false }, // 如果是 https, 请设置为 true
+  })
+);
+
 app.use(passport.initialize());
+app.use(passport.session());
 
 // General authentication (Google, Microsoft, Facebook login)
 app.use("/auth", authRoutes);

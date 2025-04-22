@@ -48,6 +48,10 @@ function LoginPage() {
         if (data.success) {
           clearInterval(interval);
           console.log("✅ OAuth login detected! Redirecting...");
+
+          const { token, user } = data;
+          localStorage.setItem("token", token); // 保存 token
+          setUser(user); // 更新 UserContext 中的用户信息
           router.push("/workspace");
         }
       } catch (error) {

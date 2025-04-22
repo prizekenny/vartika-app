@@ -13,6 +13,19 @@ console.log(`🔹 Google Auth Callback: ${BASE_URL}/auth/google/callback`);
 console.log(`🔹 Gmail Auth Callback: ${BASE_URL}/auth/gmail/callback`);
 console.log(`🔹 Drive Auth Callback: ${BASE_URL}/auth/drive/callback`);
 
+passport.serializeUser((user, done) => {
+  console.log("🔹 Serializing user:", user);
+  done(null, user.user_id); // 只存储用户的 id
+});
+
+passport.deserializeUser(async (id, done) => {
+  console.log("🔹 Deserializing user with user_id:", id);
+  const result = await pool.query("SELECT * FROM users WHERE user_id = $1", [
+    id,
+  ]);
+  done(null, result.rows[0]);
+});
+
 // Local Strategy
 passport.use(
   new LocalStrategy(
@@ -53,10 +66,11 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: `${BASE_URL}/auth/google/callback`,
+      callbackURL: `${process.env.BASE_URL}/auth/google/callback`,
       passReqToCallback: true,
     },
     async (req, accessToken, refreshToken, profile, done) => {
+      console.log("🔹 Google OAuth Profile:", profile);
       try {
         let result = await pool.query(
           "SELECT * FROM users WHERE auth_provider = $1 AND auth_provider_id = $2",
