@@ -3,6 +3,7 @@ import express from "express";
 import { getQuickBooksToken } from "../services/tokenService.js";
 import { QuickBooksClient } from "../services/quickbooksService.js";
 import auditLog from "../middlewares/auditLog.js";
+import { pool } from "../config/database.js";
 
 const router = express.Router();
 
@@ -190,6 +191,47 @@ router.get("/invoices/:id/pdf", async (req, res) => {
   } catch (error) {
     console.error("❌ Failed to download invoice PDF:", error);
     res.status(500).json({ error: "Failed to download invoice PDF" });
+  }
+});
+
+/**
+ * 📋 Get Customer List
+ */
+router.get("/customers", async (req, res) => {
+  try {
+    const token = await getQuickBooksToken();
+    const qb = new QuickBooksClient(token);
+    const customers = await qb.getCustomerList();
+    res.json(customers);
+  } catch (error) {
+    console.error("❌ Failed to fetch customer list:", error);
+    res.status(500).json({ error: "Failed to fetch customer list" });
+  }
+});
+
+/**
+ * 📋 Get QB Customers Without Client
+ */
+router.get("/customers/without-client", async (req, res) => {
+  try {
+    const token = await getQuickBooksToken();
+    const qb = new QuickBooksClient(token);
+    const customers = await qb.getCustomerList();
+
+    // Use correct pool reference for querying linked customer IDs
+    const result = await pool.query(
+      "SELECT qb_customer_id FROM clients WHERE qb_customer_id IS NOT NULL"
+    );
+    const linkedCustomerIds = result.rows.map((r) => r.qb_customer_id);
+
+    const unlinkedCustomers = customers.filter(
+      (cust) => !linkedCustomerIds.includes(cust.Id)
+    );
+
+    res.json(unlinkedCustomers);
+  } catch (error) {
+    console.error("❌ Failed to fetch unlinked customers:", error);
+    res.status(500).json({ error: "Failed to fetch unlinked customers" });
   }
 });
 

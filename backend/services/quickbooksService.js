@@ -883,6 +883,20 @@ class QuickBooksClient {
 
     return response.response?.data;
   }
+
+  async getCustomerList() {
+    await this.#ensureValidToken();
+    const response = await this.client.makeApiCall({
+      url: `${QUICKBOOKS_BASE_URL}/v3/company/${this.realmId}/query?query=SELECT * FROM Customer&minorversion=75`,
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${this.accessToken}`,
+        Accept: "application/json",
+      },
+    });
+
+    return response.response?.data?.QueryResponse?.Customer || [];
+  }
 }
 
 export { QuickBooksClient };

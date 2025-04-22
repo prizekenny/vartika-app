@@ -67,3 +67,7 @@ export const downloadInvoicePdf = async (invoiceId) => {
     console.error("❌ Failed to download invoice PDF:", error);
   }
 };
+
+export const getQuickBooksCustomersWithoutClient = () => {
+  return safeApiGet("/api/quickbooks/customers/without-client");
+};

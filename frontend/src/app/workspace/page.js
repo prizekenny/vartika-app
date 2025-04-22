@@ -22,7 +22,7 @@ import { useRouter } from "next/navigation";
 import DashboardTab from "./tabs/dashboard/dashboard";
 import UserTab from "./tabs/user";
 import SettingTab from "./tabs/settings/setting";
-import ClientTab from "./tabs/client";
+import ClientTab from "./tabs/clients/client";
 import ContractTab from "./tabs/contract";
 import InvoiceTab from "./tabs/invoice";
 import TransactionTab from "./tabs/transaction";

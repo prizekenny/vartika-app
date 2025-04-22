@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Button from "./Button";
-import axios from "axios";
+import { updateUser } from "@/api/users";
 
 const API_BASE_URL = "http://localhost:5001/api/users";
 
@@ -34,7 +34,7 @@ const EditUserModal = ({ isOpen, user, setShowEditUserForm, fetchUsers }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.put(`${API_BASE_URL}/${user.user_id}`, formData);
+      await updateUser(user.user_id, formData);
       setShowEditUserForm(false);
       fetchUsers();
     } catch (error) {

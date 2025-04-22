@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { FaSearch, FaUserPlus, FaTrash, FaEdit } from "react-icons/fa";
-import axios from "axios";
+import { getUsers, updateUser, deleteUser } from "@/api/users";
 import AddUserModal from "../../../components/AddUserModal";
 import EditUserModal from "../../../components/EditUserModal";
 
@@ -24,7 +24,7 @@ const UserTab = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await axios.get(API_BASE_URL);
+      const response = await getUsers();
       setUsers(response.data);
     } catch (error) {
       console.error("Error fetching users:", error);
@@ -34,7 +34,7 @@ const UserTab = () => {
   const handleStatusToggle = async (userId, currentStatus) => {
     try {
       const newStatus = currentStatus === "active" ? "inactive" : "active";
-      await axios.put(`${API_BASE_URL}/${userId}`, { status: newStatus });
+      await updateUser(userId, { status: newStatus });
       fetchUsers();
     } catch (error) {
       console.error("Error updating status:", error);
@@ -44,7 +44,7 @@ const UserTab = () => {
   const handleDeleteUser = async (userId) => {
     if (!window.confirm("Are you sure you want to delete this user?")) return;
     try {
-      await axios.delete(`${API_BASE_URL}/${userId}`);
+      await deleteUser(userId);
       fetchUsers();
     } catch (error) {
       console.error("Error deleting user:", error);
@@ -83,8 +83,10 @@ const UserTab = () => {
   };
 
   const filteredUsers = sortUsers(
-    users.filter((user) =>
-      user.username.toLowerCase().includes(searchTerm.toLowerCase())
+    (Array.isArray(users) ? users : []).filter(
+      (user) =>
+        typeof user.username === "string" &&
+        user.username.toLowerCase().includes(searchTerm.toLowerCase())
     ),
     sortBy
   );

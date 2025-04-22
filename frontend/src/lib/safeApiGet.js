@@ -36,3 +36,36 @@ export const safeApiGet = async (url, options = {}, config = {}) => {
     return null;
   }
 };
+
+export const safeApiPost = async (url, data = {}, config = {}) => {
+  try {
+    const res = await api.post(url, data);
+    return res.data;
+  } catch (error) {
+    console.error("❌ POST error:", error);
+    toast.error(config.errorMessage || "Failed to submit data");
+    return null;
+  }
+};
+
+export const safeApiPut = async (url, data = {}, config = {}) => {
+  try {
+    const res = await api.put(url, data);
+    return res.data;
+  } catch (error) {
+    console.error("❌ PUT error:", error);
+    toast.error(config.errorMessage || "Failed to update");
+    return null;
+  }
+};
+
+export const safeApiDelete = async (url, config = {}) => {
+  try {
+    const res = await api.delete(url);
+    return res.data;
+  } catch (error) {
+    console.error("❌ DELETE error:", error);
+    toast.error(config.errorMessage || "Failed to delete");
+    return null;
+  }
+};

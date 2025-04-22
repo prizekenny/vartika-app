@@ -171,4 +171,27 @@ router.get("/:id/roles", async (req, res) => {
   }
 });
 
+// Get users without associated clients
+router.get("/without-client", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT u.user_id, u.username, u.email, u.phone, u.status, u.user_type,
+             u.created_at, u.last_login_time,
+             array_agg(r.role_name) as roles
+      FROM users u
+      LEFT JOIN user_roles ur ON u.user_id = ur.user_id
+      LEFT JOIN roles r ON ur.role_id = r.role_id
+      LEFT JOIN clients c ON u.user_id = c.user_id
+      WHERE c.user_id IS NULL
+      GROUP BY u.user_id
+      ORDER BY u.created_at DESC
+    `);
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error fetching unlinked users:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;

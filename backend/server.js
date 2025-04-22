@@ -15,6 +15,7 @@ import quickbooksRoutes from "./routes/quickbooks.js"; // ✅ API access logic
 import contractRoutes from "./routes/contracts.js"; // ✅ Contract related routes
 import { loadTokensIntoCache } from "./services/tokenService.js";
 import logRoutes from "./routes/logs.js";
+import clientsRoutes from "./routes/clients.js";
 
 const app = express();
 app.use(
@@ -78,6 +79,9 @@ app.use("/api/logs", logRoutes);
 
 // ✅ Contract related routes
 app.use("/api/contracts", contractRoutes);
+
+// ✅ Clients related routes
+app.use("/api/clients", clientsRoutes);
 
 // 🔹 Load tokens into cache at server startup
 loadTokensIntoCache();
