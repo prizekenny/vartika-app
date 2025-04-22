@@ -1,6 +1,9 @@
 import express from "express";
 
-import { getQuickBooksToken } from "../services/tokenService.js";
+import {
+  getQuickBooksToken,
+  getAllTokensByPlatform,
+} from "../services/tokenService.js";
 import { QuickBooksClient } from "../services/quickbooksService.js";
 import auditLog from "../middlewares/auditLog.js";
 import { pool } from "../config/database.js";
@@ -10,7 +13,7 @@ const router = express.Router();
 /**
  * 📌 获取公司信息
  */
-router.get("/company", auditLog("get_company_info"), async (req, res) => {
+router.get("/company", async (req, res) => {
   try {
     const token = await getQuickBooksToken();
     const qb = new QuickBooksClient(token);
@@ -25,64 +28,52 @@ router.get("/company", auditLog("get_company_info"), async (req, res) => {
 /**
  * 📌 获取发票
  */
-router.get(
-  "/invoices",
-  auditLog("get_invoices", (req) => req.query),
-  async (req, res) => {
-    try {
-      const token = await getQuickBooksToken();
-      const qb = new QuickBooksClient(token);
+router.get("/invoices", async (req, res) => {
+  try {
+    const token = await getQuickBooksToken();
+    const qb = new QuickBooksClient(token);
 
-      const data = await qb.getInvoices(req.query);
-      res.json(data);
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
+    const data = await qb.getInvoices(req.query);
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
-);
+});
 
 /**
  * 📌 获取 Profit and Loss Report
  */
-router.get(
-  "/reports/profit-and-loss",
-  auditLog("get_profit_and_loss", (req) => req.query),
-  async (req, res) => {
-    try {
-      const token = await getQuickBooksToken();
-      const qb = new QuickBooksClient(token);
+router.get("/reports/profit-and-loss", async (req, res) => {
+  try {
+    const token = await getQuickBooksToken();
+    const qb = new QuickBooksClient(token);
 
-      const data = await qb.reportProfitAndLoss(req.query);
-      res.json(data);
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
+    const data = await qb.reportProfitAndLoss(req.query);
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
-);
+});
 
 /**
  * 📌 获取 Profit and Loss Detail Report
  */
-router.get(
-  "/reports/profit-and-loss-detail",
-  auditLog("get_profit_and_loss_detail", (req) => req.query),
-  async (req, res) => {
-    try {
-      const token = await getQuickBooksToken();
-      const qb = new QuickBooksClient(token);
+router.get("/reports/profit-and-loss-detail", async (req, res) => {
+  try {
+    const token = await getQuickBooksToken();
+    const qb = new QuickBooksClient(token);
 
-      const data = await qb.reportProfitAndLossDetail(req.query);
-      res.json(data);
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
+    const data = await qb.reportProfitAndLossDetail(req.query);
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
-);
+});
 
 /**
  * 📌 检查是否授权
  */
-router.get("/authorized", auditLog("check_authorization"), async (req, res) => {
+router.get("/authorized", async (req, res) => {
   try {
     const token = await getQuickBooksToken();
     const qb = new QuickBooksClient(token);
@@ -98,20 +89,29 @@ router.get("/authorized", auditLog("check_authorization"), async (req, res) => {
 /**
  * 📌 获取所有 QuickBooks 授权用户（仅供管理或调试）
  */
-router.get(
-  "/authorized-users",
-  auditLog("get_authorized_users"),
-  async (req, res) => {
-    try {
-      const token = await getQuickBooksToken();
-      const qb = new QuickBooksClient(token);
-      const users = await qb.getAllAuthorizedUsers();
-      res.json(users);
-    } catch (error) {
-      res.status(500).json({ error: error.message });
+router.get("/authorized-users", async (req, res) => {
+  try {
+    const allTokens = await getAllTokensByPlatform("quickbooks");
+    const authorizedUsers = [];
+
+    for (const token of allTokens) {
+      try {
+        const qb = new QuickBooksClient(token);
+        await qb.getCompanyInfo(); // this will throw if not authorized
+        authorizedUsers.push(token.user_email);
+      } catch (error) {
+        console.error(
+          `❌ QuickBooks API authorization failed for ${token.user_email}:`,
+          error.message
+        );
+      }
     }
+
+    res.json({ authorizedUsers });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
-);
+});
 
 /**
  * 📊 Get Balance Sheet Report

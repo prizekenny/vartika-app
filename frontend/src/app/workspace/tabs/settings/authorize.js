@@ -3,28 +3,25 @@ import { SiQuickbooks, SiGoogledrive } from "react-icons/si";
 import { RiRobot2Fill } from "react-icons/ri";
 import GmailCard from "./components/GmailCard";
 import ServiceCard from "./components/ServiceCard";
+import {
+  getQuickBooksAuthStatus,
+  resetQuickBooksAuthStatus,
+  getQuickBooksAuthorizedUsers,
+} from "@/api/quickbooks";
+import {
+  getGoogleDriveAuthStatus,
+  resetGoogleDriveAuthStatus,
+  getGoogleDriveAuthorizedUsers,
+} from "@/api/googleDrive";
 
 const AuthorizeTab = () => {
-  // Updated state to handle multiple Gmail accounts
-  const [authorizedServices, setAuthorizedServices] = useState({
-    gmail: {
-      accounts: [],
-    },
-    googleDrive: {
-      authorized: false,
-      active: false,
-      email: "",
-    },
-    quickbooks: {
-      authorized: false,
-      active: false,
-      email: "",
-    },
-    karbonAI: {
-      authorized: false,
-      active: false,
-    },
-  });
+  // Updated individual states instead of a single object
+  const [gmailAccounts, setGmailAccounts] = useState([]);
+  const [googleDriveAuthorized, setGoogleDriveAuthorized] = useState(false);
+  const [googleDriveEmail, setGoogleDriveEmail] = useState("");
+  const [quickbooksAuthorized, setQuickbooksAuthorized] = useState(false);
+  const [quickbooksEmail, setQuickbooksEmail] = useState("");
+  const [karbonAIAuthorized, setKarbonAIAuthorized] = useState(false);
 
   const [authInProgress, setAuthInProgress] = useState({
     gmail: false,
@@ -44,30 +41,31 @@ const AuthorizeTab = () => {
   const fetchAllServicesStatus = async () => {
     setIsLoading(true);
     try {
-      // Check QuickBooks status - use the existing endpoints
-      await checkQuickbooksServiceAuthorization();
-      
-      // Add other services status fetching here as they're implemented
-      
-      // For now, using mock data for other services
-      setAuthorizedServices((prev) => ({
-        ...prev,
-        gmail: {
-          accounts: [
-            { email: "user1@example.com", active: true },
-            { email: "user2@example.com", active: false },
-          ],
-        },
-        googleDrive: {
-          authorized: true,
-          active: true,
-          email: "drive@example.com",
-        },
-        karbonAI: {
-          authorized: false,  // Changed to false for testing
-          active: false,
-        },
-      }));
+      const users = await getQuickBooksAuthorizedUsers();
+      if (users?.authorizedUsers?.length > 0) {
+        setQuickbooksAuthorized(true);
+        setQuickbooksEmail(users.authorizedUsers[0]);
+      } else {
+        setQuickbooksAuthorized(false);
+        setQuickbooksEmail("");
+      }
+
+      // Mock data for others
+      setGmailAccounts([
+        { email: "vartika.portal@gmail.com", active: true },
+        { email: "sunny.portal@gmail.com.com", active: false },
+      ]);
+
+      // Check Google Drive authorization status
+      const driveUsers = await getGoogleDriveAuthorizedUsers();
+      if (driveUsers?.authorizedUsers?.length > 0) {
+        setGoogleDriveAuthorized(true);
+        setGoogleDriveEmail(driveUsers.authorizedUsers[0]);
+      } else {
+        setGoogleDriveAuthorized(false);
+        setGoogleDriveEmail("");
+      }
+      setKarbonAIAuthorized(false);
     } catch (error) {
       console.error("Error fetching services status:", error);
     } finally {
@@ -75,97 +73,17 @@ const AuthorizeTab = () => {
     }
   };
 
-  // Check QuickBooks service authorization using the existing endpoints
-  const checkQuickbooksServiceAuthorization = async () => {
-    try {
-      console.log("Checking QuickBooks authorization status...");
-      
-      // First check if the service is authorized using /quickbooks/authorized
-      const authResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/quickbooks/authorized`, 
-        { 
-          credentials: "include",
-          headers: {
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            "Pragma": "no-cache"
-          }
-        }
-      );
-      
-      if (!authResponse.ok) {
-        console.warn("Failed to check QuickBooks authorization status:", authResponse.status);
-        return false;
-      }
-      
-      const authData = await authResponse.json();
-      console.log("QuickBooks authorized endpoint response:", authData);
-      
-      if (authData.authorized) {
-        console.log("QuickBooks is authorized, checking authorized users...");
-        
-        // If authorized, get the list of authorized users using /quickbooks/authorized-users
-        const usersResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/quickbooks/authorized-users`, 
-          { 
-            credentials: "include",
-            headers: {
-              "Cache-Control": "no-cache, no-store, must-revalidate",
-              "Pragma": "no-cache"
-            }
-          }
-        );
-        
-        if (!usersResponse.ok) {
-          console.warn("Failed to fetch authorized users:", usersResponse.status);
-          return false;
-        }
-        
-        const usersData = await usersResponse.json();
-        console.log("QuickBooks authorized users response:", usersData);
-        
-        if (usersData.authorizedUsers && usersData.authorizedUsers.length > 0) {
-          // We have at least one authorized user
-          const firstUser = usersData.authorizedUsers[0];
-          console.log("Found authorized QuickBooks user:", firstUser);
-          
-          setAuthorizedServices((prev) => ({
-            ...prev,
-            quickbooks: {
-              authorized: true,
-              active: true,
-              email: firstUser.email || "Authorized User"
-            },
-          }));
-          
-          return true;
-        } else {
-          console.log("No authorized users found despite service being authorized");
-        }
-      } else {
-        console.log("QuickBooks is not authorized");
-        
-        // Service is not authorized
-        setAuthorizedServices((prev) => ({
-          ...prev,
-          quickbooks: {
-            ...prev.quickbooks,
-            authorized: false,
-            active: false,
-          },
-        }));
-      }
-      return false;
-    } catch (error) {
-      console.error("Error checking QuickBooks service authorization:", error);
-      // Don't update state on error, to prevent wiping out existing auth state
-      return false;
-    }
-  };
-
   // Start OAuth flow for a service
   const handleAuthorize = async (service) => {
     try {
       console.log(`Starting authorization for ${service}...`);
+
+      if (service === "quickbooks") {
+        await resetQuickBooksAuthStatus();
+      }
+      if (service === "googleDrive") {
+        await resetGoogleDriveAuthStatus();
+      }
 
       // Open OAuth window
       const authWindow = window.open(
@@ -190,71 +108,90 @@ const AuthorizeTab = () => {
       const statusCheckInterval = setInterval(async () => {
         try {
           let authorized = false;
-          
+
           // Check authorization status via API calls
           if (service === "quickbooks") {
-            authorized = await checkQuickbooksServiceAuthorization();
+            // Use fetchAllServicesStatus to refresh state, but check status directly for polling
+            const status = await getQuickBooksAuthStatus();
+            if (status?.recentAuth) {
+              const users = await getQuickBooksAuthorizedUsers();
+              setQuickbooksAuthorized(true);
+              setQuickbooksEmail(
+                users?.authorizedUsers?.[0] || "Authorized User"
+              );
+              authorized = true;
+            } else {
+              setQuickbooksAuthorized(false);
+              setQuickbooksEmail("");
+              authorized = false;
+            }
           } else if (service === "gmail") {
             // TODO: Implement Gmail check via API
             // For now use mock data
             authorized = Math.random() > 0.7; // Simulate random success for testing
           } else if (service === "googleDrive") {
-            // TODO: Implement Google Drive check via API
-            authorized = Math.random() > 0.7; // Simulate random success for testing
+            const driveStatus = await getGoogleDriveAuthStatus();
+            if (driveStatus?.recentAuth) {
+              const users = await getGoogleDriveAuthorizedUsers();
+              setGoogleDriveAuthorized(true);
+              setGoogleDriveEmail(
+                users?.authorizedUsers?.[0] || "Authorized User"
+              );
+              authorized = true;
+            } else {
+              setGoogleDriveAuthorized(false);
+              setGoogleDriveEmail("");
+              authorized = false;
+            }
           } else if (service === "karbonAI") {
             // TODO: Implement KarbonAI check via API
             authorized = Math.random() > 0.7; // Simulate random success for testing
           }
-          
-          if (authorized) {
+
+          if (authorized === true) {
             console.log(`✅ ${service} authorization successful via API!`);
             clearInterval(statusCheckInterval);
-            
+
             // Update UI based on the service
             if (service === "gmail") {
               // For Gmail, add a mock new account
-              const mockNewEmail = `new${Math.floor(Math.random() * 1000)}@gmail.com`;
-              
-              setAuthorizedServices((prev) => ({
+              const mockNewEmail = `new${Math.floor(
+                Math.random() * 1000
+              )}@gmail.com`;
+
+              setGmailAccounts((prev) => [
                 ...prev,
-                gmail: {
-                  ...prev.gmail,
-                  accounts: [
-                    ...prev.gmail.accounts,
-                    { email: mockNewEmail, active: true },
-                  ],
-                },
-              }));
-            } else if (service !== "quickbooks") {
-              // For other services (except QuickBooks which is already updated by the check function)
-              setAuthorizedServices((prev) => ({
-                ...prev,
-                [service]: {
-                  ...prev[service],
-                  authorized: true,
-                  active: true,
-                  ...(service === "googleDrive" ? { email: "drive@example.com" } : {}),
-                },
-              }));
+                { email: mockNewEmail, active: true },
+              ]);
+            } else if (service === "googleDrive") {
+              setGoogleDriveAuthorized(true);
+              setGoogleDriveEmail("drive@example.com");
+            } else if (service === "karbonAI") {
+              setKarbonAIAuthorized(true);
             }
-            
+
             // Reset auth in progress flag
             setAuthInProgress((prev) => ({
               ...prev,
               [service]: false,
             }));
-            
+
             // Close the window if it's still open
             try {
               if (authWindow && !authWindow.closed) {
                 authWindow.close();
               }
             } catch (windowError) {
-              console.log("Note: Could not close the auth window due to cross-origin restrictions");
+              console.log(
+                "Note: Could not close the auth window due to cross-origin restrictions"
+              );
             }
           }
         } catch (error) {
-          console.error(`Error checking ${service} authorization status:`, error);
+          console.error(
+            `Error checking ${service} authorization status:`,
+            error
+          );
           clearInterval(statusCheckInterval);
           setAuthInProgress((prev) => ({
             ...prev,
@@ -262,7 +199,7 @@ const AuthorizeTab = () => {
           }));
         }
       }, 2000); // Poll every 2 seconds
-      
+
       // Set a timeout to stop polling after 5 minutes (prevent infinite polling)
       setTimeout(() => {
         if (statusCheckInterval) {
@@ -274,7 +211,6 @@ const AuthorizeTab = () => {
           }));
         }
       }, 5 * 60 * 1000);
-      
     } catch (error) {
       console.error(`Error starting ${service} authorization:`, error);
       setAuthInProgress((prev) => ({
@@ -298,25 +234,17 @@ const AuthorizeTab = () => {
 
       // For Gmail we need to handle multiple accounts
       if (service === "gmail" && email) {
-        setAuthorizedServices((prev) => ({
-          ...prev,
-          gmail: {
-            ...prev.gmail,
-            accounts: prev.gmail.accounts.filter(
-              (account) => account.email !== email
-            ),
-          },
-        }));
-      } else {
-        // For other services, just set authorized to false
-        setAuthorizedServices((prev) => ({
-          ...prev,
-          [service]: {
-            ...prev[service],
-            authorized: false,
-            active: false,
-          },
-        }));
+        setGmailAccounts((prev) =>
+          prev.filter((account) => account.email !== email)
+        );
+      } else if (service === "googleDrive") {
+        setGoogleDriveAuthorized(false);
+        setGoogleDriveEmail("");
+      } else if (service === "quickbooks") {
+        setQuickbooksAuthorized(false);
+        setQuickbooksEmail("");
+      } else if (service === "karbonAI") {
+        setKarbonAIAuthorized(false);
       }
     } catch (error) {
       console.error(`Error revoking ${service}:`, error);
@@ -337,8 +265,8 @@ const AuthorizeTab = () => {
         </div>
       ) : (
         <div className="space-y-4">
-          <GmailCard 
-            accounts={authorizedServices.gmail.accounts}
+          <GmailCard
+            accounts={gmailAccounts}
             isAuthInProgress={authInProgress.gmail}
             onAuthorize={handleAuthorize}
             onRevoke={handleRevoke}
@@ -348,14 +276,14 @@ const AuthorizeTab = () => {
             service="googleDrive"
             name="Google Drive"
             icon={<SiGoogledrive className="text-2xl text-blue-600" />}
-            isAuthorized={authorizedServices.googleDrive.authorized}
-            isActive={authorizedServices.googleDrive.active}
+            isAuthorized={googleDriveAuthorized}
+            isActive={googleDriveAuthorized}
             isAuthInProgress={authInProgress.googleDrive}
             onAuthorize={handleAuthorize}
             onRevoke={handleRevoke}
             details={
-              authorizedServices.googleDrive.authorized ? (
-                <p>Connected account: {authorizedServices.googleDrive.email}</p>
+              googleDriveAuthorized ? (
+                <p>Connected account: {googleDriveEmail}</p>
               ) : (
                 <p className="text-gray-500 italic">Not authorized</p>
               )
@@ -366,14 +294,14 @@ const AuthorizeTab = () => {
             service="quickbooks"
             name="QuickBooks"
             icon={<SiQuickbooks className="text-2xl text-green-500" />}
-            isAuthorized={authorizedServices.quickbooks.authorized}
-            isActive={authorizedServices.quickbooks.active}
+            isAuthorized={quickbooksAuthorized}
+            isActive={quickbooksAuthorized}
             isAuthInProgress={authInProgress.quickbooks}
             onAuthorize={handleAuthorize}
             onRevoke={handleRevoke}
             details={
-              authorizedServices.quickbooks.authorized ? (
-                <p>Connected account: {authorizedServices.quickbooks.email}</p>
+              quickbooksAuthorized ? (
+                <p>Connected account: {quickbooksEmail}</p>
               ) : (
                 <p className="text-gray-500 italic">Not authorized</p>
               )
@@ -384,13 +312,13 @@ const AuthorizeTab = () => {
             service="karbonAI"
             name="KarbonAI"
             icon={<RiRobot2Fill className="text-2xl text-purple-600" />}
-            isAuthorized={authorizedServices.karbonAI.authorized}
-            isActive={authorizedServices.karbonAI.active}
+            isAuthorized={karbonAIAuthorized}
+            isActive={karbonAIAuthorized}
             isAuthInProgress={authInProgress.karbonAI}
             onAuthorize={handleAuthorize}
             onRevoke={handleRevoke}
             details={
-              authorizedServices.karbonAI.authorized ? (
+              karbonAIAuthorized ? (
                 <p>Connected AI service</p>
               ) : (
                 <p className="text-gray-500 italic">Not authorized</p>

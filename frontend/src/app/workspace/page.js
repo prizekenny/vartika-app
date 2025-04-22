@@ -81,7 +81,7 @@ function Workspace() {
     <main className="bg-gray-50 min-h-screen flex text-black">
       <Tab.Group as="div" className="flex w-full">
         {/* Left Side: Header + Tabs */}
-        <div className="w-1/5 bg-white shadow-md flex flex-col">
+        <div className="w-[220px] bg-white shadow-md flex flex-col">
           {/* Header */}
           <header className="bg-gray-900 text-white py-8 px-6">
             <div className="flex items-center justify-center space-x-3">

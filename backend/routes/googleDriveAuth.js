@@ -1,7 +1,6 @@
 import express from "express";
 import passport from "passport";
 import { updateToken } from "../services/tokenService.js";
-import auditLog from "../middlewares/auditLog.js";
 
 const router = express.Router();
 
@@ -10,7 +9,6 @@ const router = express.Router();
  */
 router.get(
   "/",
-  auditLog("google_drive_oauth_start"),
   passport.authenticate("google-drive", {
     scope: ["profile", "email", "https://www.googleapis.com/auth/drive"],
     accessType: "offline",
@@ -23,7 +21,6 @@ router.get(
  */
 router.get(
   "/callback",
-  auditLog("google_drive_oauth_callback"),
   passport.authenticate("google-drive", { failureRedirect: "/login" }),
   async (req, res) => {
     try {
@@ -53,8 +50,17 @@ router.get(
         null
       );
 
+      googleDriveOAuthSuccess = true;
+
       console.log(`✅ Stored refresh_token for Google Drive: ${userEmail}`);
-      res.json({ success: true, user: req.user });
+
+      // Return HTML that closes the popup and notifies the parent window
+      res.setHeader("Content-Type", "text/html");
+      res.send(`
+         <script>
+          window.close();
+        </script>
+    `);
     } catch (err) {
       console.error("❌ Failed to store Google Drive refresh token:", err);
       res
@@ -63,5 +69,39 @@ router.get(
     }
   }
 );
+
+// Temporary in-memory flag to track recent Google Drive OAuth success
+let googleDriveOAuthSuccess = false;
+
+/**
+ * 🔄 Reset Google Drive OAuth session state
+ */
+router.get("/status/reset", (req, res) => {
+  googleDriveOAuthSuccess = false;
+  res.json({ success: true, message: "Google Drive OAuth session reset." });
+});
+
+/**
+ * ✅ Check Google Drive OAuth status
+ */
+router.get("/status", (req, res) => {
+  const recentOAuthSuccess = googleDriveOAuthSuccess;
+
+  if (recentOAuthSuccess) {
+    googleDriveOAuthSuccess = false;
+    return res.json({
+      success: true,
+      authorized: true,
+      active: true,
+      recentAuth: true,
+    });
+  }
+
+  return res.json({
+    success: true,
+    authorized: false,
+    recentAuth: false,
+  });
+});
 
 export default router;

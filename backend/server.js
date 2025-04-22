@@ -65,9 +65,9 @@ app.use("/auth/gmail", gmailAuthRoutes);
 app.use("/api/gmail", gmailRoutes);
 
 // Google Drive API routes (redirects for OAuth)
-app.use("/auth/drive", driveAuthRoutes);
+app.use("/auth/googledrive", driveAuthRoutes);
 // Google Drive routes (upload, download files)
-app.use("/api/drive", googleDriveRoutes);
+app.use("/api/googledrive", googleDriveRoutes);
 
 // ✅ QuickBooks OAuth authentication
 app.use("/auth/quickbooks", quickbooksAuthRoutes);

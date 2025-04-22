@@ -71,3 +71,15 @@ export const downloadInvoicePdf = async (invoiceId) => {
 export const getQuickBooksCustomersWithoutClient = () => {
   return safeApiGet("/api/quickbooks/customers/without-client");
 };
+
+export const getQuickBooksAuthStatus = () => {
+  return safeApiGet("/auth/quickbooks/status");
+};
+
+export const resetQuickBooksAuthStatus = () => {
+  return safeApiGet("/auth/quickbooks/status/reset");
+};
+
+export const getQuickBooksAuthorizedUsers = () => {
+  return safeApiGet("/api/quickbooks/authorized-users");
+};
