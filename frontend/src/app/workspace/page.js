@@ -112,8 +112,8 @@ function Workspace() {
   return (
     <main className="bg-gray-50 min-h-screen flex text-black">
       <Tab.Group as="div" className="flex w-full">
-        {/* Left Side: Header + Tabs */}
-        <div className="w-[220px] bg-white shadow-md flex flex-col">
+        {/* Left Side: Header + Tabs with fixed width */}
+        <div className="w-[220px] bg-white shadow-md flex flex-col fixed h-full">
           {/* Header */}
           <header className="bg-gray-900 text-white py-8 px-6">
             <div className="flex flex-col items-center space-y-2">
@@ -132,7 +132,7 @@ function Workspace() {
 
           {/* Tabs */}
           <div className="flex flex-col flex-1">
-            <Tab.List className="flex flex-col flex-1 py-4">
+            <Tab.List className="flex flex-col flex-1 py-4 overflow-auto">
               {tabs.map((tab, index) => (
                 <Tab
                   key={index}
@@ -174,7 +174,7 @@ function Workspace() {
         </div>
 
         {/* Right Side: Tab Panels */}
-        <div className="flex-1 bg-white p-8">
+        <div className="flex-1 bg-white p-8 ml-[220px]">
           <Tab.Panels>
             {tabs.map((tab, index) => (
               <Tab.Panel key={index} className="focus:outline-none">
