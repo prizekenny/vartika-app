@@ -11,6 +11,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { FaChevronDown, FaChevronRight } from "react-icons/fa";
+import { getFinancialReport } from "@/api/quickbooks";
 
 const ReportTab = () => {
   const [activeTab, setActiveTab] = useState("all");
@@ -66,24 +67,7 @@ const ReportTab = () => {
         setLoading(true);
         setError(null);
 
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/quickbooks/reports/overview`,
-          {
-            credentials: "include",
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(
-            errorData.error || "Failed to fetch financial reports"
-          );
-        }
-
-        const data = await response.json();
+        const data = await getFinancialReport();
         setReports(data);
       } catch (error) {
         console.error("Failed to fetch reports:", error);
@@ -102,22 +86,7 @@ const ReportTab = () => {
       setLoading(true);
       setError(null);
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/quickbooks/reports/overview`,
-        {
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to fetch financial reports");
-      }
-
-      const data = await response.json();
+      const data = await getFinancialReport();
       setReports(data);
     } catch (error) {
       console.error("Failed to refresh reports:", error);

@@ -83,3 +83,7 @@ export const resetQuickBooksAuthStatus = () => {
 export const getQuickBooksAuthorizedUsers = () => {
   return safeApiGet("/api/quickbooks/authorized-users");
 };
+
+export const getFinancialReport = (params) => {
+  return safeApiGet("/api/quickbooks/reports/overview", { params });
+};
