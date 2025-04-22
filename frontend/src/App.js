@@ -1,11 +1,10 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Sidebar from "./components/Sidebar";
 import User from "./app/workspace/tabs/user";
-import { UserProvider } from "@/context/UserContext";
 
 function App() {
+  console.log("Rendering App");
   return (
-    <UserProvider>
       <Router>
         <div className="flex">
           <Sidebar />
@@ -17,7 +16,6 @@ function App() {
           </div>
         </div>
       </Router>
-    </UserProvider>
   );
 }
 

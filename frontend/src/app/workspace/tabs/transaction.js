@@ -16,6 +16,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { getTransactions } from "@/api/quickbooks";
 
 // 定义饼图颜色
 const COLORS = [
@@ -107,22 +108,8 @@ export default function TransactionTab() {
       setLoading(true);
       setError(null);
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/quickbooks/transactions`,
-        {
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const data = await getTransactions({ page: 1, perPage: 15 });
 
-      if (!response.ok) {
-        console.log("Error response:", response);
-        throw new Error("Failed to fetch transaction data");
-      }
-
-      const data = await response.json();
       console.log("📥 从后端接收到的交易数据:", JSON.stringify(data, null, 2));
       setTransactions(data);
     } catch (error) {

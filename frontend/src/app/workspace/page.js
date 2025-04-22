@@ -31,7 +31,8 @@ import AssignmentTab from "./tabs/assignment";
 import ReportTab from "./tabs/report";
 import LogTab from "./tabs/log";
 
-import { useUser } from "@/context/UserContext.js";
+import { useUser } from "@/context/UserContext";
+import { useEffect } from "react";
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -39,7 +40,15 @@ function classNames(...classes) {
 
 function Workspace() {
   const router = useRouter();
-  const user = null;
+  const { user, setUser } = useUser();
+
+  // Check if user is logged in, if not, redirect to login page
+  useEffect(() => {
+    if (!user) {
+      console.log("User not logged in. Redirecting to login...");
+      router.push("/login"); // Redirect to login page if user is not logged in
+    }
+  }, [user, router]); // Depend on user state to check login status
 
   const allTabs = [
     { name: "Dashboard", icon: <FaHome />, component: <DashboardTab /> },
@@ -59,18 +68,19 @@ function Workspace() {
     { name: "Activity Logs", icon: <FaHistory />, component: <LogTab /> },
   ];
 
-  const tabs =
-    user?.role === "client"
-      ? allTabs.filter((tab) =>
-          [
-            "Dashboard",
-            "Settings",
-            "Contracts",
-            "Invoices",
-            "Documents",
-          ].includes(tab.name)
-        )
-      : allTabs;
+  const tabs = user?.roles?.some(
+    (role) => !["employee", "admin", "super admin"].includes(role.toLowerCase())
+  )
+    ? allTabs.filter((tab) =>
+        [
+          "Dashboard",
+          "Settings",
+          "Contracts",
+          "Invoices",
+          "Documents",
+        ].includes(tab.name)
+      )
+    : allTabs;
 
   const handleLogout = async () => {
     try {
@@ -85,11 +95,16 @@ function Workspace() {
       );
 
       if (response.ok) {
+        setUser(null);
+
+        // 清除本地存储中的用户数据
+        localStorage.removeItem("user");
         router.push("/login");
       } else {
         alert("Logout failed. Please try again.");
       }
     } catch (error) {
+      console.log("⚠️ Error during logout:", error);
       alert("An error occurred during logout. Please try again.");
     }
   };
@@ -101,9 +116,17 @@ function Workspace() {
         <div className="w-[220px] bg-white shadow-md flex flex-col">
           {/* Header */}
           <header className="bg-gray-900 text-white py-8 px-6">
-            <div className="flex items-center justify-center space-x-3">
+            <div className="flex flex-col items-center space-y-2">
               <FaLayerGroup className="text-3xl text-blue-400" />
               <h1 className="text-2xl font-bold tracking-wide">Vartika</h1>
+
+              {/* Current User Info */}
+              {user && (
+                <div className="text-center text-sm mt-4">
+                  <p className="font-semibold">{user.username}</p>
+                  <p className="text-gray-300">{user.email}</p>
+                </div>
+              )}
             </div>
           </header>
 

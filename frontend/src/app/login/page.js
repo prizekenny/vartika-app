@@ -10,7 +10,10 @@ import api from "@/lib/axios";
 function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const { setUser } = useUser(); // 从 UserContext 获取 setUser
   const router = useRouter();
+
+  console.log("useUser output:", { setUser });
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -21,9 +24,11 @@ function LoginPage() {
         return;
       }
       const response = await api.post("/auth/login", { email, password });
-      const { token } = response.data;
+      const { token, user } = response.data;
 
-      localStorage.setItem("token", token);
+      localStorage.setItem("token", token); // 保存 token
+      setUser(user); // 更新 UserContext 中的用户信息
+
       router.push("/workspace");
     } catch (error) {
       alert("An error occurred during login. Please try again.", error);
@@ -70,6 +75,7 @@ function LoginPage() {
 
     authWindow.focus();
   };
+
   return (
     <main className="bg-white min-h-screen flex flex-col justify-center items-center text-black">
       <header className="flex flex-col items-center justify-center mb-6">
