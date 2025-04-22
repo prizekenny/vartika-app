@@ -19,3 +19,7 @@ export const updateUser = (userId, data) => {
 export const getUsersWithoutClient = () => {
   return api.get("/api/users/without-client");
 };
+
+export const createUser = (userData) => {
+  return api.post("/api/users", userData);
+};

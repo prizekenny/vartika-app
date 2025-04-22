@@ -6,8 +6,6 @@ import { getUsers, updateUser, deleteUser } from "@/api/users";
 import AddUserModal from "../../../components/AddUserModal";
 import EditUserModal from "../../../components/EditUserModal";
 
-const API_BASE_URL = "http://localhost:5001/api/users";
-
 const UserTab = () => {
   const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");

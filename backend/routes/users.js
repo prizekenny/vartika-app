@@ -1,3 +1,4 @@
+import auditLog from "../middlewares/auditLog.js";
 import express from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -26,7 +27,7 @@ router.get("/", async (req, res) => {
 });
 
 // Create new user
-router.post("/", async (req, res) => {
+router.post("/", auditLog("create_user"), async (req, res) => {
   try {
     const { username, email, password, phone, user_type, roles, status } =
       req.body;
@@ -45,18 +46,22 @@ router.post("/", async (req, res) => {
 
       const userId = userResult.rows[0].user_id;
 
-      if (roles && roles.length > 0) {
-        const roleQuery = await client.query(
-          "SELECT role_id FROM roles WHERE role_name = ANY($1)",
-          [roles]
-        );
+      let assignedRoles = roles;
+      if (!roles || roles.length === 0) {
+        // 默认角色
+        assignedRoles = ["client"];
+      }
 
-        for (const role of roleQuery.rows) {
-          await client.query(
-            "INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2)",
-            [userId, role.role_id]
-          );
-        }
+      const roleQuery = await client.query(
+        "SELECT role_id FROM roles WHERE role_name = ANY($1)",
+        [assignedRoles]
+      );
+
+      for (const role of roleQuery.rows) {
+        await client.query(
+          "INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2)",
+          [userId, role.role_id]
+        );
       }
 
       await client.query("COMMIT");
@@ -73,8 +78,12 @@ router.post("/", async (req, res) => {
 });
 
 // Update user info
-router.put("/:id", async (req, res) => {
+router.put("/:id", auditLog("update_user"), async (req, res) => {
   try {
+    console.log("🧪 req.headers.cookie:", req.headers.cookie);
+    console.log("🧪 req.session:", req.session);
+    console.log("🧪 req.user:", req.user);
+
     const { id } = req.params;
     const { username, email, phone, user_type, status, roles } = req.body;
 
@@ -130,7 +139,7 @@ router.put("/:id", async (req, res) => {
 });
 
 // Delete user
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", auditLog("delete_user"), async (req, res) => {
   try {
     const client = await pool.connect();
     try {

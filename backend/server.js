@@ -31,10 +31,13 @@ app.use(
 app.use((req, res, next) => {
   res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
   res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
+  res.header("Access-Control-Allow-Credentials", "true");
   next();
 });
 
 app.use(express.json());
+
+console.log("🌍 NODE_ENV:", process.env.NODE_ENV);
 
 app.use(
   session({

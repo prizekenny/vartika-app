@@ -2,8 +2,6 @@ import React, { useState, useEffect } from "react";
 import Button from "./Button";
 import { updateUser } from "@/api/users";
 
-const API_BASE_URL = "http://localhost:5001/api/users";
-
 const EditUserModal = ({ isOpen, user, setShowEditUserForm, fetchUsers }) => {
   const [formData, setFormData] = useState({
     username: "",

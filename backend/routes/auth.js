@@ -6,6 +6,8 @@ import auditLog from "../middlewares/auditLog.js";
 
 const router = express.Router();
 
+let oauthLoginSuccess = false; // ✅ 使用全局变量
+
 // Test route - just for API testing
 router.get("/test", (req, res) => {
   res.json({ message: "Auth route working" });
@@ -36,37 +38,41 @@ router.post(
 );
 
 // Local login with last_login_time update
-router.post(
-  "/login",
-  auditLog("local_login", (req) => ({ username: req.body.username })),
-  (req, res, next) => {
-    passport.authenticate("local", async (err, user, info) => {
-      if (err) return next(err);
-      if (!user) return res.status(401).json(info);
+router.post("/login", (req, res, next) => {
+  passport.authenticate("local", async (err, user, info) => {
+    if (err) return next(err);
+    if (!user) return res.status(401).json(info);
 
-      try {
-        // Update last_login_time
-        await pool.query(
-          "UPDATE users SET last_login_time = NOW() WHERE user_id = $1",
+    try {
+      // Update last_login_time
+      await pool.query(
+        "UPDATE users SET last_login_time = NOW() WHERE user_id = $1",
+        [user.user_id]
+      );
+
+      // Complete login
+      req.logIn(user, async (err) => {
+        if (err) return next(err);
+        // Get user roles
+        const rolesResult = await pool.query(
+          "SELECT r.role_name FROM user_roles ur JOIN roles r ON ur.role_id = r.role_id WHERE ur.user_id = $1",
           [user.user_id]
         );
-
-        // Complete login
-        req.logIn(user, (err) => {
-          if (err) return next(err);
-          res.json({ user });
-        });
-      } catch (err) {
-        return res.status(500).json({ error: err.message });
-      }
-    })(req, res, next);
-  }
-);
+        user.roles = rolesResult.rows.map((r) => r.role_name);
+        if (user.roles.length === 0) user.roles = ["guest"];
+        //req.session.user = user;
+        res.json({ user });
+        console.log("User logged in:", req.session);
+      });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  })(req, res, next);
+});
 
 // Google OAuth routes
 router.get(
   "/google",
-  auditLog("google_oauth_start"),
   passport.authenticate("google-login", {
     scope: ["profile", "email"],
     accessType: "offline",
@@ -78,7 +84,6 @@ router.get(
 // Also update last_login_time for Google login
 router.get(
   "/google/callback",
-  auditLog("google_oauth_callback"),
   passport.authenticate("google-login", {
     failureRedirect: "/login",
   }),
@@ -99,16 +104,25 @@ router.get(
           [req.user.user_id]
         );
 
-        req.session.oauth_logged_in = true;
+        oauthLoginSuccess = true; // ✅ 设置全局状态
       }
+
+      // Get user roles
+      const rolesResult = await pool.query(
+        "SELECT r.role_name FROM user_roles ur JOIN roles r ON ur.role_id = r.role_id WHERE ur.user_id = $1",
+        [req.user.user_id]
+      );
+      req.user.roles = rolesResult.rows.map((r) => r.role_name);
+      if (req.user.roles.length === 0) req.user.roles = ["guest"];
+      //req.session.user = req.user;
 
       res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
       res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
       res.setHeader("Content-Type", "text/html");
-      res.send(`;
+      res.send(`
          <script>
           window.close();
-        </script>
+         </script>
       `);
     } catch (err) {
       res.status(500).json({ error: err.message });
@@ -117,7 +131,7 @@ router.get(
 );
 
 // Get current authenticated user
-router.get("/current-user", auditLog("get_current_user"), (req, res) => {
+router.get("/current-user", (req, res) => {
   if (req.user) {
     res.json({ user: req.user });
   } else {
@@ -126,7 +140,7 @@ router.get("/current-user", auditLog("get_current_user"), (req, res) => {
 });
 
 // Logout route
-router.get("/logout", auditLog("logout"), (req, res, next) => {
+router.get("/logout", (req, res, next) => {
   if (typeof req.logOut !== "function") {
     return res.status(500).json({ error: "req.logOut is not a function" });
   }
@@ -139,15 +153,17 @@ router.get("/logout", auditLog("logout"), (req, res, next) => {
       if (err) {
         return next(err);
       }
-      req.session.oauth_logged_in = false;
+      oauthLoginSuccess = false; // ✅ 重置全局状态
       res.clearCookie("connect.sid"); // 清除 session cookie
       res.json({ message: "Logged out successfully" });
     });
   });
 });
 
-router.get("/oauth-status", auditLog("oauth_status_check"), (req, res) => {
-  if (req.session.oauth_logged_in) {
+// ✅ 替代 session 状态检测方式
+router.get("/oauth-status", (req, res) => {
+  if (oauthLoginSuccess) {
+    oauthLoginSuccess = false;
     return res.json({ success: true, message: "OAuth login successful" });
   }
   return res.json({ success: false, message: "Waiting for OAuth login..." });

@@ -4,12 +4,12 @@ import React, { useState, useEffect } from "react";
 import Button from "../../components/common/Button";
 import { FaGoogle, FaFacebook, FaMicrosoft } from "react-icons/fa";
 import { useRouter } from "next/navigation";
+import { useUser } from "@/context/UserContext";
 
 function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -37,12 +37,13 @@ function LoginPage() {
       const data = await response.json();
 
       if (response.ok) {
+        console.log("Login successful:", data);
         router.push("/workspace");
       } else {
         alert(data.message || "Login failed. Please try again.");
       }
     } catch (error) {
-      alert("An error occurred during login. Please try again.");
+      alert("An error occurred during login. Please try again.", error);
     }
   };
 
@@ -67,7 +68,7 @@ function LoginPage() {
       }
     };
 
-    const interval = setInterval(checkOAuthStatus, 1000); // **每秒轮询**
+    const interval = setInterval(checkOAuthStatus, 500); // **每秒轮询**
     return () => clearInterval(interval);
   }, [router]);
 

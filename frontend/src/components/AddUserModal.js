@@ -1,8 +1,6 @@
 import React, { useState } from "react";
 import Button from "./Button";
-import axios from "axios";
-
-const API_BASE_URL = "http://localhost:5001/api/users";
+import { createUser } from "@/api/users";
 
 const AddUserModal = ({ isOpen, setShowAddUserForm, fetchUsers }) => {
   const [formData, setFormData] = useState({
@@ -20,7 +18,7 @@ const AddUserModal = ({ isOpen, setShowAddUserForm, fetchUsers }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(API_BASE_URL, formData);
+      await createUser(formData);
       setFormData({
         username: "",
         email: "",

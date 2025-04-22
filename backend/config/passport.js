@@ -16,28 +16,31 @@ console.log(`🔹 Drive Auth Callback: ${BASE_URL}/auth/drive/callback`);
 
 // 🔹 Serialize user ID into session
 passport.serializeUser((user, done) => {
-  console.log("🔹 Serializing user:", user); // ✅ 观察 user 结构
-  done(null, user.email);
+  console.log("🔹 Serializing user:", user);
+  done(null, user.user_id); // 🔄 存 user_id 而不是 email
 });
 
 // 🔹 Deserialize user by ID from database
-passport.deserializeUser(async (email, done) => {
-  console.log("🔍 Debug: Deserializing User from users table:", email);
+passport.deserializeUser(async (user_id, done) => {
   try {
-    const result = await pool.query("SELECT * FROM users WHERE email = $1", [
-      email,
+    const result = await pool.query("SELECT * FROM users WHERE user_id = $1", [
+      user_id,
     ]);
-    if (!result.rows.length) {
-      return done(new Error("❌ User not found in users database"), null);
-    }
-    done(null, result.rows[0]); // 返回完整的用户信息
+    if (!result.rows.length) return done(new Error("User not found"), null);
+
+    const user = result.rows[0];
+    const rolesResult = await pool.query(
+      "SELECT r.role_name FROM user_roles ur JOIN roles r ON ur.role_id = r.role_id WHERE ur.user_id = $1",
+      [user_id]
+    );
+    user.roles = rolesResult.rows.map((r) => r.role_name);
+    done(null, user);
   } catch (error) {
-    console.error("❌ Error deserializing user:", error);
     done(error, null);
   }
 });
 
-// 🔹 Local Strategy for username/password login
+// Local Strategy
 passport.use(
   new LocalStrategy(
     {
@@ -50,15 +53,11 @@ passport.use(
           "SELECT * FROM users WHERE email = $1",
           [email]
         );
-        if (!result.rows[0]) {
+        if (!result.rows[0])
           return done(null, false, { message: "Invalid credentials" });
-        }
-
         const isValid = await bcrypt.compare(password, result.rows[0].password);
-        if (!isValid) {
+        if (!isValid)
           return done(null, false, { message: "Invalid credentials" });
-        }
-
         return done(null, result.rows[0]);
       } catch (err) {
         return done(err);
@@ -67,7 +66,7 @@ passport.use(
   )
 );
 
-// 🔹 Google Strategy (Restored `passReqToCallback: true`)
+// Google OAuth Strategy
 passport.use(
   "google-login",
   new GoogleStrategy(
@@ -91,35 +90,49 @@ passport.use(
           );
         }
 
-        return done(null, result.rows[0]);
+        const newUser = result.rows[0];
+        const roleRes = await pool.query(
+          "SELECT role_id FROM roles WHERE role_name = 'Client'"
+        );
+        const clientRoleId = roleRes.rows?.[0]?.role_id;
+
+        if (clientRoleId) {
+          const roleCheck = await pool.query(
+            "SELECT * FROM user_roles WHERE user_id = $1 AND role_id = $2",
+            [newUser.user_id, clientRoleId]
+          );
+
+          if (roleCheck.rows.length === 0) {
+            await pool.query(
+              "INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2)",
+              [newUser.user_id, clientRoleId]
+            );
+          }
+        }
+
+        return done(null, newUser);
       } catch (err) {
         return done(err);
       }
     }
   )
 );
-// Google Strategy for Gmail access (with `passReqToCallback: true`)
+
 passport.use(
   "google-gmail",
   new GoogleStrategy(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: `${BASE_URL}/auth/gmail/callback`, // 🔥 Gmail 授权专用
+      callbackURL: `${BASE_URL}/auth/gmail/callback`,
       passReqToCallback: true,
     },
     async (req, accessToken, refreshToken, profile, done) => {
-      console.log("🔹 Google callback triggered"); // ✅ 确保 Google 回调触发
-      console.log("🔹 Access Token:", accessToken);
-      console.log("🔹 Refresh Token:", refreshToken); // 🔥 确保 refreshToken 有值
-      console.log("🔹 Profile:", profile);
-
       try {
-        let user = {
+        const user = {
           email: profile.emails[0].value,
-          refresh_token: refreshToken, // ✅ Gmail 授权时存储 refresh_token
+          refresh_token: refreshToken || null,
         };
-
         return done(null, user);
       } catch (err) {
         return done(err);
@@ -127,7 +140,7 @@ passport.use(
     }
   )
 );
-// 📂 **Google Drive OAuth Strategy (仅允许一个用户)**
+
 passport.use(
   "google-drive",
   new GoogleStrategy(
@@ -139,16 +152,10 @@ passport.use(
     },
     async (req, accessToken, refreshToken, profile, done) => {
       try {
-        if (!refreshToken) {
-          console.log(
-            "⚠️ No refresh_token received for Google Drive, skipping storage."
-          );
-        }
         const user = {
           email: profile.emails[0].value,
           refresh_token: refreshToken || null,
         };
-        console.log(`✅ Google Drive OAuth Success: ${user.email}`);
         return done(null, user);
       } catch (err) {
         return done(err);
@@ -157,7 +164,6 @@ passport.use(
   )
 );
 
-// 🔹 Microsoft Strategy (Restored `passReqToCallback: true`)
 passport.use(
   new MicrosoftStrategy(
     {
@@ -165,7 +171,7 @@ passport.use(
       clientSecret: process.env.MICROSOFT_CLIENT_SECRET,
       callbackURL: `${BASE_URL}/auth/microsoft/callback`,
       scope: ["user.read"],
-      passReqToCallback: true, // ✅ Ensures req is accessible
+      passReqToCallback: true,
     },
     async (req, accessToken, refreshToken, profile, done) => {
       try {
@@ -194,7 +200,6 @@ passport.use(
   )
 );
 
-// 🔹 Facebook Strategy (Restored `passReqToCallback: true`)
 passport.use(
   new FacebookStrategy(
     {
@@ -202,7 +207,7 @@ passport.use(
       clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
       callbackURL: `${BASE_URL}/auth/facebook/callback`,
       profileFields: ["id", "displayName", "email"],
-      passReqToCallback: true, // ✅ Required to access `req`
+      passReqToCallback: true,
     },
     async (req, accessToken, refreshToken, profile, done) => {
       try {

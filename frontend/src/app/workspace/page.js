@@ -31,13 +31,17 @@ import AssignmentTab from "./tabs/assignment";
 import ReportTab from "./tabs/report";
 import LogTab from "./tabs/log";
 
+import { useUser } from "@/context/UserContext.js";
+
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
 }
 
 function Workspace() {
   const router = useRouter();
-  const tabs = [
+  const user = null;
+
+  const allTabs = [
     { name: "Dashboard", icon: <FaHome />, component: <DashboardTab /> },
     { name: "Users", icon: <FaUsers />, component: <UserTab /> },
     { name: "Settings", icon: <FaCog />, component: <SettingTab /> },
@@ -54,6 +58,19 @@ function Workspace() {
     { name: "Reports", icon: <FaChartBar />, component: <ReportTab /> },
     { name: "Activity Logs", icon: <FaHistory />, component: <LogTab /> },
   ];
+
+  const tabs =
+    user?.role === "client"
+      ? allTabs.filter((tab) =>
+          [
+            "Dashboard",
+            "Settings",
+            "Contracts",
+            "Invoices",
+            "Documents",
+          ].includes(tab.name)
+        )
+      : allTabs;
 
   const handleLogout = async () => {
     try {
