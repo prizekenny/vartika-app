@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import api from "@/lib/axios";
 import { FaSearch, FaUserPlus, FaTrash, FaEdit } from "react-icons/fa";
 import { getUsers, updateUser, deleteUser } from "@/api/users";
 import AddUserModal from "../../../components/AddUserModal";
@@ -14,11 +15,22 @@ const UserTab = () => {
   const [showEditUserForm, setShowEditUserForm] = useState(false);
   const [editUser, setEditUser] = useState(null);
   const [sortBy, setSortBy] = useState("Newest");
+  const [currentUser, setCurrentUser] = useState(null);
   const usersPerPage = 10;
 
   useEffect(() => {
     fetchUsers();
+    fetchCurrentUser();
   }, []);
+
+  const fetchCurrentUser = async () => {
+    try {
+      const res = await api.get("/auth/current-user");
+      setCurrentUser(res.data.user);
+    } catch (error) {
+      console.error("Error fetching current user:", error);
+    }
+  };
 
   const fetchUsers = async () => {
     try {
@@ -160,6 +172,12 @@ const UserTab = () => {
 
   return (
     <div className="p-6">
+      {currentUser && (
+        <div className="mb-4 text-gray-700">
+          Logged in as:{" "}
+          <span className="font-semibold">{currentUser.email}</span>
+        </div>
+      )}
       <div className="mb-10">
         <h2 className="text-2xl font-bold text-gray-800">Users</h2>
       </div>

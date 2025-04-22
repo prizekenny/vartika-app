@@ -5,6 +5,7 @@ import Button from "../../components/common/Button";
 import { FaGoogle, FaFacebook, FaMicrosoft } from "react-icons/fa";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/context/UserContext";
+import api from "@/lib/axios";
 
 function LoginPage() {
   const [email, setEmail] = useState("");
@@ -19,29 +20,11 @@ function LoginPage() {
         alert("Please fill in both email and password.");
         return;
       }
+      const response = await api.post("/auth/login", { email, password });
+      const { token } = response.data;
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/auth/login`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email,
-            password,
-          }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (response.ok) {
-        console.log("Login successful:", data);
-        router.push("/workspace");
-      } else {
-        alert(data.message || "Login failed. Please try again.");
-      }
+      localStorage.setItem("token", token);
+      router.push("/workspace");
     } catch (error) {
       alert("An error occurred during login. Please try again.", error);
     }
@@ -51,8 +34,7 @@ function LoginPage() {
     const checkOAuthStatus = async () => {
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/auth/oauth-status`,
-          { credentials: "include" } // 发送 cookies
+          `${process.env.NEXT_PUBLIC_API_URL}/auth/oauth-status`
         );
         const data = await response.json();
 
@@ -68,7 +50,7 @@ function LoginPage() {
       }
     };
 
-    const interval = setInterval(checkOAuthStatus, 500); // **每秒轮询**
+    const interval = setInterval(checkOAuthStatus, 1000); // **每秒轮询**
     return () => clearInterval(interval);
   }, [router]);
 

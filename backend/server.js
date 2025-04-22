@@ -1,7 +1,6 @@
 import express from "express";
 import cors from "cors";
 import passport from "./config/passport.js";
-import session from "express-session";
 import userRoutes from "./routes/users.js";
 import rolesRoutes from "./routes/roles.js";
 import publicRoutes from "./routes/public.js";
@@ -25,13 +24,11 @@ app.use(
       "https://b.lyu.lol",
       "https://vartika-app.vercel.app",
     ], // 确保是你的前端 URL
-    credentials: true, // 允许跨域携带 cookies
   })
 );
 app.use((req, res, next) => {
   res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
   res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
-  res.header("Access-Control-Allow-Credentials", "true");
   next();
 });
 
@@ -39,20 +36,7 @@ app.use(express.json());
 
 console.log("🌍 NODE_ENV:", process.env.NODE_ENV);
 
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    },
-  })
-);
-
 app.use(passport.initialize());
-app.use(passport.session());
 
 // General authentication (Google, Microsoft, Facebook login)
 app.use("/auth", authRoutes);

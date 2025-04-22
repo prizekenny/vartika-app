@@ -5,7 +5,6 @@ import { Strategy as FacebookStrategy } from "passport-facebook";
 import { Strategy as LocalStrategy } from "passport-local";
 import bcrypt from "bcrypt";
 import { pool } from "./database.js";
-import { getToken } from "../services/tokenService.js";
 
 const BASE_URL = process.env.BASE_URL || "http://localhost:5001";
 
@@ -13,32 +12,6 @@ console.log(`🔹 BASE_URL: ${BASE_URL}`);
 console.log(`🔹 Google Auth Callback: ${BASE_URL}/auth/google/callback`);
 console.log(`🔹 Gmail Auth Callback: ${BASE_URL}/auth/gmail/callback`);
 console.log(`🔹 Drive Auth Callback: ${BASE_URL}/auth/drive/callback`);
-
-// 🔹 Serialize user ID into session
-passport.serializeUser((user, done) => {
-  console.log("🔹 Serializing user:", user);
-  done(null, user.user_id); // 🔄 存 user_id 而不是 email
-});
-
-// 🔹 Deserialize user by ID from database
-passport.deserializeUser(async (user_id, done) => {
-  try {
-    const result = await pool.query("SELECT * FROM users WHERE user_id = $1", [
-      user_id,
-    ]);
-    if (!result.rows.length) return done(new Error("User not found"), null);
-
-    const user = result.rows[0];
-    const rolesResult = await pool.query(
-      "SELECT r.role_name FROM user_roles ur JOIN roles r ON ur.role_id = r.role_id WHERE ur.user_id = $1",
-      [user_id]
-    );
-    user.roles = rolesResult.rows.map((r) => r.role_name);
-    done(null, user);
-  } catch (error) {
-    done(error, null);
-  }
-});
 
 // Local Strategy
 passport.use(
@@ -53,11 +26,18 @@ passport.use(
           "SELECT * FROM users WHERE email = $1",
           [email]
         );
-        if (!result.rows[0])
+        if (!result.rows[0]) {
+          console.log("❌ User not found");
           return done(null, false, { message: "Invalid credentials" });
+        }
+
         const isValid = await bcrypt.compare(password, result.rows[0].password);
-        if (!isValid)
+        if (!isValid) {
+          console.log("❌ Password mismatch");
           return done(null, false, { message: "Invalid credentials" });
+        }
+
+        console.log("✅ User authenticated successfully:", result.rows[0]);
         return done(null, result.rows[0]);
       } catch (err) {
         return done(err);

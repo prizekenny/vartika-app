@@ -3,6 +3,7 @@ import express from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { pool } from "../config/database.js";
+import verifyJWT from "../middlewares/verifyJWT.js";
 
 const router = express.Router();
 
@@ -27,7 +28,7 @@ router.get("/", async (req, res) => {
 });
 
 // Create new user
-router.post("/", auditLog("create_user"), async (req, res) => {
+router.post("/", auditLog("create_user"), verifyJWT, async (req, res) => {
   try {
     const { username, email, password, phone, user_type, roles, status } =
       req.body;
@@ -78,12 +79,8 @@ router.post("/", auditLog("create_user"), async (req, res) => {
 });
 
 // Update user info
-router.put("/:id", auditLog("update_user"), async (req, res) => {
+router.put("/:id", auditLog("update_user"), verifyJWT, async (req, res) => {
   try {
-    console.log("🧪 req.headers.cookie:", req.headers.cookie);
-    console.log("🧪 req.session:", req.session);
-    console.log("🧪 req.user:", req.user);
-
     const { id } = req.params;
     const { username, email, phone, user_type, status, roles } = req.body;
 
@@ -139,7 +136,7 @@ router.put("/:id", auditLog("update_user"), async (req, res) => {
 });
 
 // Delete user
-router.delete("/:id", auditLog("delete_user"), async (req, res) => {
+router.delete("/:id", auditLog("delete_user"), verifyJWT, async (req, res) => {
   try {
     const client = await pool.connect();
     try {

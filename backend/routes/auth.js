@@ -3,6 +3,10 @@ import passport from "passport";
 import bcrypt from "bcrypt";
 import { pool } from "../config/database.js";
 import auditLog from "../middlewares/auditLog.js";
+import verifyJWT from "../middlewares/verifyJWT.js";
+import jwt from "jsonwebtoken";
+
+const JWT_SECRET = process.env.JWT_SECRET || "default_jwt_secret";
 
 const router = express.Router();
 
@@ -37,7 +41,7 @@ router.post(
   }
 );
 
-// Local login with last_login_time update
+// Local login with JWT token generation and last_login_time update
 router.post("/login", (req, res, next) => {
   passport.authenticate("local", async (err, user, info) => {
     if (err) return next(err);
@@ -50,20 +54,23 @@ router.post("/login", (req, res, next) => {
         [user.user_id]
       );
 
-      // Complete login
-      req.logIn(user, async (err) => {
-        if (err) return next(err);
-        // Get user roles
-        const rolesResult = await pool.query(
-          "SELECT r.role_name FROM user_roles ur JOIN roles r ON ur.role_id = r.role_id WHERE ur.user_id = $1",
-          [user.user_id]
-        );
-        user.roles = rolesResult.rows.map((r) => r.role_name);
-        if (user.roles.length === 0) user.roles = ["guest"];
-        //req.session.user = user;
-        res.json({ user });
-        console.log("User logged in:", req.session);
-      });
+      // Get user roles
+      const rolesResult = await pool.query(
+        "SELECT r.role_name FROM user_roles ur JOIN roles r ON ur.role_id = r.role_id WHERE ur.user_id = $1",
+        [user.user_id]
+      );
+      user.roles = rolesResult.rows.map((r) => r.role_name);
+      if (user.roles.length === 0) user.roles = ["guest"];
+
+      const tokenPayload = {
+        user_id: user.user_id,
+        email: user.email,
+        roles: user.roles,
+      };
+      const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: "1d" });
+
+      res.json({ user, token });
+      console.log("User logged in with JWT:", user);
     } catch (err) {
       return res.status(500).json({ error: err.message });
     }
@@ -116,12 +123,20 @@ router.get(
       if (req.user.roles.length === 0) req.user.roles = ["guest"];
       //req.session.user = req.user;
 
+      const tokenPayload = {
+        user_id: req.user.user_id,
+        email: req.user.email,
+        roles: req.user.roles,
+      };
+      const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: "1d" });
+
       res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
       res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
       res.setHeader("Content-Type", "text/html");
       res.send(`
          <script>
-          window.close();
+           window.opener.postMessage({ token: "${token}" }, "*");
+           window.close();
          </script>
       `);
     } catch (err) {
@@ -131,33 +146,14 @@ router.get(
 );
 
 // Get current authenticated user
-router.get("/current-user", (req, res) => {
-  if (req.user) {
-    res.json({ user: req.user });
-  } else {
-    res.status(401).json({ message: "Not authenticated" });
-  }
+router.get("/current-user", verifyJWT, (req, res) => {
+  res.json({ user: req.user });
 });
 
-// Logout route
-router.get("/logout", (req, res, next) => {
-  if (typeof req.logOut !== "function") {
-    return res.status(500).json({ error: "req.logOut is not a function" });
-  }
-
-  req.logOut((err) => {
-    if (err) {
-      return next(err);
-    }
-    req.session.destroy((err) => {
-      if (err) {
-        return next(err);
-      }
-      oauthLoginSuccess = false; // ✅ 重置全局状态
-      res.clearCookie("connect.sid"); // 清除 session cookie
-      res.json({ message: "Logged out successfully" });
-    });
-  });
+// Logout route - stateless logout
+router.get("/logout", (req, res) => {
+  oauthLoginSuccess = false; // ✅ 重置全局状态
+  res.json({ message: "Logged out successfully" });
 });
 
 // ✅ 替代 session 状态检测方式
