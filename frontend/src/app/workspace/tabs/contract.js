@@ -726,13 +726,65 @@ const ContractTab = () => {
                       cx="50%"
                       cy="50%"
                       innerRadius={60}
-                      outerRadius={80}
+                      outerRadius={90}
                       fill="#8884d8"
                       paddingAngle={5}
                       dataKey="value"
-                      label={({ name, percentage }) =>
-                        `${name} (${percentage}%)`
-                      }
+                      labelLine={true}
+                      label={({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, name, percentage }) => {
+                        const RADIAN = Math.PI / 180;
+                        // 增加半径，让标签显示在扇区外围
+                        const radius = outerRadius * 1.1;
+                        const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                        const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                        
+                        // 将长文本拆分成多行，每行不超过10个字符
+                        const words = name.split(' ');
+                        let lines = [];
+                        let currentLine = '';
+                        
+                        words.forEach(word => {
+                          // 如果当前行加上新词和空格不超过10个字符，则添加到当前行
+                          if (currentLine.length + word.length + 1 <= 10) {
+                            currentLine += (currentLine ? ' ' : '') + word;
+                          } else {
+                            // 否则保存当前行并开始新行
+                            if (currentLine) lines.push(currentLine);
+                            currentLine = word;
+                          }
+                        });
+                        
+                        // 添加最后一行
+                        if (currentLine) lines.push(currentLine);
+                        
+                        // 如果没有拆分成行，就用原文本
+                        if (lines.length === 0) lines = [name];
+                        
+                        return (
+                          <text 
+                            x={x} 
+                            y={y} 
+                            fill={COLORS[index % COLORS.length]}
+                            textAnchor={x > cx ? 'start' : 'end'} 
+                            dominantBaseline="central"
+                            style={{ 
+                              fontSize: '12px', 
+                              fontWeight: 'bold',
+                              textShadow: '0 0 3px white, 0 0 3px white, 0 0 3px white, 0 0 3px white'
+                            }}
+                          >
+                            {lines.map((line, i) => (
+                              <tspan 
+                                key={i} 
+                                x={x} 
+                                dy={i === 0 ? 0 : '1.2em'} // 第一行不偏移，后续行偏移1.2em
+                              >
+                                {line} {i === lines.length - 1 ? `(${percentage}%)` : ''}
+                              </tspan>
+                            ))}
+                          </text>
+                        );
+                      }}
                     >
                       {statusDistribution.map((entry, index) => (
                         <Cell
@@ -747,7 +799,16 @@ const ContractTab = () => {
                         name,
                       ]}
                     />
-                    <Legend />
+                    <Legend 
+                      wrapperStyle={{ paddingTop: 10, width: '100%' }}
+                      formatter={(value, entry, index) => {
+                        return (
+                          <span style={{ color: entry.color, wordBreak: 'break-word', width: '100%' }}>
+                            {value}
+                          </span>
+                        );
+                      }}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -787,7 +848,16 @@ const ContractTab = () => {
                         return `${label}: $${item.minAmount.toLocaleString()} - $${item.maxAmount.toLocaleString()}`;
                       }}
                     />
-                    <Legend />
+                    <Legend 
+                      wrapperStyle={{ paddingTop: 10, width: '100%' }}
+                      formatter={(value, entry, index) => {
+                        return (
+                          <span style={{ color: entry.color, wordBreak: 'break-word', width: '100%' }}>
+                            {value}
+                          </span>
+                        );
+                      }}
+                    />
                     <Bar
                       dataKey="value"
                       name="Contracts"
