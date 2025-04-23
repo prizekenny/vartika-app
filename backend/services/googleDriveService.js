@@ -73,7 +73,12 @@ async function uploadFile(username, fileType, filePath, fileName, mimeType) {
     const drive = await getDriveClient();
 
     // 🔹 设定 Google Drive 根目录 (环境变量)
-    const ROOT_FOLDER_ID = process.env.DRIVE_ROOT_FOLDER_ID;
+    const ROOT_FOLDER_ID = process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID;
+
+    if (!ROOT_FOLDER_ID) {
+      console.error("❌ GOOGLE_DRIVE_ROOT_FOLDER_ID not set in environment variables");
+      return { success: false, error: "Google Drive root folder not configured" };
+    }
 
     // 🔹 创建 `用户名 + 文件类型` 目录
     const userFolderId = await getOrCreateFolder(

@@ -1,11 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { FaUpload, FaSpinner, FaFile } from "react-icons/fa";
+import { FaUpload, FaSpinner, FaFile, FaExclamationTriangle } from "react-icons/fa";
 import Pagination from "@/components/common/Pagination";
 import Button from "@/components/common/Button";
 import EmptyState from "@/components/common/EmptyState";
 import { formatDateTime } from "@/lib/format";
+import { uploadFileToDrive, checkGoogleDriveAuthorization } from "@/api/googleDrive";
 
 const DocumentTab = () => {
   const [isUploading, setIsUploading] = useState(false);
@@ -16,6 +17,9 @@ const DocumentTab = () => {
     documents: [],
     pagination: { itemsPerPage: 10, totalItems: 0 },
   });
+  const [driveAuthorized, setDriveAuthorized] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   useEffect(() => {
     const loadDocumentData = async () => {
@@ -23,12 +27,38 @@ const DocumentTab = () => {
         const response = await import("../../../../dummy_data/document.json");
         setDocumentsData(response);
         setUploadedFiles(response.documents);
+        
+        // Check if Google Drive is authorized
+        checkDriveAuthorization();
       } catch (error) {
         console.error("Error loading document data:", error);
       }
     };
     loadDocumentData();
   }, []);
+  
+  const checkDriveAuthorization = async () => {
+    setIsCheckingAuth(true);
+    setErrorMessage("");
+    
+    try {
+      const response = await checkGoogleDriveAuthorization();
+      console.log("Google Drive authorization status:", response);
+      
+      setDriveAuthorized(response.authorized);
+      if (!response.authorized) {
+        setErrorMessage("Google Drive is not authorized. Please connect your Google Drive account in settings.");
+      } else if (response.user) {
+        console.log("Authorized with Google account:", response.user);
+      }
+    } catch (error) {
+      console.error("Error checking Google Drive authorization:", error);
+      setDriveAuthorized(false);
+      setErrorMessage("Could not verify Google Drive connection status.");
+    } finally {
+      setIsCheckingAuth(false);
+    }
+  };
 
   const getFileType = (fileName) => {
     const extension = fileName.split(".").pop().toLowerCase();
@@ -52,6 +82,7 @@ const DocumentTab = () => {
 
     setIsUploading(true);
     setUploadProgress(0);
+    setErrorMessage("");
 
     try {
       const successfulUploads = [];
@@ -62,15 +93,14 @@ const DocumentTab = () => {
         formData.append("username", "testuser");
         formData.append("fileType", getFileType(files[i].name));
 
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/drive/upload`,
-          {
-            method: "POST",
-            body: formData,
-          }
-        );
+        const response = await uploadFileToDrive(formData);
+        const result = await response.json();
 
-        if (!response.ok) throw new Error(await response.text());
+        if (!response.ok) throw new Error(result.error || "Upload failed");
+        
+        if (!result.success) {
+          throw new Error(result.error || "Upload failed");
+        }
 
         successfulUploads.push({
           name: files[i].name,
@@ -85,7 +115,8 @@ const DocumentTab = () => {
       setUploadedFiles((prev) => [...successfulUploads, ...prev]);
       alert("Files uploaded successfully!");
     } catch (error) {
-      alert(`Upload failed: ${error.message}`);
+      console.error("Upload error:", error);
+      setErrorMessage(`Upload failed: ${error.message}`);
     } finally {
       setIsUploading(false);
       setUploadProgress(0);
@@ -104,11 +135,20 @@ const DocumentTab = () => {
         <h2 className="text-2xl font-bold text-gray-800">
           Google Drive Documents
         </h2>
-        <div>
+        <div className="flex gap-2">
+          {!driveAuthorized && (
+            <Button
+              text="Check Authorization"
+              icon={isCheckingAuth ? <FaSpinner className="animate-spin" /> : null}
+              onClick={checkDriveAuthorization}
+              disabled={isCheckingAuth}
+            />
+          )}
           <Button
             text="Upload Files"
             icon={<FaUpload />}
             onClick={() => document.getElementById("file-input").click()}
+            disabled={!driveAuthorized || isUploading}
           />
           <input
             id="file-input"
@@ -116,10 +156,28 @@ const DocumentTab = () => {
             multiple
             hidden
             onChange={handleFileUpload}
-            disabled={isUploading}
+            disabled={!driveAuthorized || isUploading}
           />
         </div>
       </div>
+
+      {!driveAuthorized && (
+        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
+          <div className="flex items-center">
+            <FaExclamationTriangle className="text-yellow-500 mr-2" />
+            <p className="text-yellow-700">{errorMessage || "Google Drive authorization required. Please connect your account in settings."}</p>
+          </div>
+        </div>
+      )}
+
+      {errorMessage && driveAuthorized && (
+        <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
+          <div className="flex items-center">
+            <FaExclamationTriangle className="text-red-500 mr-2" />
+            <p className="text-red-700">{errorMessage}</p>
+          </div>
+        </div>
+      )}
 
       {isUploading && (
         <div>
