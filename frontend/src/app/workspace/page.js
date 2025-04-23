@@ -115,19 +115,19 @@ function Workspace() {
         {/* Left Side: Header + Tabs with fixed width */}
         <div className="w-[220px] bg-white shadow-md flex flex-col fixed h-full">
           {/* Header */}
-          <header className="bg-gray-900 text-white py-8 px-6">
-            <div className="flex flex-col items-center space-y-2">
-              <FaLayerGroup className="text-3xl text-blue-400" />
-              <h1 className="text-2xl font-bold tracking-wide">Vartika</h1>
-
-              {/* Current User Info */}
-              {user && (
-                <div className="text-center text-sm mt-4">
-                  <p className="font-semibold">{user.username}</p>
-                  <p className="text-gray-300">{user.email}</p>
-                </div>
-              )}
+          <header className="bg-[#9C1C53] text-white py-6 px-6">
+            <div className="text-center">
+              <h1 className="text-2xl font-bold">Vartika Satija</h1>
+              <p className="text-xs">Tax | Consulting | Accounting</p>
             </div>
+
+            {/* Current User Info */}
+            {user && (
+              <div className="text-sm mt-6 text-center">
+                <p className="font-semibold">{user.username}</p>
+                <p className="text-gray-300">{user.email}</p>
+              </div>
+            )}
           </header>
 
           {/* Tabs */}
