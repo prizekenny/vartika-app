@@ -10,8 +10,9 @@ import api from "@/lib/axios";
 function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const { setUser } = useUser(); // 从 UserContext 获取 setUser
+  const { setUser, user } = useUser(); // 从 UserContext 获取 setUser and user
   const router = useRouter();
+  const [rememberMe, setRememberMe] = useState(false);
 
   console.log("useUser output:", { setUser });
 
@@ -26,12 +27,19 @@ function LoginPage() {
       const response = await api.post("/auth/login", { email, password });
       const { token, user } = response.data;
 
-      localStorage.setItem("token", token); // 保存 token
-      setUser(user); // 更新 UserContext 中的用户信息
+      if (rememberMe) {
+        localStorage.setItem("token", token);
+        localStorage.setItem("user", JSON.stringify(user));
+      } else {
+        sessionStorage.setItem("token", token);
+        sessionStorage.setItem("user", JSON.stringify(user));
+      }
+
+      setUser(user);
 
       router.push("/workspace");
     } catch (error) {
-      alert("An error occurred during login. Please try again.", error);
+      alert("An error occurred during login. Please try again.");
     }
   };
 
@@ -62,6 +70,17 @@ function LoginPage() {
     const interval = setInterval(checkOAuthStatus, 1000); // **每秒轮询**
     return () => clearInterval(interval);
   }, [router]);
+
+  useEffect(() => {
+    // 检查是否有token
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    
+    if (token && user) {
+      router.push("/workspace");
+    } else {
+      router.push("/login");
+    }
+  }, [user]);
 
   // 🔹 触发 OAuth 登录
   const handleOAuthLogin = (provider) => {
@@ -123,6 +142,8 @@ function LoginPage() {
                 type="checkbox"
                 id="remember"
                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
               />
               <label htmlFor="remember" className="text-gray-600">
                 Remember Me
