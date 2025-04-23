@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Button from "../../components/common/Button";
 import { FaGoogle, FaFacebook, FaMicrosoft } from "react-icons/fa";
 import { useRouter } from "next/navigation";
@@ -43,60 +43,15 @@ function LoginPage() {
     }
   };
 
-  useEffect(() => {
-    const checkOAuthStatus = async () => {
-      try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/auth/oauth-status`
-        );
-        const data = await response.json();
-
-        console.log("📩 OAuth status check:", data);
-
-        if (data.success) {
-          clearInterval(interval);
-          console.log("✅ OAuth login detected! Redirecting...");
-
-          const { token, user } = data;
-          localStorage.setItem("token", token); // 保存 token
-          setUser(user); // 更新 UserContext 中的用户信息
-          router.push("/workspace");
-        }
-      } catch (error) {
-        console.error("⚠️ Error checking OAuth status:", error);
-      }
-    };
-
-    const interval = setInterval(checkOAuthStatus, 1000); // **每秒轮询**
-    return () => clearInterval(interval);
-  }, [router]);
-
-  useEffect(() => {
-    // 检查是否有token
-    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-    
-    if (token && user) {
-      router.push("/workspace");
-    } else {
-      router.push("/login");
+  // Add a function to autofill the email and password fields
+  const autofillCredentials = (role) => {
+    if (role === "admin") {
+      setEmail("test@test.com");
+      setPassword("123456");
+    } else if (role === "client") {
+      setEmail("client@test.com");
+      setPassword("123456");
     }
-  }, [user]);
-
-  // 🔹 触发 OAuth 登录
-  const handleOAuthLogin = (provider) => {
-    const authWindow = window.open(
-      `${process.env.NEXT_PUBLIC_API_URL}/auth/${provider}`,
-      "_blank",
-      "width=500,height=600"
-    );
-
-    console.log("Main Window Origin:", window.origin);
-    if (!authWindow) {
-      alert("⚠️ OAuth 弹窗被拦截，请允许弹窗并重试。");
-      return;
-    }
-
-    authWindow.focus();
   };
 
   return (
@@ -154,12 +109,32 @@ function LoginPage() {
             </a>
           </div>
 
-          <button
-            type="submit"
-            className="bg-blue-500 text-white rounded-md py-2 px-4 hover:bg-blue-600 transition"
-          >
-            Sign In
-          </button>
+          <div className="flex justify-between items-center">
+            <button
+              type="submit"
+              className="bg-blue-500 text-white rounded-md py-2 px-4 hover:bg-blue-600 transition w-full"
+            >
+              Sign In
+            </button>
+
+            {/* Admin and Client autofill buttons */}
+            <div className="flex space-x-4 pl-4">
+              <button
+                type="button"
+                onClick={() => autofillCredentials("admin")}
+                className="bg-gray-200 text-gray-700 py-2 px-2 rounded-md hover:bg-gray-300 transition"
+              >
+                Admin
+              </button>
+              <button
+                type="button"
+                onClick={() => autofillCredentials("client")}
+                className="bg-gray-200 text-gray-700 py-2 px-2 rounded-md hover:bg-gray-300 transition"
+              >
+                Client
+              </button>
+            </div>
+          </div>
         </form>
 
         <div className="flex flex-col items-center justify-center mt-6 space-y-4">
