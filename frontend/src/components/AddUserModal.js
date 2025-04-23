@@ -99,7 +99,11 @@ const AddUserModal = ({ isOpen, setShowAddUserForm, fetchUsers }) => {
             >
               Cancel
             </Button>
-            <Button variant="primary" type="submit" className="px-6 py-2">
+            <Button
+              variant="primary"
+              type="submit"
+              className="px-6 py-2 !bg-blue-500 hover:!bg-blue-700"
+            >
               Submit
             </Button>
           </div>
@@ -115,7 +119,7 @@ const InputField = ({ label, type, value, onChange }) => (
     <input
       type={type}
       placeholder={`Enter ${label.toLowerCase()}`}
-      className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500"
+      className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
       value={value}
       onChange={onChange}
     />
@@ -126,7 +130,7 @@ const DropdownField = ({ label, value, options, onChange }) => (
   <div>
     <label className="block text-sm font-medium mb-1">{label}</label>
     <select
-      className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 bg-white"
+      className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
       value={value ?? ""}
       onChange={onChange}
     >

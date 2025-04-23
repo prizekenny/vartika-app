@@ -150,7 +150,7 @@ function Workspace() {
                       <span
                         className={classNames(
                           "mr-3 text-lg",
-                          selected ? "text-blue-500" : "text-gray-400"
+                          selected ? "text-[#9C1C53]" : "text-gray-400"
                         )}
                       >
                         {tab.icon}

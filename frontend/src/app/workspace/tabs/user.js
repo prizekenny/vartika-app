@@ -120,7 +120,7 @@ const UserTab = () => {
       </div>
       <div className="mb-10 flex justify-between items-center">
         <button
-          className="bg-purple-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-purple-700"
+          className="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center hover:bg-blue-700"
           onClick={() => setShowAddUserForm(true)}
         >
           <FaUserPlus className="mr-2" /> New User
@@ -130,7 +130,7 @@ const UserTab = () => {
             <input
               type="text"
               placeholder="Search users..."
-              className="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -138,7 +138,7 @@ const UserTab = () => {
           </div>
           <select
             onChange={(e) => setSortBy(e.target.value)}
-            className="border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="Newest">Newest</option>
             <option value="Oldest">Oldest</option>
