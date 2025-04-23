@@ -5,7 +5,7 @@ import { FaUpload, FaSpinner, FaFile, FaExclamationTriangle, FaFolderOpen } from
 import Pagination from "@/components/common/Pagination";
 import Button from "@/components/common/Button";
 import EmptyState from "@/components/common/EmptyState";
-import { formatDateTime } from "@/lib/format";
+import { formatDateTime, formatFileSize } from "@/lib/format";
 import { uploadFileToDrive, checkGoogleDriveAuthorization } from "@/api/googleDrive";
 
 const DocumentTab = () => {
@@ -145,7 +145,7 @@ const DocumentTab = () => {
 
         successfulUploads.push({
           name: selectedFiles[i].name,
-          size: `${(selectedFiles[i].size / 1024).toFixed(2)} KB`,
+          size: formatFileSize(selectedFiles[i].size),
           type: `${companyName}/${documentType}`,
           uploadTime: new Date().toISOString(),
         });
