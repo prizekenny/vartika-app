@@ -6,17 +6,16 @@ import Pagination from "@/components/common/Pagination";
 import Button from "@/components/common/Button";
 import EmptyState from "@/components/common/EmptyState";
 import { formatDateTime, formatFileSize } from "@/lib/format";
-import { uploadFileToDrive, checkGoogleDriveAuthorization } from "@/api/googleDrive";
+import { uploadFileToDrive, checkGoogleDriveAuthorization, getFileList } from "@/api/googleDrive";
 
 const DocumentTab = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [documentsData, setDocumentsData] = useState({
-    documents: [],
-    pagination: { itemsPerPage: 10, totalItems: 0 },
-  });
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
   const [driveAuthorized, setDriveAuthorized] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
@@ -37,20 +36,35 @@ const DocumentTab = () => {
   ];
 
   useEffect(() => {
-    const loadDocumentData = async () => {
-      try {
-        const response = await import("../../../../dummy_data/document.json");
-        setDocumentsData(response);
-        setUploadedFiles(response.documents);
-        
-        // Check if Google Drive is authorized
-        checkDriveAuthorization();
-      } catch (error) {
-        console.error("Error loading document data:", error);
-      }
-    };
-    loadDocumentData();
+    // 检查Google Drive授权状态
+    checkDriveAuthorization();
   }, []);
+  
+  useEffect(() => {
+    // 获取文件列表
+    fetchFileList();
+  }, [currentPage]);
+
+  const fetchFileList = async () => {
+    setIsLoading(true);
+    try {
+      const response = await getFileList(currentPage, itemsPerPage);
+      
+      if (response.success) {
+        setUploadedFiles(response.files);
+        setTotalPages(response.pagination.totalPages);
+        setItemsPerPage(response.pagination.itemsPerPage);
+      } else {
+        console.error("Failed to fetch file list:", response.error);
+        setErrorMessage("Failed to load file list. Please try again later.");
+      }
+    } catch (error) {
+      console.error("Error fetching file list:", error);
+      setErrorMessage("Failed to load file list. Please try again later.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
   const checkDriveAuthorization = async () => {
     setIsCheckingAuth(true);
@@ -127,12 +141,17 @@ const DocumentTab = () => {
       const successfulUploads = [];
 
       for (let i = 0; i < selectedFiles.length; i++) {
+        const file = selectedFiles[i];
         const formData = new FormData();
-        formData.append("file", selectedFiles[i]);
+        formData.append("file", file);
         // 使用公司名作为用户名
         formData.append("username", companyName);
         // 使用文档类型作为文件类型
         formData.append("fileType", documentType);
+        // 添加文件大小
+        formData.append("fileSize", formatFileSize(file.size));
+        // 添加当前用户ID (如果有)
+        // formData.append("userId", currentUser?.id);
 
         const response = await uploadFileToDrive(formData);
         const result = await response.json();
@@ -144,17 +163,26 @@ const DocumentTab = () => {
         }
 
         successfulUploads.push({
-          name: selectedFiles[i].name,
-          size: formatFileSize(selectedFiles[i].size),
-          type: `${companyName}/${documentType}`,
-          uploadTime: new Date().toISOString(),
+          file_name: file.name,
+          file_size: formatFileSize(file.size),
+          mime_type: getFileMimeType(file.name),
+          company_name: companyName,
+          document_type: documentType,
+          drive_file_id: result.fileId,
+          upload_time: new Date().toISOString(),
         });
 
         setUploadProgress(((i + 1) / selectedFiles.length) * 100);
       }
 
+      // 将新上传的文件添加到列表
       setUploadedFiles((prev) => [...successfulUploads, ...prev]);
+      
+      // 刷新文件列表
+      fetchFileList();
+      
       alert("Files uploaded successfully!");
+      
       // 重置状态
       setSelectedFiles([]);
       setCompanyName("");
@@ -176,11 +204,9 @@ const DocumentTab = () => {
     setErrorMessage("");
   };
 
-  const { itemsPerPage } = documentsData.pagination;
-  const totalPages = Math.ceil(uploadedFiles.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentFiles = uploadedFiles.slice(startIndex, endIndex);
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
 
   return (
     <div className="p-6 space-y-4">
@@ -318,31 +344,35 @@ const DocumentTab = () => {
       <div className="bg-white rounded-lg shadow">
         <div className="grid grid-cols-12 gap-4 p-4 border-b border-gray-200 bg-gray-50 font-medium">
           <div className="col-span-4">File Name</div>
-          <div className="col-span-3">Size</div>
+          <div className="col-span-2">Size</div>
           <div className="col-span-3">Location</div>
-          <div className="col-span-2">Upload Time</div>
+          <div className="col-span-3">Upload Time</div>
         </div>
 
         <div className="divide-y divide-gray-200">
-          {currentFiles.length === 0 ? (
+          {isLoading ? (
+            <div className="p-10 flex justify-center">
+              <FaSpinner className="animate-spin text-blue-500 text-xl" />
+            </div>
+          ) : uploadedFiles.length === 0 ? (
             <EmptyState message="No files uploaded yet." />
           ) : (
-            currentFiles.map((file, index) => (
+            uploadedFiles.map((file, index) => (
               <div
                 key={index}
                 className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-gray-50"
               >
                 <div className="col-span-4 flex items-center">
                   <FaFile className="mr-2 text-gray-400" />
-                  <span className="truncate">{file.name}</span>
+                  <span className="truncate">{file.file_name}</span>
                 </div>
-                <div className="col-span-3">{file.size}</div>
+                <div className="col-span-2">{file.file_size}</div>
                 <div className="col-span-3 flex items-center">
                   <FaFolderOpen className="mr-2 text-gray-400" />
-                  <span className="truncate">{file.type}</span>
+                  <span className="truncate">{`${file.company_name}/${file.document_type}`}</span>
                 </div>
-                <div className="col-span-2">
-                  {formatDateTime(file.uploadTime)}
+                <div className="col-span-3">
+                  {formatDateTime(file.upload_time)}
                 </div>
               </div>
             ))
@@ -350,11 +380,11 @@ const DocumentTab = () => {
         </div>
       </div>
 
-      {uploadedFiles.length > 0 && (
+      {uploadedFiles.length > 0 && totalPages > 1 && (
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
-          onPageChange={setCurrentPage}
+          onPageChange={handlePageChange}
         />
       )}
     </div>

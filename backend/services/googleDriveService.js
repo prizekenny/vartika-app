@@ -4,6 +4,7 @@ import {
   getGoogleDriveToken,
   getAllTokensByPlatform,
 } from "../services/tokenService.js";
+import { pool } from "../config/database.js";
 
 /**
  * 🔑 获取 Google Drive API 客户端
@@ -73,7 +74,7 @@ async function getOrCreateFolder(drive, parentFolderId, folderName) {
  * @param {string} fileName - 文件名
  * @param {string} mimeType - MIME类型
  */
-async function uploadFile(username, fileType, fileStream, fileName, mimeType) {
+async function uploadFile(username, fileType, fileStream, fileName, mimeType, userId = null) {
   try {
     const drive = await getDriveClient();
 
@@ -109,10 +110,31 @@ async function uploadFile(username, fileType, fileStream, fileName, mimeType) {
       fields: "id",
     });
 
+    const fileId = response.data.id;
+
+    // 获取文件大小 (这里需要估算，因为我们是直接上传的流)
+    // 如果前端有文件大小，可以将其作为参数传递
+    // 这里存储的是格式化后的大小字符串，实际应用中可能需要存储原始字节数
+    const fileSize = "Unknown size"; // 在实际应用中，应该从请求中获取文件大小
+
+    // 将文件记录保存到数据库
+    try {
+      await pool.query(
+        `INSERT INTO file_records 
+        (file_name, file_size, mime_type, company_name, document_type, drive_file_id, user_id) 
+        VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [fileName, fileSize, mimeType, username, fileType, fileId, userId]
+      );
+      console.log(`✅ File record saved to database: ${fileName}`);
+    } catch (dbError) {
+      console.error(`❌ Failed to save file record to database:`, dbError);
+      // 即使数据库保存失败，我们仍然继续，因为文件已经上传到Google Drive
+    }
+
     console.log(
       `✅ File uploaded: ${fileName} -> Drive Folder: ${fileTypeFolderId}`
     );
-    return { success: true, fileId: response.data.id };
+    return { success: true, fileId: fileId };
   } catch (error) {
     console.error(`🔴 Failed to upload file:`, error);
     return { success: false, error: error.message };

@@ -31,3 +31,19 @@ export const uploadFileToDrive = (formData) => {
     body: formData,
   });
 };
+
+export const getFileList = (page = 1, limit = 10, company = null) => {
+  let url = `${process.env.NEXT_PUBLIC_API_URL}/api/googledrive/files?page=${page}&limit=${limit}`;
+  
+  if (company) {
+    url += `&company=${encodeURIComponent(company)}`;
+  }
+  
+  return fetch(url)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error("Failed to fetch file list");
+      }
+      return response.json();
+    });
+};

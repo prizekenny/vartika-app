@@ -6,6 +6,7 @@ import {
   isAuthorized,
   getAllAuthorizedUsers,
 } from "../services/googleDriveService.js";
+import { pool } from "../config/database.js";
 
 const router = express.Router();
 // 使用内存存储而不是磁盘临时存储
@@ -28,9 +29,9 @@ router.post(
     }
 
     const { buffer, originalname, mimetype } = req.file;
-    const { username, fileType } = req.body;
+    const { username, fileType, fileSize, userId } = req.body;
 
-    console.log(`📤 Processing file upload: ${originalname}, type: ${mimetype}, username: ${username}, fileType: ${fileType}`);
+    console.log(`📤 Processing file upload: ${originalname}, type: ${mimetype}, username: ${username}, fileType: ${fileType}, size: ${fileSize || "unknown"}`);
 
     if (!username || !fileType) {
       console.error("❌ Missing username or fileType");
@@ -61,7 +62,8 @@ router.post(
         fileType,
         fileStream,
         originalname,
-        mimetype
+        mimetype,
+        userId || null
       );
 
       if (!result.success) {
@@ -107,6 +109,66 @@ router.get(
       res.json({ authorizedUsers });
     } catch (error) {
       res.status(500).json({ error: error.message });
+    }
+  }
+);
+
+/**
+ * 📁 获取文件列表
+ */
+router.get(
+  "/files",
+  auditLog("get_drive_files"),
+  async (req, res) => {
+    try {
+      const { page = 1, limit = 10, company } = req.query;
+      const offset = (page - 1) * limit;
+      
+      let query = `
+        SELECT id, file_name, file_size, mime_type, company_name, document_type, drive_file_id, upload_time 
+        FROM file_records
+      `;
+      
+      const queryParams = [];
+      
+      // 如果指定了公司，进行过滤
+      if (company) {
+        query += ` WHERE company_name = $1`;
+        queryParams.push(company);
+      }
+      
+      // 添加排序和分页
+      query += ` ORDER BY upload_time DESC LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}`;
+      queryParams.push(parseInt(limit), parseInt(offset));
+      
+      // 获取总数
+      let countQuery = `SELECT COUNT(*) FROM file_records`;
+      if (company) {
+        countQuery += ` WHERE company_name = $1`;
+      }
+      
+      const fileResult = await pool.query(query, queryParams);
+      const countResult = await pool.query(countQuery, company ? [company] : []);
+      
+      const totalItems = parseInt(countResult.rows[0].count);
+      const totalPages = Math.ceil(totalItems / limit);
+      
+      res.json({
+        success: true,
+        files: fileResult.rows,
+        pagination: {
+          totalItems,
+          totalPages,
+          currentPage: parseInt(page),
+          itemsPerPage: parseInt(limit)
+        }
+      });
+    } catch (error) {
+      console.error(`❌ Error fetching file list:`, error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Failed to fetch file list" 
+      });
     }
   }
 );
