@@ -5,18 +5,12 @@ import {
   FaUser,
   FaKey,
   FaBell,
-  FaFileInvoiceDollar,
-  FaUsersCog,
-  FaRegCreditCard,
 } from "react-icons/fa";
 
 // Import tab components
 import ProfileTab from "./profile";
 import AuthorizeTab from "./authorize";
 import NotificationsTab from "./notifications";
-import SubscriptionsTab from "./suscriptions";
-import BillingTab from "./billing";
-import AccountTab from "./account";
 
 const SettingTab = () => {
   const [activeTab, setActiveTab] = useState("profile");
@@ -61,39 +55,6 @@ const SettingTab = () => {
           <FaBell className="inline mr-2" />
           Notifications
         </button>
-        <button
-          className={`px-4 py-2 ${
-            activeTab === "subscriptions"
-              ? "text-blue-500 border-b-2 border-blue-500"
-              : "text-gray-600"
-          }`}
-          onClick={() => setActiveTab("subscriptions")}
-        >
-          <FaFileInvoiceDollar className="inline mr-2" />
-          Subscriptions
-        </button>
-        <button
-          className={`px-4 py-2 ${
-            activeTab === "billing"
-              ? "text-blue-500 border-b-2 border-blue-500"
-              : "text-gray-600"
-          }`}
-          onClick={() => setActiveTab("billing")}
-        >
-          <FaRegCreditCard className="inline mr-2" />
-          Billing
-        </button>
-        <button
-          className={`px-4 py-2 ${
-            activeTab === "account"
-              ? "text-blue-500 border-b-2 border-blue-500"
-              : "text-gray-600"
-          }`}
-          onClick={() => setActiveTab("account")}
-        >
-          <FaUsersCog className="inline mr-2" />
-          Account
-        </button>
       </div>
 
       {/* Content Area */}
@@ -101,9 +62,6 @@ const SettingTab = () => {
         {activeTab === "profile" && <ProfileTab />}
         {activeTab === "authorize" && <AuthorizeTab />}
         {activeTab === "notifications" && <NotificationsTab />}
-        {activeTab === "subscriptions" && <SubscriptionsTab />}
-        {activeTab === "billing" && <BillingTab />}
-        {activeTab === "account" && <AccountTab />}
       </div>
     </div>
   );
