@@ -1,13 +1,29 @@
-import React, { useState } from "react";
+"use client"; // 确保这是一个客户端组件
+
+import { useState, useEffect } from "react";
+import { useUser } from "@/context/UserContext"; // 导入 UserContext
+import { updateUser } from "@/api/users"; // Import updateUser API
 
 const ProfileTab = () => {
+  const { user } = useUser(); // Get user from context
   const [profilePhoto, setProfilePhoto] = useState(null);
   const [userDetails, setUserDetails] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
+    username: user?.username || "", // Get the username from the user context
+    email: user?.email || "", // Assuming email is available in user context
+    phone: user?.phone || "", // Assuming phone is available in user context
   });
+
+  // Update the userDetails state when the user context is updated
+  useEffect(() => {
+    if (user) {
+      setUserDetails({
+        ...userDetails,
+        username: user.username,
+        email: user.email || "",
+        phone: user.phone || "",
+      });
+    }
+  }, [user]);
 
   const handlePhotoUpload = (event) => {
     const file = event.target.files[0];
@@ -29,7 +45,8 @@ const ProfileTab = () => {
 
   const handleSave = async () => {
     try {
-      const response = await axios.post("/api/saveUserDetails", userDetails);
+      // Call the updateUser API with the current userDetails
+      const response = await updateUser(user.user_id, userDetails);
       if (response.status === 200) {
         alert("Successfully saved!");
       }
@@ -47,7 +64,7 @@ const ProfileTab = () => {
           <div
             className="w-16 h-16 bg-gray-200 rounded-full mr-4"
             style={{
-              backgroundImage: `url(${profilePhoto || "/avatar.jpg"})`, // 默认使用 public/avatar.jpg
+              backgroundImage: `url(${profilePhoto || "/avatar.jpg"})`, // Default to /avatar.jpg
               backgroundSize: "cover",
             }}
           ></div>
@@ -79,29 +96,14 @@ const ProfileTab = () => {
         <h3 className="text-lg font-bold mb-4">User Details</h3>
         <div className="grid grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-semibold mb-1">
-              First Name
-            </label>
+            <label className="block text-sm font-semibold mb-1">Username</label>
             <input
               type="text"
-              name="firstName"
-              value={userDetails.firstName}
+              name="username"
+              value={userDetails.username}
               onChange={handleInputChange}
               className="w-full border p-3 rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="First Name"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold mb-1">
-              Last Name
-            </label>
-            <input
-              type="text"
-              name="lastName"
-              value={userDetails.lastName}
-              onChange={handleInputChange}
-              className="w-full border p-3 rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Last Name"
+              placeholder="Username"
             />
           </div>
           <div>
