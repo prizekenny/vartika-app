@@ -113,9 +113,9 @@ function Workspace() {
     <main className="bg-gray-50 min-h-screen flex text-black">
       <Tab.Group as="div" className="flex w-full">
         {/* Left Side: Header + Tabs with fixed width */}
-        <div className="w-[220px] bg-white shadow-md flex flex-col fixed h-full">
+        <div className="w-[220px] bg-white shadow-md flex flex-col fixed h-screen overflow-hidden">
           {/* Header */}
-          <header className="bg-[#9C1C53] text-white py-6 px-6">
+          <header className="bg-[#9C1C53] text-white py-4 px-6 flex-shrink-0">
             <div className="text-center">
               <h1 className="text-2xl font-bold">Vartika Satija</h1>
               <p className="text-xs">Tax | Consulting | Accounting</p>
@@ -123,7 +123,7 @@ function Workspace() {
 
             {/* Current User Info */}
             {user && (
-              <div className="text-sm mt-6 text-center">
+              <div className="text-sm mt-3 text-center">
                 <p className="font-semibold">{user.username}</p>
                 <p className="text-gray-300">{user.email}</p>
               </div>
@@ -131,14 +131,14 @@ function Workspace() {
           </header>
 
           {/* Tabs */}
-          <div className="flex flex-col flex-1">
-            <Tab.List className="flex flex-col flex-1 py-4 overflow-auto">
+          <div className="flex flex-col flex-grow min-h-0">
+            <Tab.List className="flex flex-col overflow-y-auto py-2">
               {tabs.map((tab, index) => (
                 <Tab
                   key={index}
                   className={({ selected }) =>
                     classNames(
-                      "flex items-center px-4 py-3 my-1 mx-2 text-left cursor-pointer text-sm font-medium rounded-lg transition-colors duration-150",
+                      "flex items-center px-4 py-2 my-0.5 mx-2 text-left cursor-pointer text-sm font-medium rounded-lg transition-colors duration-150",
                       selected
                         ? "bg-gray-100 text-gray-900 font-semibold"
                         : "hover:bg-gray-50 text-gray-600"
@@ -165,7 +165,7 @@ function Workspace() {
             {/* Logout Button */}
             <button
               onClick={handleLogout}
-              className="flex items-center px-4 py-3 mx-2 mb-4 text-left text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-red-600 rounded-lg transition-colors duration-150"
+              className="flex items-center px-4 py-2 mx-2 my-2 text-left text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-red-600 rounded-lg transition-colors duration-150 flex-shrink-0 mt-auto"
             >
               <FaSignOutAlt className="mr-3 text-lg opacity-75" />
               Logout
