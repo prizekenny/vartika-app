@@ -68,19 +68,27 @@ function Workspace() {
     { name: "Activity Logs", icon: <FaHistory />, component: <LogTab /> },
   ];
 
-  const tabs = user?.roles?.some(
-    (role) => !["employee", "admin", "super admin"].includes(role.toLowerCase())
-  )
-    ? allTabs.filter((tab) =>
-        [
-          "Dashboard",
-          "Settings",
-          "Contracts",
-          "Invoices",
-          "Documents",
-        ].includes(tab.name)
-      )
-    : allTabs;
+  // 修改标签页过滤逻辑
+  const tabs = user?.roles ? (() => {
+    const userRoles = user.roles.map(role => role.toLowerCase());
+    
+    // 如果用户是client角色
+    if (userRoles.includes('client')) {
+      return allTabs.filter(tab => ["Dashboard", "Settings", "Documents"].includes(tab.name));
+    }
+    
+    // 如果用户是employee、admin或super admin
+    else if (userRoles.some(role => ["employee", "admin", "super admin"].includes(role))) {
+      return allTabs;
+    }
+    
+    // 其他角色显示部分标签页
+    else {
+      return allTabs.filter(tab =>
+        ["Dashboard", "Settings", "Documents"].includes(tab.name)
+      );
+    }
+  })() : [];
 
   const handleLogout = async () => {
     try {

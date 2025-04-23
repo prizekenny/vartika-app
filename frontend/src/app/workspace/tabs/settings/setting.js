@@ -6,6 +6,7 @@ import {
   FaKey,
   FaBell,
 } from "react-icons/fa";
+import { useUser } from "@/context/UserContext";
 
 // Import tab components
 import ProfileTab from "./profile";
@@ -13,6 +14,8 @@ import AuthorizeTab from "./authorize";
 import NotificationsTab from "./notifications";
 
 const SettingTab = () => {
+  const { user } = useUser();
+  const isClient = user?.roles?.map(role => role.toLowerCase()).includes('client');
   const [activeTab, setActiveTab] = useState("profile");
 
   return (
@@ -33,17 +36,20 @@ const SettingTab = () => {
           <FaUser className="inline mr-2" />
           Profile
         </button>
-        <button
-          className={`px-4 py-2 ${
-            activeTab === "authorize"
-              ? "text-blue-500 border-b-2 border-blue-500"
-              : "text-gray-600"
-          }`}
-          onClick={() => setActiveTab("authorize")}
-        >
-          <FaKey className="inline mr-2" />
-          Authorize
-        </button>
+        {/* 仅对非client用户显示Authorize标签页 */}
+        {!isClient && (
+          <button
+            className={`px-4 py-2 ${
+              activeTab === "authorize"
+                ? "text-blue-500 border-b-2 border-blue-500"
+                : "text-gray-600"
+            }`}
+            onClick={() => setActiveTab("authorize")}
+          >
+            <FaKey className="inline mr-2" />
+            Authorize
+          </button>
+        )}
         <button
           className={`px-4 py-2 ${
             activeTab === "notifications"
@@ -60,7 +66,7 @@ const SettingTab = () => {
       {/* Content Area */}
       <div className="bg-white rounded-lg shadow p-6">
         {activeTab === "profile" && <ProfileTab />}
-        {activeTab === "authorize" && <AuthorizeTab />}
+        {activeTab === "authorize" && !isClient && <AuthorizeTab />}
         {activeTab === "notifications" && <NotificationsTab />}
       </div>
     </div>
