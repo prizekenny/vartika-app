@@ -12,7 +12,7 @@ const Button = ({
     primary: "bg-[#4F46E5] hover:bg-[#4338CA] text-white",
     default: "bg-white hover:bg-gray-50 border border-gray-300 text-gray-700",
     pagination: "px-3 py-1 text-sm border border-gray-200",
-    paginationActive: "px-3 py-1 text-sm bg-[#4F46E5] text-white",
+    paginationActive: "px-3 py-1 text-sm bg-[#9C1C53] text-white",
   };
 
   return (

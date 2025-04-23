@@ -18,6 +18,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { getTransactions } from "@/api/quickbooks";
+import DataTable from "../../../components/common/DataTable";
 
 // 定义饼图颜色
 const COLORS = [
@@ -177,103 +178,66 @@ export default function TransactionTab() {
         <div className="text-sm text-gray-500 mb-2">
           Found {recordCount} records
         </div>
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th
-                scope="col"
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
-                Date
-              </th>
-              <th
-                scope="col"
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
-                Type
-              </th>
-              <th
-                scope="col"
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
-                Doc #
-              </th>
-              <th
-                scope="col"
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
-                Name
-              </th>
-              <th
-                scope="col"
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
-                Account
-              </th>
-              <th
-                scope="col"
-                className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
-                Amount
-              </th>
-              <th
-                scope="col"
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
-                Memo
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {currentTransactions.map((transaction, idx) => (
-              <tr key={idx} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {transaction.date}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {transaction.type}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {transaction.docNum || "-"}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {transaction.name || "-"}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {transaction.account || "-"}
-                </td>
-                <td
-                  className={`px-6 py-4 whitespace-nowrap text-sm text-right ${
-                    type === "expense" ? "text-red-600" : "text-green-600"
-                  }`}
-                >
-                  ${Math.abs(transaction.amount).toFixed(2)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {transaction.memo || "-"}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-          <tfoot className="bg-gray-50">
-            <tr>
-              <td
-                colSpan="5"
-                className="px-6 py-4 text-sm font-medium text-gray-900"
-              >
-                Total {type} amount:
-              </td>
-              <td
-                className={`px-6 py-4 text-sm font-medium text-right ${
-                  type === "expense" ? "text-red-600" : "text-green-600"
-                }`}
-              >
-                ${Math.abs(total).toFixed(2)}
-              </td>
-              <td></td>
-            </tr>
-          </tfoot>
-        </table>
+        
+        <DataTable
+          columns={[
+            { 
+              key: "date", 
+              label: "Date", 
+              width: "15%"
+            },
+            { 
+              key: "type", 
+              label: "Type", 
+              width: "15%"
+            },
+            { 
+              key: "docNum", 
+              label: "Doc #", 
+              width: "10%",
+              render: (row) => row.docNum || "-"
+            },
+            { 
+              key: "name", 
+              label: "Name", 
+              width: "20%",
+              render: (row) => row.name || "-"
+            },
+            { 
+              key: "account", 
+              label: "Account", 
+              width: "15%",
+              render: (row) => row.account || "-"
+            },
+            { 
+              key: "amount", 
+              label: "Amount", 
+              width: "15%",
+              render: (row) => (
+                <div className={`text-right ${type === "expense" ? "text-red-600" : "text-green-600"}`}>
+                  ${Math.abs(row.amount).toFixed(2)}
+                </div>
+              )
+            },
+            { 
+              key: "memo", 
+              label: "Memo", 
+              width: "15%",
+              render: (row) => row.memo || "-"
+            }
+          ]}
+          data={currentTransactions}
+        />
+        
+        <div className="bg-gray-50 p-4 flex justify-end items-center">
+          <div className="font-medium mr-4">
+            Total {type} amount: 
+            <span className={`ml-2 ${type === "expense" ? "text-red-600" : "text-green-600"}`}>
+              ${Math.abs(total).toFixed(2)}
+            </span>
+          </div>
+        </div>
+
         <Pagination
           currentPage={pagination[type].currentPage}
           totalPages={Math.ceil(transactions.length / itemsPerPage)}
@@ -318,18 +282,27 @@ export default function TransactionTab() {
       </div>
 
       {/* Charts Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 max-w-full">
         {/* Monthly Income/Expense Chart */}
-        <div className="bg-white p-6 rounded-lg shadow">
+        <div className="bg-white p-6 rounded-lg shadow overflow-hidden">
           <h2 className="text-lg font-medium mb-4">Monthly Overview</h2>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="h-80 w-full">
+            <ResponsiveContainer width="99%" height="100%">
               <BarChart data={processMonthlyData()}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip formatter={(value) => `$${value.toFixed(2)}`} />
-                <Legend />
+                <Legend 
+                  wrapperStyle={{ paddingTop: 10, width: '100%' }}
+                  formatter={(value, entry, index) => {
+                    return (
+                      <span style={{ color: entry.color, wordBreak: 'break-word', width: '100%' }}>
+                        {value}
+                      </span>
+                    );
+                  }}
+                />
                 <Bar dataKey="Income" fill="#4CAF50" />
                 <Bar dataKey="Expenses" fill="#f44336" />
               </BarChart>
@@ -338,22 +311,75 @@ export default function TransactionTab() {
         </div>
 
         {/* Expense Categories Chart */}
-        <div className="bg-white p-6 rounded-lg shadow">
+        <div className="bg-white p-6 rounded-lg shadow overflow-hidden">
           <h2 className="text-lg font-medium mb-4">Expense Types</h2>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="h-80 w-full">
+            <ResponsiveContainer width="99%" height="100%">
               <PieChart>
                 <Pie
                   data={processExpenseCategories()}
                   cx="50%"
                   cy="50%"
-                  labelLine={false}
-                  outerRadius={100}
+                  labelLine={true}
+                  outerRadius={90}
                   fill="#8884d8"
                   dataKey="value"
-                  label={({ name, percent }) =>
-                    `${name} ${(percent * 100).toFixed(0)}%`
-                  }
+                  label={({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, name }) => {
+                    const RADIAN = Math.PI / 180;
+                    // 增加半径，让标签显示在扇区外围
+                    const radius = outerRadius * 1.1;
+                    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                    
+                    // 将长文本拆分成多行，每行不超过10个字符
+                    const words = name.split(' ');
+                    let lines = [];
+                    let currentLine = '';
+                    
+                    words.forEach(word => {
+                      // 如果当前行加上新词和空格不超过10个字符，则添加到当前行
+                      if (currentLine.length + word.length + 1 <= 10) {
+                        currentLine += (currentLine ? ' ' : '') + word;
+                      } else {
+                        // 否则保存当前行并开始新行
+                        if (currentLine) lines.push(currentLine);
+                        currentLine = word;
+                      }
+                    });
+                    
+                    // 添加最后一行
+                    if (currentLine) lines.push(currentLine);
+                    
+                    // 如果没有拆分成行，就用原文本
+                    if (lines.length === 0) lines = [name];
+                    
+                    const percentValue = (percent * 100).toFixed(0);
+                    
+                    return (
+                      <text 
+                        x={x} 
+                        y={y} 
+                        fill={COLORS[index % COLORS.length]}
+                        textAnchor={x > cx ? 'start' : 'end'} 
+                        dominantBaseline="central"
+                        style={{ 
+                          fontSize: '12px', 
+                          fontWeight: 'bold',
+                          textShadow: '0 0 3px white, 0 0 3px white, 0 0 3px white, 0 0 3px white'
+                        }}
+                      >
+                        {lines.map((line, i) => (
+                          <tspan 
+                            key={i} 
+                            x={x} 
+                            dy={i === 0 ? 0 : '1.2em'} // 第一行不偏移，后续行偏移1.2em
+                          >
+                            {line} {i === lines.length - 1 ? `${percentValue}%` : ''}
+                          </tspan>
+                        ))}
+                      </text>
+                    );
+                  }}
                 >
                   {processExpenseCategories().map((entry, index) => (
                     <Cell
@@ -366,7 +392,16 @@ export default function TransactionTab() {
                   formatter={(value) => `$${value.toFixed(2)}`}
                   labelFormatter={(name) => `Type: ${name}`}
                 />
-                <Legend />
+                <Legend 
+                  wrapperStyle={{ paddingTop: 10, width: '100%' }}
+                  formatter={(value, entry, index) => {
+                    return (
+                      <span style={{ color: entry.color, wordBreak: 'break-word', width: '100%' }}>
+                        {value}
+                      </span>
+                    );
+                  }}
+                />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -375,7 +410,7 @@ export default function TransactionTab() {
 
       {/* Transaction Category Tabs */}
       <Tab.Group>
-        <Tab.List className="flex space-x-4 border-b border-gray-300">
+        <Tab.List className="flex space-x-4 border-b border-gray-300 max-w-full">
           <Tab
             className={({ selected }) =>
               `px-4 py-2 text-sm font-medium ${

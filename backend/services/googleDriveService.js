@@ -4,6 +4,7 @@ import {
   getGoogleDriveToken,
   getAllTokensByPlatform,
 } from "../services/tokenService.js";
+import { pool } from "../config/database.js";
 
 /**
  * 🔑 获取 Google Drive API 客户端
@@ -67,13 +68,25 @@ async function getOrCreateFolder(drive, parentFolderId, folderName) {
 
 /**
  * 📤 上传文件到 Google Drive (分类存储)
+ * @param {string} username - 公司名称/用户名
+ * @param {string} fileType - 文件类型
+ * @param {ReadableStream} fileStream - 文件流
+ * @param {string} fileName - 文件名
+ * @param {string} mimeType - MIME类型
+ * @param {string} fileSize - 文件大小(格式化后的字符串)
+ * @param {string} userId - 用户ID
  */
-async function uploadFile(username, fileType, filePath, fileName, mimeType) {
+async function uploadFile(username, fileType, fileStream, fileName, mimeType, userId = null, fileSize = "Unknown size") {
   try {
     const drive = await getDriveClient();
 
     // 🔹 设定 Google Drive 根目录 (环境变量)
-    const ROOT_FOLDER_ID = process.env.DRIVE_ROOT_FOLDER_ID;
+    const ROOT_FOLDER_ID = process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID;
+
+    if (!ROOT_FOLDER_ID) {
+      console.error("❌ GOOGLE_DRIVE_ROOT_FOLDER_ID not set in environment variables");
+      return { success: false, error: "Google Drive root folder not configured" };
+    }
 
     // 🔹 创建 `用户名 + 文件类型` 目录
     const userFolderId = await getOrCreateFolder(
@@ -91,7 +104,7 @@ async function uploadFile(username, fileType, filePath, fileName, mimeType) {
       name: fileName,
       parents: [fileTypeFolderId],
     };
-    const media = { mimeType, body: fs.createReadStream(filePath) };
+    const media = { mimeType, body: fileStream };
 
     const response = await drive.files.create({
       requestBody: fileMetadata,
@@ -99,10 +112,26 @@ async function uploadFile(username, fileType, filePath, fileName, mimeType) {
       fields: "id",
     });
 
+    const fileId = response.data.id;
+
+    // 将文件记录保存到数据库，使用传入的文件大小
+    try {
+      await pool.query(
+        `INSERT INTO file_records 
+        (file_name, file_size, mime_type, company_name, document_type, drive_file_id, user_id) 
+        VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [fileName, fileSize, mimeType, username, fileType, fileId, userId]
+      );
+      console.log(`✅ File record saved to database: ${fileName}, size: ${fileSize}`);
+    } catch (dbError) {
+      console.error(`❌ Failed to save file record to database:`, dbError);
+      // 即使数据库保存失败，我们仍然继续，因为文件已经上传到Google Drive
+    }
+
     console.log(
       `✅ File uploaded: ${fileName} -> Drive Folder: ${fileTypeFolderId}`
     );
-    return { success: true, fileId: response.data.id };
+    return { success: true, fileId: fileId };
   } catch (error) {
     console.error(`🔴 Failed to upload file:`, error);
     return { success: false, error: error.message };

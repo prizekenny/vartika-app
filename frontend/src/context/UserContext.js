@@ -8,11 +8,15 @@ export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem("user"); // 仅在客户端访问 localStorage
-    if (savedUser) {
-      setUser(JSON.parse(savedUser)); // 设置用户信息
+    const savedUserLocal = localStorage.getItem("user");
+    const savedUserSession = sessionStorage.getItem("user");
+    
+    if (savedUserLocal) {
+      setUser(JSON.parse(savedUserLocal));
+    } else if (savedUserSession) {
+      setUser(JSON.parse(savedUserSession));
     }
-  }, []); // 空依赖数组，确保只在组件挂载时运行一次
+  }, []);
 
   useEffect(() => {
     if (user) {

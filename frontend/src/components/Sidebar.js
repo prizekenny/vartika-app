@@ -36,8 +36,11 @@ const Sidebar = () => {
   return (
     <div className="w-64 h-screen bg-white shadow-lg">
       {/* Logo */}
-      <div className="px-6 py-4 border-b bg-[#4F46E5] text-white">
-        <h1 className="text-2xl font-semibold">Vartika</h1>
+      <div className="px-6 py-4 border-b bg-[#9C1C53] text-white">
+        <div className="flex flex-col">
+          <h1 className="text-2xl font-semibold">Vartika Satija</h1>
+          <p className="text-sm">Tax | Consulting | Accounting</p>
+        </div>
       </div>
 
       {/* Search Bar */}

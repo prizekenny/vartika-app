@@ -103,13 +103,56 @@ const FinancialSummary = ({
                 data={marketShareData}
                 cx="50%"
                 cy="50%"
-                labelLine={false}
+                labelLine={true}
                 outerRadius={100}
                 fill="#8884d8"
                 dataKey="value"
-                label={({ name, percent }) =>
-                  `${name} ${(percent * 100).toFixed(0)}%`
-                }
+                label={({ name, percent, cx, cy, midAngle, innerRadius, outerRadius, index }) => {
+                  const RADIAN = Math.PI / 180;
+                  const radius = outerRadius * 1.1;
+                  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                  
+                  // Split text into lines with max 10 characters per line
+                  const words = name.split(' ');
+                  let lines = [];
+                  let currentLine = '';
+                  
+                  words.forEach(word => {
+                    if (currentLine.length + word.length + 1 <= 10) {
+                      currentLine += (currentLine ? ' ' : '') + word;
+                    } else {
+                      if (currentLine) lines.push(currentLine);
+                      currentLine = word;
+                    }
+                  });
+                  
+                  if (currentLine) lines.push(currentLine);
+                  if (lines.length === 0) lines = [name];
+                  
+                  const percentValue = (percent * 100).toFixed(0);
+                  
+                  return (
+                    <text 
+                      x={x} 
+                      y={y} 
+                      fill={COLORS[index % COLORS.length]}
+                      textAnchor={x > cx ? 'start' : 'end'} 
+                      dominantBaseline="central"
+                      style={{ fontSize: '12px', fontWeight: 'bold' }}
+                    >
+                      {lines.map((line, i) => (
+                        <tspan 
+                          key={i} 
+                          x={x} 
+                          dy={i === 0 ? 0 : '1.2em'}
+                        >
+                          {line} {i === lines.length - 1 ? `${percentValue}%` : ''}
+                        </tspan>
+                      ))}
+                    </text>
+                  );
+                }}
               >
                 {marketShareData.map((entry, index) => (
                   <Cell
@@ -153,13 +196,56 @@ const FinancialSummary = ({
                 data={expenseBreakdown}
                 cx="50%"
                 cy="50%"
-                labelLine={false}
+                labelLine={true}
                 outerRadius={100}
                 fill="#8884d8"
                 dataKey="value"
-                label={({ name, percent }) =>
-                  `${name} ${(percent * 100).toFixed(0)}%`
-                }
+                label={({ name, percent, cx, cy, midAngle, innerRadius, outerRadius, index }) => {
+                  const RADIAN = Math.PI / 180;
+                  const radius = outerRadius * 1.1;
+                  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                  
+                  // Split text into lines with max 10 characters per line
+                  const words = name.split(' ');
+                  let lines = [];
+                  let currentLine = '';
+                  
+                  words.forEach(word => {
+                    if (currentLine.length + word.length + 1 <= 10) {
+                      currentLine += (currentLine ? ' ' : '') + word;
+                    } else {
+                      if (currentLine) lines.push(currentLine);
+                      currentLine = word;
+                    }
+                  });
+                  
+                  if (currentLine) lines.push(currentLine);
+                  if (lines.length === 0) lines = [name];
+                  
+                  const percentValue = (percent * 100).toFixed(0);
+                  
+                  return (
+                    <text 
+                      x={x} 
+                      y={y} 
+                      fill={COLORS[index % COLORS.length]}
+                      textAnchor={x > cx ? 'start' : 'end'} 
+                      dominantBaseline="central"
+                      style={{ fontSize: '12px', fontWeight: 'bold' }}
+                    >
+                      {lines.map((line, i) => (
+                        <tspan 
+                          key={i} 
+                          x={x} 
+                          dy={i === 0 ? 0 : '1.2em'}
+                        >
+                          {line} {i === lines.length - 1 ? `${percentValue}%` : ''}
+                        </tspan>
+                      ))}
+                    </text>
+                  );
+                }}
               >
                 {expenseBreakdown.map((entry, index) => (
                   <Cell

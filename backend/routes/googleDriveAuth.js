@@ -2,6 +2,7 @@ import express from "express";
 import passport from "passport";
 import { updateToken } from "../services/tokenService.js";
 import axios from "axios";
+import { isAuthorized } from "../services/googleDriveService.js";
 
 const router = express.Router();
 
@@ -98,24 +99,38 @@ router.get("/status/reset", (req, res) => {
 /**
  * ✅ Check Google Drive OAuth status
  */
-router.get("/status", (req, res) => {
+router.get("/status", async (req, res) => {
   const recentOAuthSuccess = googleDriveOAuthSuccess;
-
-  if (recentOAuthSuccess) {
-    googleDriveOAuthSuccess = false;
+  
+  try {
+    // 检查真实的授权状态
+    const authStatus = await isAuthorized();
+    
+    if (recentOAuthSuccess) {
+      googleDriveOAuthSuccess = false;
+      return res.json({
+        success: true,
+        authorized: true,
+        active: true,
+        recentAuth: true,
+      });
+    }
+    
+    // 返回真实的授权状态
     return res.json({
       success: true,
-      authorized: true,
-      active: true,
-      recentAuth: true,
+      authorized: authStatus.authorized,
+      user: authStatus.user,
+      recentAuth: false,
+    });
+  } catch (error) {
+    console.error("Error checking Google Drive authorization:", error);
+    return res.status(500).json({
+      success: false,
+      authorized: false,
+      error: error.message,
     });
   }
-
-  return res.json({
-    success: true,
-    authorized: false,
-    recentAuth: false,
-  });
 });
 
 export default router;

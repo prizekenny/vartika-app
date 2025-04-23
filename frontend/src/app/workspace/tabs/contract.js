@@ -27,6 +27,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import DataTable from "../../../components/common/DataTable";
 
 // 定义图表颜色
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8"];
@@ -726,13 +727,65 @@ const ContractTab = () => {
                       cx="50%"
                       cy="50%"
                       innerRadius={60}
-                      outerRadius={80}
+                      outerRadius={90}
                       fill="#8884d8"
                       paddingAngle={5}
                       dataKey="value"
-                      label={({ name, percentage }) =>
-                        `${name} (${percentage}%)`
-                      }
+                      labelLine={true}
+                      label={({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, name, percentage }) => {
+                        const RADIAN = Math.PI / 180;
+                        // 增加半径，让标签显示在扇区外围
+                        const radius = outerRadius * 1.1;
+                        const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                        const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                        
+                        // 将长文本拆分成多行，每行不超过10个字符
+                        const words = name.split(' ');
+                        let lines = [];
+                        let currentLine = '';
+                        
+                        words.forEach(word => {
+                          // 如果当前行加上新词和空格不超过10个字符，则添加到当前行
+                          if (currentLine.length + word.length + 1 <= 10) {
+                            currentLine += (currentLine ? ' ' : '') + word;
+                          } else {
+                            // 否则保存当前行并开始新行
+                            if (currentLine) lines.push(currentLine);
+                            currentLine = word;
+                          }
+                        });
+                        
+                        // 添加最后一行
+                        if (currentLine) lines.push(currentLine);
+                        
+                        // 如果没有拆分成行，就用原文本
+                        if (lines.length === 0) lines = [name];
+                        
+                        return (
+                          <text 
+                            x={x} 
+                            y={y} 
+                            fill={COLORS[index % COLORS.length]}
+                            textAnchor={x > cx ? 'start' : 'end'} 
+                            dominantBaseline="central"
+                            style={{ 
+                              fontSize: '12px', 
+                              fontWeight: 'bold',
+                              textShadow: '0 0 3px white, 0 0 3px white, 0 0 3px white, 0 0 3px white'
+                            }}
+                          >
+                            {lines.map((line, i) => (
+                              <tspan 
+                                key={i} 
+                                x={x} 
+                                dy={i === 0 ? 0 : '1.2em'} // 第一行不偏移，后续行偏移1.2em
+                              >
+                                {line} {i === lines.length - 1 ? `(${percentage}%)` : ''}
+                              </tspan>
+                            ))}
+                          </text>
+                        );
+                      }}
                     >
                       {statusDistribution.map((entry, index) => (
                         <Cell
@@ -747,7 +800,16 @@ const ContractTab = () => {
                         name,
                       ]}
                     />
-                    <Legend />
+                    <Legend 
+                      wrapperStyle={{ paddingTop: 10, width: '100%' }}
+                      formatter={(value, entry, index) => {
+                        return (
+                          <span style={{ color: entry.color, wordBreak: 'break-word', width: '100%' }}>
+                            {value}
+                          </span>
+                        );
+                      }}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -787,7 +849,16 @@ const ContractTab = () => {
                         return `${label}: $${item.minAmount.toLocaleString()} - $${item.maxAmount.toLocaleString()}`;
                       }}
                     />
-                    <Legend />
+                    <Legend 
+                      wrapperStyle={{ paddingTop: 10, width: '100%' }}
+                      formatter={(value, entry, index) => {
+                        return (
+                          <span style={{ color: entry.color, wordBreak: 'break-word', width: '100%' }}>
+                            {value}
+                          </span>
+                        );
+                      }}
+                    />
                     <Bar
                       dataKey="value"
                       name="Contracts"
@@ -916,92 +987,50 @@ const ContractTab = () => {
           </div>
 
           {/* Contracts table */}
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Name
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Subject
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Amount
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Start Date
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    End Date
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {contractData.contracts.map((contract) => (
-                  <tr
-                    key={contract.contract_id}
-                    className="hover:bg-gray-50 cursor-pointer"
-                    onClick={() => handleEditClick(contract)}
+          <DataTable
+            columns={[
+              { key: "username", label: "Name", width: "120px" },
+              { key: "subject", label: "Subject", width: "180px" },
+              { key: "amount", label: "Amount", width: "100px", render: (row) => 
+                `$${parseFloat(row.amount).toLocaleString()}` },
+              { key: "start_date", label: "Start Date", width: "120px", render: (row) => 
+                new Date(row.start_date).toLocaleDateString() },
+              { key: "expiration_date", label: "End Date", width: "120px", render: (row) => 
+                new Date(row.expiration_date).toLocaleDateString() },
+              { key: "status", label: "Status", width: "80px", render: (row) => (
+                <span
+                  className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                    row.status === "Accept"
+                      ? "bg-green-100 text-green-800"
+                      : "bg-yellow-100 text-yellow-800"
+                  }`}
+                >
+                  {row.status}
+                </span>
+              )},
+              { key: "actions", label: "Actions", width: "100px", render: (row) => (
+                <div className="flex space-x-3" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    onClick={() => handleEditClick(row)}
+                    className="text-indigo-600 hover:text-indigo-900"
                   >
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {contract.username || "Unknown User"}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {contract.subject}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      ${parseFloat(contract.amount).toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(contract.start_date).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(contract.expiration_date).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          contract.status === "Accept"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }`}
-                      >
-                        {contract.status}
-                      </span>
-                    </td>
-                    <td
-                      className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
-                      onClick={(e) => e.stopPropagation()} // 防止触发行的点击事件
-                    >
-                      <button
-                        onClick={() => handleEditClick(contract)}
-                        className="text-indigo-600 hover:text-indigo-900 mr-3"
-                      >
-                        <FaEdit className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation(); // 防止触发行的点击事件
-                          setSelectedContract(contract);
-                          setShowDeleteModal(true);
-                        }}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        <FaTrash className="h-4 w-4" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    <FaEdit className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSelectedContract(row);
+                      setShowDeleteModal(true);
+                    }}
+                    className="text-red-600 hover:text-red-900"
+                  >
+                    <FaTrash className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+            ]}
+            data={contractData.contracts}
+            onRowClick={handleEditClick}
+          />
 
           {/* Pagination */}
           <div className="px-6 py-4 flex items-center justify-end border-t">
@@ -1016,10 +1045,10 @@ const ContractTab = () => {
 
       {/* Edit/Create Modal */}
       {showEditModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div className="mt-3">
-              <h3 className="text-lg font-medium text-gray-900">
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center h-full w-full z-50">
+          <div className="relative mx-auto p-5 border w-96 shadow-lg rounded-md bg-white max-h-[90vh]">
+            <div className="mt-3 overflow-y-auto pr-2" style={{ maxHeight: 'calc(90vh - 40px)' }}>
+              <h3 className="text-lg font-medium text-gray-900 sticky top-0 bg-white pb-2">
                 {selectedContract ? "Edit Contract" : "New Contract"}
               </h3>
               <form onSubmit={handleSubmit} className="mt-4">
@@ -1158,28 +1187,30 @@ const ContractTab = () => {
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
-              Confirm Delete
-            </h3>
-            <p className="text-sm text-gray-500">
-              Are you sure you want to delete this contract? This action cannot
-              be undone.
-            </p>
-            <div className="mt-4 flex justify-end space-x-3">
-              <button
-                onClick={() => setShowDeleteModal(false)}
-                className="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDelete}
-                className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
-              >
-                Delete
-              </button>
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center h-full w-full z-50">
+          <div className="relative mx-auto p-5 border w-96 shadow-lg rounded-md bg-white max-h-[90vh]">
+            <div className="overflow-y-auto pr-2" style={{ maxHeight: 'calc(90vh - 40px)' }}>
+              <h3 className="text-lg font-medium text-gray-900 mb-4 sticky top-0 bg-white pb-2">
+                Confirm Delete
+              </h3>
+              <p className="text-sm text-gray-500">
+                Are you sure you want to delete this contract? This action cannot
+                be undone.
+              </p>
+              <div className="mt-4 flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  className="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDelete}
+                  className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
           </div>
         </div>

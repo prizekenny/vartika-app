@@ -7,6 +7,7 @@ import { getUsers, updateUser, deleteUser } from "@/api/users";
 import AddUserModal from "../../../components/AddUserModal";
 import EditUserModal from "../../../components/EditUserModal";
 import Pagination from "../../../components/common/Pagination"; // 导入分页组件
+import DataTable from "../../../components/common/DataTable";
 
 const UserTab = () => {
   const [users, setUsers] = useState([]);
@@ -120,7 +121,7 @@ const UserTab = () => {
       </div>
       <div className="mb-10 flex justify-between items-center">
         <button
-          className="bg-purple-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-purple-700"
+          className="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center hover:bg-blue-700"
           onClick={() => setShowAddUserForm(true)}
         >
           <FaUserPlus className="mr-2" /> New User
@@ -130,7 +131,7 @@ const UserTab = () => {
             <input
               type="text"
               placeholder="Search users..."
-              className="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -138,7 +139,7 @@ const UserTab = () => {
           </div>
           <select
             onChange={(e) => setSortBy(e.target.value)}
-            className="border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="Newest">Newest</option>
             <option value="Oldest">Oldest</option>
@@ -166,72 +167,54 @@ const UserTab = () => {
       )}
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                User Name
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Role
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Phone
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Email
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Status
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {currentUsers.map((user) => (
-              <tr key={user.user_id}>
-                <td className="px-6 py-4 whitespace-nowrap">{user.username}</td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  {user.roles && user.roles.length > 0 ? user.roles[0] : "N/A"}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  {user.phone || "-"}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">{user.email}</td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <button
-                    onClick={() =>
-                      handleStatusToggle(user.user_id, user.status)
-                    }
-                    className={`px-3 py-1 rounded-full text-sm ${
-                      user.status === "active"
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-red-800"
-                    }`}
-                  >
-                    {user.status === "active" ? "Active" : "Inactive"}
-                  </button>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap flex space-x-4">
-                  <button
-                    onClick={() => handleEditUser(user)}
-                    className="text-blue-500 hover:text-blue-700"
-                  >
-                    <FaEdit />
-                  </button>
-                  <button
-                    onClick={() => handleDeleteUser(user.user_id)}
-                    className="text-red-500 hover:text-red-700"
-                  >
-                    <FaTrash />
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <DataTable 
+          columns={[
+            { key: "username", label: "User Name", width: "120px" },
+            { key: "roles", label: "Role", width: "120px", render: (row) => 
+              row.roles && row.roles.length > 0 ? row.roles[0] : "N/A" },
+            { key: "phone", label: "Phone", width: "120px" },
+            { key: "email", label: "Email", width: "180px" },
+            { key: "status", label: "Status", width: "100px", render: (row) => (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleStatusToggle(row.user_id, row.status);
+                }}
+                className={`px-3 py-1 rounded-full text-sm ${
+                  row.status === "active"
+                    ? "bg-green-100 text-green-800"
+                    : "bg-red-100 text-red-800"
+                }`}
+              >
+                {row.status === "active" ? "Active" : "Inactive"}
+              </button>
+            )},
+            { key: "actions", label: "Actions", width: "100px", render: (row) => (
+              <div className="flex space-x-4">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEditUser(row);
+                  }}
+                  className="text-blue-500 hover:text-blue-700"
+                >
+                  <FaEdit />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteUser(row.user_id);
+                  }}
+                  className="text-red-500 hover:text-red-700"
+                >
+                  <FaTrash />
+                </button>
+              </div>
+            )}
+          ]}
+          data={currentUsers}
+          onRowClick={handleEditUser}
+        />
       </div>
 
       <div className="flex justify-between items-center mt-4 text-sm text-gray-500">

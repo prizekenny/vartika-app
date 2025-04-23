@@ -5,8 +5,13 @@ import { FaChartBar, FaListUl } from "react-icons/fa";
 
 import TodoList from "./components/TodoList";
 import FinancialSummary from "./components/FinancialSummary";
+import { useUser } from "@/context/UserContext";
 
 const DashboardTab = () => {
+  // 获取用户信息
+  const { user } = useUser();
+  const isClient = user?.roles?.map(role => role.toLowerCase()).includes('client');
+
   // 状态管理
   const [todos, setTodos] = useState([]);
   const [revenueData, setRevenueData] = useState([]);
@@ -15,6 +20,8 @@ const DashboardTab = () => {
   const [expenseBreakdown, setExpenseBreakdown] = useState([]);
   const [financialMetrics, setFinancialMetrics] = useState({});
   const [COLORS, setCOLORS] = useState([]);
+  
+  // client用户默认只显示todo列表，其他用户可以切换
   const [activeTab, setActiveTab] = useState("todo");
 
   // 加载仪表板数据
@@ -66,42 +73,44 @@ const DashboardTab = () => {
         Dashboard Overview
       </h2>
 
-      {/* Navigation */}
-      <div className="flex space-x-4 mb-6 border-b">
-        <button
-          className={`px-4 py-2 ${
-            activeTab === "todo"
-              ? "text-blue-500 border-b-2 border-blue-500"
-              : "text-gray-600"
-          }`}
-          onClick={() => setActiveTab("todo")}
-        >
-          <FaListUl className="inline mr-2" />
-          To-do List
-        </button>
-        <button
-          className={`px-4 py-2 ${
-            activeTab === "financial"
-              ? "text-blue-500 border-b-2 border-blue-500"
-              : "text-gray-600"
-          }`}
-          onClick={() => setActiveTab("financial")}
-        >
-          <FaChartBar className="inline mr-2" />
-          Financial Summary
-        </button>
-      </div>
+      {/* Navigation - 只对非client用户显示 */}
+      {!isClient && (
+        <div className="flex space-x-4 mb-6 border-b">
+          <button
+            className={`px-4 py-2 ${
+              activeTab === "todo"
+                ? "text-blue-500 border-b-2 border-blue-500"
+                : "text-gray-600"
+            }`}
+            onClick={() => setActiveTab("todo")}
+          >
+            <FaListUl className="inline mr-2" />
+            To-do List
+          </button>
+          <button
+            className={`px-4 py-2 ${
+              activeTab === "financial"
+                ? "text-blue-500 border-b-2 border-blue-500"
+                : "text-gray-600"
+            }`}
+            onClick={() => setActiveTab("financial")}
+          >
+            <FaChartBar className="inline mr-2" />
+            Financial Summary
+          </button>
+        </div>
+      )}
 
       {/* Content Area */}
       <div className="bg-white rounded-lg shadow p-6">
-        {activeTab === "todo" ? (
+        {isClient || activeTab === "todo" ? (
           <TodoList
             todos={todos}
             toggleStar={toggleStar}
             deleteTodo={deleteTodo}
           />
         ) : (
-          // Financial Summary
+          // Financial Summary - 仅对非client用户显示
           <FinancialSummary
             financialMetrics={financialMetrics}
             revenueData={revenueData}

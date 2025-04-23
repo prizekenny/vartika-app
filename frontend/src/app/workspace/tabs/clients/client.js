@@ -115,7 +115,7 @@ const ClientTab = () => {
 
       <div className="flex justify-between items-center mb-4">
         <button
-          className="bg-purple-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-purple-700"
+          className="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center hover:bg-blue-700"
           onClick={() => setShowAddClientModal(true)}
         >
           <FaPlus className="mr-2" /> New Client
