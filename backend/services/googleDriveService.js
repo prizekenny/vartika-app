@@ -73,8 +73,10 @@ async function getOrCreateFolder(drive, parentFolderId, folderName) {
  * @param {ReadableStream} fileStream - 文件流
  * @param {string} fileName - 文件名
  * @param {string} mimeType - MIME类型
+ * @param {string} fileSize - 文件大小(格式化后的字符串)
+ * @param {string} userId - 用户ID
  */
-async function uploadFile(username, fileType, fileStream, fileName, mimeType, userId = null) {
+async function uploadFile(username, fileType, fileStream, fileName, mimeType, userId = null, fileSize = "Unknown size") {
   try {
     const drive = await getDriveClient();
 
@@ -112,12 +114,7 @@ async function uploadFile(username, fileType, fileStream, fileName, mimeType, us
 
     const fileId = response.data.id;
 
-    // 获取文件大小 (这里需要估算，因为我们是直接上传的流)
-    // 如果前端有文件大小，可以将其作为参数传递
-    // 这里存储的是格式化后的大小字符串，实际应用中可能需要存储原始字节数
-    const fileSize = "Unknown size"; // 在实际应用中，应该从请求中获取文件大小
-
-    // 将文件记录保存到数据库
+    // 将文件记录保存到数据库，使用传入的文件大小
     try {
       await pool.query(
         `INSERT INTO file_records 
@@ -125,7 +122,7 @@ async function uploadFile(username, fileType, fileStream, fileName, mimeType, us
         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
         [fileName, fileSize, mimeType, username, fileType, fileId, userId]
       );
-      console.log(`✅ File record saved to database: ${fileName}`);
+      console.log(`✅ File record saved to database: ${fileName}, size: ${fileSize}`);
     } catch (dbError) {
       console.error(`❌ Failed to save file record to database:`, dbError);
       // 即使数据库保存失败，我们仍然继续，因为文件已经上传到Google Drive

@@ -63,7 +63,8 @@ router.post(
         fileStream,
         originalname,
         mimetype,
-        userId || null
+        userId || null,
+        fileSize || undefined
       );
 
       if (!result.success) {
