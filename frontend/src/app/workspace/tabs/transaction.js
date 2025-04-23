@@ -318,12 +318,12 @@ export default function TransactionTab() {
       </div>
 
       {/* Charts Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 max-w-full">
         {/* Monthly Income/Expense Chart */}
-        <div className="bg-white p-6 rounded-lg shadow">
+        <div className="bg-white p-6 rounded-lg shadow overflow-hidden">
           <h2 className="text-lg font-medium mb-4">Monthly Overview</h2>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="h-80 w-full">
+            <ResponsiveContainer width="99%" height="100%">
               <BarChart data={processMonthlyData()}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
@@ -347,10 +347,10 @@ export default function TransactionTab() {
         </div>
 
         {/* Expense Categories Chart */}
-        <div className="bg-white p-6 rounded-lg shadow">
+        <div className="bg-white p-6 rounded-lg shadow overflow-hidden">
           <h2 className="text-lg font-medium mb-4">Expense Types</h2>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="h-80 w-full">
+            <ResponsiveContainer width="99%" height="100%">
               <PieChart>
                 <Pie
                   data={processExpenseCategories()}
@@ -446,7 +446,7 @@ export default function TransactionTab() {
 
       {/* Transaction Category Tabs */}
       <Tab.Group>
-        <Tab.List className="flex space-x-4 border-b border-gray-300">
+        <Tab.List className="flex space-x-4 border-b border-gray-300 max-w-full">
           <Tab
             className={({ selected }) =>
               `px-4 py-2 text-sm font-medium ${
