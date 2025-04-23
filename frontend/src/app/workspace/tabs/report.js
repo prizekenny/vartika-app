@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import { FaChevronDown, FaChevronRight } from "react-icons/fa";
 import { getFinancialReport } from "@/api/quickbooks";
+import DataTable from "@/components/common/DataTable";
 
 const ReportTab = () => {
   const [activeTab, setActiveTab] = useState("all");
@@ -126,6 +127,210 @@ const ReportTab = () => {
     return `${prefix}${change.toFixed(1)}%`;
   };
 
+  const convertReportToTableData = (reportType) => {
+    switch (reportType) {
+      case "profitLoss":
+        return [
+          { 
+            metric: "Revenue", 
+            currentPeriod: reports.profitLoss.revenue, 
+            previousPeriod: reports.profitLoss.previousPeriodRevenue,
+            change: formatChange(
+              reports.profitLoss.revenue,
+              reports.profitLoss.previousPeriodRevenue
+            ),
+            percentage: "100%"
+          },
+          { 
+            metric: "Gross Profit", 
+            currentPeriod: reports.profitLoss.grossProfit,
+            previousPeriod: 0,
+            change: formatPercentage(reports.profitLoss.revenueChange),
+            percentage: calculatePercentage(
+              reports.profitLoss.grossProfit,
+              reports.profitLoss.revenue
+            )
+          },
+          { 
+            metric: "Operating Income", 
+            currentPeriod: reports.profitLoss.operatingIncome,
+            previousPeriod: 0,
+            change: formatPercentage(0),
+            percentage: calculatePercentage(
+              reports.profitLoss.operatingIncome,
+              reports.profitLoss.revenue
+            )
+          },
+          { 
+            metric: "Total Expenses", 
+            currentPeriod: reports.profitLoss.expenses,
+            previousPeriod: 0,
+            change: formatPercentage(0),
+            percentage: calculatePercentage(
+              reports.profitLoss.expenses,
+              reports.profitLoss.revenue
+            )
+          },
+          { 
+            metric: "Net Income", 
+            currentPeriod: reports.profitLoss.netIncome,
+            previousPeriod: reports.profitLoss.previousPeriodNetIncome,
+            change: formatChange(
+              reports.profitLoss.netIncome,
+              reports.profitLoss.previousPeriodNetIncome
+            ),
+            percentage: calculatePercentage(
+              reports.profitLoss.netIncome,
+              reports.profitLoss.revenue
+            ),
+            isTotal: true
+          }
+        ];
+
+      case "balanceSheet":
+        return [
+          { 
+            metric: "Total Assets", 
+            amount: reports.balanceSheet.totalAssets,
+            percentOfAssets: "100%",
+            structure: formatPercentage(1),
+            isHeader: true
+          },
+          { 
+            metric: "Current Assets", 
+            amount: reports.balanceSheet.currentAssets,
+            percentOfAssets: calculatePercentage(
+              reports.balanceSheet.currentAssets,
+              reports.balanceSheet.totalAssets
+            ),
+            structure: calculatePercentage(
+              reports.balanceSheet.currentAssets,
+              reports.balanceSheet.totalAssets
+            ),
+            indent: true
+          },
+          { 
+            metric: "Fixed Assets", 
+            amount: reports.balanceSheet.fixedAssets,
+            percentOfAssets: calculatePercentage(
+              reports.balanceSheet.fixedAssets,
+              reports.balanceSheet.totalAssets
+            ),
+            structure: calculatePercentage(
+              reports.balanceSheet.fixedAssets,
+              reports.balanceSheet.totalAssets
+            ),
+            indent: true
+          },
+          { 
+            metric: "Total Liabilities", 
+            amount: reports.balanceSheet.totalLiabilities,
+            percentOfAssets: calculatePercentage(
+              reports.balanceSheet.totalLiabilities,
+              reports.balanceSheet.totalAssets
+            ),
+            structure: "100%",
+            isHeader: true
+          },
+          { 
+            metric: "Current Liabilities", 
+            amount: reports.balanceSheet.currentLiabilities,
+            percentOfAssets: calculatePercentage(
+              reports.balanceSheet.currentLiabilities,
+              reports.balanceSheet.totalAssets
+            ),
+            structure: calculatePercentage(
+              reports.balanceSheet.currentLiabilities,
+              reports.balanceSheet.totalLiabilities
+            ),
+            indent: true
+          },
+          { 
+            metric: "Long-term Liabilities", 
+            amount: reports.balanceSheet.longTermLiabilities,
+            percentOfAssets: calculatePercentage(
+              reports.balanceSheet.longTermLiabilities,
+              reports.balanceSheet.totalAssets
+            ),
+            structure: calculatePercentage(
+              reports.balanceSheet.longTermLiabilities,
+              reports.balanceSheet.totalLiabilities
+            ),
+            indent: true
+          },
+          { 
+            metric: "Total Equity", 
+            amount: reports.balanceSheet.totalEquity,
+            percentOfAssets: calculatePercentage(
+              reports.balanceSheet.totalEquity,
+              reports.balanceSheet.totalAssets
+            ),
+            structure: formatPercentage(1),
+            isTotal: true
+          }
+        ];
+
+      case "cashFlow":
+        return [
+          { 
+            metric: "Beginning Cash", 
+            amount: reports.cashFlow.beginningCash,
+            percentage: calculatePercentage(
+              reports.cashFlow.beginningCash,
+              Math.abs(reports.cashFlow.operatingCash)
+            )
+          },
+          { 
+            metric: "Operating Cash Flow", 
+            amount: reports.cashFlow.operatingCash,
+            percentage: "100%"
+          },
+          { 
+            metric: "Investing Cash Flow", 
+            amount: reports.cashFlow.investingCash,
+            percentage: calculatePercentage(
+              reports.cashFlow.investingCash,
+              Math.abs(reports.cashFlow.operatingCash)
+            )
+          },
+          { 
+            metric: "Financing Cash Flow", 
+            amount: reports.cashFlow.financingCash,
+            percentage: calculatePercentage(
+              reports.cashFlow.financingCash,
+              Math.abs(reports.cashFlow.operatingCash)
+            )
+          },
+          { 
+            metric: "Free Cash Flow", 
+            amount: reports.cashFlow.freeCashFlow,
+            percentage: calculatePercentage(
+              reports.cashFlow.freeCashFlow,
+              Math.abs(reports.cashFlow.operatingCash)
+            ),
+            isTotal: true
+          },
+          { 
+            metric: "Ending Cash", 
+            amount: reports.cashFlow.endingCash,
+            percentage: calculatePercentage(
+              reports.cashFlow.endingCash,
+              Math.abs(reports.cashFlow.operatingCash)
+            ),
+            isTotal: true
+          },
+          { 
+            metric: "Cash Ratio", 
+            amount: formatPercentage(reports.cashFlow.cashRatio),
+            percentage: "-"
+          }
+        ];
+        
+      default:
+        return [];
+    }
+  };
+
   const SectionHeader = ({ title, expanded, onToggle }) => (
     <div
       className="flex items-center bg-gray-50 p-2 cursor-pointer hover:bg-gray-100"
@@ -142,337 +347,151 @@ const ReportTab = () => {
 
   const renderProfitLossTable = () => (
     <div className="overflow-x-auto">
-      <table className="min-w-full bg-white border rounded-lg">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Metrics
-            </th>
-            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Current Period
-            </th>
-            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Previous Period
-            </th>
-            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Change %
-            </th>
-            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-              % of Revenue
-            </th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-200">
-          <tr>
-            <td className="px-6 py-4">Revenue</td>
-            <td className="px-6 py-4 text-right">
-              {formatCurrency(reports.profitLoss.revenue)}
-            </td>
-            <td className="px-6 py-4 text-right">
-              {formatCurrency(reports.profitLoss.previousPeriodRevenue)}
-            </td>
-            <td className="px-6 py-4 text-right">
-              {formatChange(
-                reports.profitLoss.revenue,
-                reports.profitLoss.previousPeriodRevenue
-              )}
-            </td>
-            <td className="px-6 py-4 text-right">100%</td>
-          </tr>
-          <tr>
-            <td className="px-6 py-4">Gross Profit</td>
-            <td className="px-6 py-4 text-right">
-              {formatCurrency(reports.profitLoss.grossProfit)}
-            </td>
-            <td className="px-6 py-4 text-right">{formatCurrency(0)}</td>
-            <td className="px-6 py-4 text-right">
-              {formatPercentage(reports.profitLoss.revenueChange)}
-            </td>
-            <td className="px-6 py-4 text-right">
-              {calculatePercentage(
-                reports.profitLoss.grossProfit,
-                reports.profitLoss.revenue
-              )}
-            </td>
-          </tr>
-          <tr>
-            <td className="px-6 py-4">Operating Income</td>
-            <td className="px-6 py-4 text-right">
-              {formatCurrency(reports.profitLoss.operatingIncome)}
-            </td>
-            <td className="px-6 py-4 text-right">{formatCurrency(0)}</td>
-            <td className="px-6 py-4 text-right">{formatPercentage(0)}</td>
-            <td className="px-6 py-4 text-right">
-              {calculatePercentage(
-                reports.profitLoss.operatingIncome,
-                reports.profitLoss.revenue
-              )}
-            </td>
-          </tr>
-          <tr>
-            <td className="px-6 py-4">Total Expenses</td>
-            <td className="px-6 py-4 text-right">
-              {formatCurrency(reports.profitLoss.expenses)}
-            </td>
-            <td className="px-6 py-4 text-right">{formatCurrency(0)}</td>
-            <td className="px-6 py-4 text-right">{formatPercentage(0)}</td>
-            <td className="px-6 py-4 text-right">
-              {calculatePercentage(
-                reports.profitLoss.expenses,
-                reports.profitLoss.revenue
-              )}
-            </td>
-          </tr>
-          <tr className="font-bold">
-            <td className="px-6 py-4">Net Income</td>
-            <td className="px-6 py-4 text-right">
-              {formatCurrency(reports.profitLoss.netIncome)}
-            </td>
-            <td className="px-6 py-4 text-right">
-              {formatCurrency(reports.profitLoss.previousPeriodNetIncome)}
-            </td>
-            <td className="px-6 py-4 text-right">
-              {formatChange(
-                reports.profitLoss.netIncome,
-                reports.profitLoss.previousPeriodNetIncome
-              )}
-            </td>
-            <td className="px-6 py-4 text-right">
-              {calculatePercentage(
-                reports.profitLoss.netIncome,
-                reports.profitLoss.revenue
-              )}
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <DataTable
+        columns={[
+          { 
+            key: "metric", 
+            label: "Metrics", 
+            width: "25%", 
+            render: (row) => (
+              <div className={`${row.isTotal ? "font-bold" : ""}`}>
+                {row.metric}
+              </div>
+            )
+          },
+          { 
+            key: "currentPeriod", 
+            label: "Current Period", 
+            width: "25%", 
+            render: (row) => (
+              <div className={`text-right ${row.isTotal ? "font-bold" : ""}`}>
+                {formatCurrency(row.currentPeriod)}
+              </div>
+            ) 
+          },
+          { 
+            key: "previousPeriod", 
+            label: "Previous Period", 
+            width: "25%", 
+            render: (row) => (
+              <div className={`text-right ${row.isTotal ? "font-bold" : ""}`}>
+                {formatCurrency(row.previousPeriod)}
+              </div>
+            ) 
+          },
+          { 
+            key: "change", 
+            label: "Change %", 
+            width: "12.5%", 
+            render: (row) => (
+              <div className={`text-right ${row.isTotal ? "font-bold" : ""}`}>
+                {row.change}
+              </div>
+            ) 
+          },
+          { 
+            key: "percentage", 
+            label: "% of Revenue", 
+            width: "12.5%", 
+            render: (row) => (
+              <div className={`text-right ${row.isTotal ? "font-bold" : ""}`}>
+                {row.percentage}
+              </div>
+            ) 
+          }
+        ]}
+        data={convertReportToTableData("profitLoss")}
+      />
     </div>
   );
 
   const renderBalanceSheetTable = () => (
     <div className="overflow-x-auto">
-      <table className="min-w-full bg-white border rounded-lg">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Metrics
-            </th>
-            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Amount
-            </th>
-            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-              % of Total Assets
-            </th>
-            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Structure %
-            </th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-200">
-          <tr className="font-semibold bg-gray-50">
-            <td className="px-6 py-4">Total Assets</td>
-            <td className="px-6 py-4 text-right">
-              {formatCurrency(reports.balanceSheet.totalAssets)}
-            </td>
-            <td className="px-6 py-4 text-right">100%</td>
-            <td className="px-6 py-4 text-right">{formatPercentage(1)}</td>
-          </tr>
-          <tr>
-            <td className="px-6 py-4 pl-8">Current Assets</td>
-            <td className="px-6 py-4 text-right">
-              {formatCurrency(reports.balanceSheet.currentAssets)}
-            </td>
-            <td className="px-6 py-4 text-right">
-              {calculatePercentage(
-                reports.balanceSheet.currentAssets,
-                reports.balanceSheet.totalAssets
-              )}
-            </td>
-            <td className="px-6 py-4 text-right">
-              {calculatePercentage(
-                reports.balanceSheet.currentAssets,
-                reports.balanceSheet.totalAssets
-              )}
-            </td>
-          </tr>
-          <tr>
-            <td className="px-6 py-4 pl-8">Fixed Assets</td>
-            <td className="px-6 py-4 text-right">
-              {formatCurrency(reports.balanceSheet.fixedAssets)}
-            </td>
-            <td className="px-6 py-4 text-right">
-              {calculatePercentage(
-                reports.balanceSheet.fixedAssets,
-                reports.balanceSheet.totalAssets
-              )}
-            </td>
-            <td className="px-6 py-4 text-right">
-              {calculatePercentage(
-                reports.balanceSheet.fixedAssets,
-                reports.balanceSheet.totalAssets
-              )}
-            </td>
-          </tr>
-          <tr className="font-semibold bg-gray-50">
-            <td className="px-6 py-4">Total Liabilities</td>
-            <td className="px-6 py-4 text-right">
-              {formatCurrency(reports.balanceSheet.totalLiabilities)}
-            </td>
-            <td className="px-6 py-4 text-right">
-              {calculatePercentage(
-                reports.balanceSheet.totalLiabilities,
-                reports.balanceSheet.totalAssets
-              )}
-            </td>
-            <td className="px-6 py-4 text-right">100%</td>
-          </tr>
-          <tr>
-            <td className="px-6 py-4 pl-8">Current Liabilities</td>
-            <td className="px-6 py-4 text-right">
-              {formatCurrency(reports.balanceSheet.currentLiabilities)}
-            </td>
-            <td className="px-6 py-4 text-right">
-              {calculatePercentage(
-                reports.balanceSheet.currentLiabilities,
-                reports.balanceSheet.totalAssets
-              )}
-            </td>
-            <td className="px-6 py-4 text-right">
-              {calculatePercentage(
-                reports.balanceSheet.currentLiabilities,
-                reports.balanceSheet.totalLiabilities
-              )}
-            </td>
-          </tr>
-          <tr>
-            <td className="px-6 py-4 pl-8">Long-term Liabilities</td>
-            <td className="px-6 py-4 text-right">
-              {formatCurrency(reports.balanceSheet.longTermLiabilities)}
-            </td>
-            <td className="px-6 py-4 text-right">
-              {calculatePercentage(
-                reports.balanceSheet.longTermLiabilities,
-                reports.balanceSheet.totalAssets
-              )}
-            </td>
-            <td className="px-6 py-4 text-right">
-              {calculatePercentage(
-                reports.balanceSheet.longTermLiabilities,
-                reports.balanceSheet.totalLiabilities
-              )}
-            </td>
-          </tr>
-          <tr className="font-bold">
-            <td className="px-6 py-4">Total Equity</td>
-            <td className="px-6 py-4 text-right">
-              {formatCurrency(reports.balanceSheet.totalEquity)}
-            </td>
-            <td className="px-6 py-4 text-right">
-              {calculatePercentage(
-                reports.balanceSheet.totalEquity,
-                reports.balanceSheet.totalAssets
-              )}
-            </td>
-            <td className="px-6 py-4 text-right">{formatPercentage(1)}</td>
-          </tr>
-        </tbody>
-      </table>
+      <DataTable
+        columns={[
+          { 
+            key: "metric", 
+            label: "Metrics", 
+            width: "25%", 
+            render: (row) => (
+              <div className={`${row.isHeader ? "font-semibold bg-gray-50" : ""} ${row.isTotal ? "font-bold" : ""} ${row.indent ? "pl-8" : ""}`}>
+                {row.metric}
+              </div>
+            )
+          },
+          { 
+            key: "amount", 
+            label: "Amount", 
+            width: "25%", 
+            render: (row) => (
+              <div className={`text-right ${row.isHeader ? "font-semibold bg-gray-50" : ""} ${row.isTotal ? "font-bold" : ""}`}>
+                {typeof row.amount === 'string' ? row.amount : formatCurrency(row.amount)}
+              </div>
+            ) 
+          },
+          { 
+            key: "percentOfAssets", 
+            label: "% of Total Assets", 
+            width: "25%", 
+            render: (row) => (
+              <div className={`text-right ${row.isHeader ? "font-semibold bg-gray-50" : ""} ${row.isTotal ? "font-bold" : ""}`}>
+                {row.percentOfAssets}
+              </div>
+            ) 
+          },
+          { 
+            key: "structure", 
+            label: "Structure %", 
+            width: "25%", 
+            render: (row) => (
+              <div className={`text-right ${row.isHeader ? "font-semibold bg-gray-50" : ""} ${row.isTotal ? "font-bold" : ""}`}>
+                {row.structure}
+              </div>
+            ) 
+          }
+        ]}
+        data={convertReportToTableData("balanceSheet")}
+      />
     </div>
   );
 
   const renderCashFlowTable = () => (
     <div className="overflow-x-auto">
-      <table className="min-w-full bg-white border rounded-lg">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Metrics
-            </th>
-            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Amount
-            </th>
-            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-              % of Operating Cash
-            </th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-200">
-          <tr>
-            <td className="px-6 py-4">Beginning Cash</td>
-            <td className="px-6 py-4 text-right">
-              {formatCurrency(reports.cashFlow.beginningCash)}
-            </td>
-            <td className="px-6 py-4 text-right">
-              {calculatePercentage(
-                reports.cashFlow.beginningCash,
-                Math.abs(reports.cashFlow.operatingCash)
-              )}
-            </td>
-          </tr>
-          <tr>
-            <td className="px-6 py-4">Operating Cash Flow</td>
-            <td className="px-6 py-4 text-right">
-              {formatCurrency(reports.cashFlow.operatingCash)}
-            </td>
-            <td className="px-6 py-4 text-right">100%</td>
-          </tr>
-          <tr>
-            <td className="px-6 py-4">Investing Cash Flow</td>
-            <td className="px-6 py-4 text-right">
-              {formatCurrency(reports.cashFlow.investingCash)}
-            </td>
-            <td className="px-6 py-4 text-right">
-              {calculatePercentage(
-                reports.cashFlow.investingCash,
-                Math.abs(reports.cashFlow.operatingCash)
-              )}
-            </td>
-          </tr>
-          <tr>
-            <td className="px-6 py-4">Financing Cash Flow</td>
-            <td className="px-6 py-4 text-right">
-              {formatCurrency(reports.cashFlow.financingCash)}
-            </td>
-            <td className="px-6 py-4 text-right">
-              {calculatePercentage(
-                reports.cashFlow.financingCash,
-                Math.abs(reports.cashFlow.operatingCash)
-              )}
-            </td>
-          </tr>
-          <tr className="font-bold">
-            <td className="px-6 py-4">Free Cash Flow</td>
-            <td className="px-6 py-4 text-right">
-              {formatCurrency(reports.cashFlow.freeCashFlow)}
-            </td>
-            <td className="px-6 py-4 text-right">
-              {calculatePercentage(
-                reports.cashFlow.freeCashFlow,
-                Math.abs(reports.cashFlow.operatingCash)
-              )}
-            </td>
-          </tr>
-          <tr className="font-bold">
-            <td className="px-6 py-4">Ending Cash</td>
-            <td className="px-6 py-4 text-right">
-              {formatCurrency(reports.cashFlow.endingCash)}
-            </td>
-            <td className="px-6 py-4 text-right">
-              {calculatePercentage(
-                reports.cashFlow.endingCash,
-                Math.abs(reports.cashFlow.operatingCash)
-              )}
-            </td>
-          </tr>
-          <tr>
-            <td className="px-6 py-4">Cash Ratio</td>
-            <td className="px-6 py-4 text-right">
-              {formatPercentage(reports.cashFlow.cashRatio)}
-            </td>
-            <td className="px-6 py-4 text-right">-</td>
-          </tr>
-        </tbody>
-      </table>
+      <DataTable
+        columns={[
+          { 
+            key: "metric", 
+            label: "Metrics", 
+            width: "40%", 
+            render: (row) => (
+              <div className={`${row.isTotal ? "font-bold" : ""}`}>
+                {row.metric}
+              </div>
+            )
+          },
+          { 
+            key: "amount", 
+            label: "Amount", 
+            width: "30%", 
+            render: (row) => (
+              <div className={`text-right ${row.isTotal ? "font-bold" : ""}`}>
+                {typeof row.amount === 'string' ? row.amount : formatCurrency(row.amount)}
+              </div>
+            ) 
+          },
+          { 
+            key: "percentage", 
+            label: "% of Operating Cash", 
+            width: "30%", 
+            render: (row) => (
+              <div className={`text-right ${row.isTotal ? "font-bold" : ""}`}>
+                {row.percentage}
+              </div>
+            ) 
+          }
+        ]}
+        data={convertReportToTableData("cashFlow")}
+      />
     </div>
   );
 

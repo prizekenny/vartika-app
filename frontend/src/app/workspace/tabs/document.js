@@ -7,6 +7,7 @@ import Button from "@/components/common/Button";
 import EmptyState from "@/components/common/EmptyState";
 import { formatDateTime, formatFileSize } from "@/lib/format";
 import { uploadFileToDrive, checkGoogleDriveAuthorization, getFileList } from "@/api/googleDrive";
+import DataTable from "@/components/common/DataTable";
 
 const DocumentTab = () => {
   const [isUploading, setIsUploading] = useState(false);
@@ -342,42 +343,50 @@ const DocumentTab = () => {
       )}
 
       <div className="bg-white rounded-lg shadow">
-        <div className="grid grid-cols-12 gap-4 p-4 border-b border-gray-200 bg-gray-50 font-medium">
-          <div className="col-span-4">File Name</div>
-          <div className="col-span-2">Size</div>
-          <div className="col-span-3">Location</div>
-          <div className="col-span-3">Upload Time</div>
-        </div>
-
-        <div className="divide-y divide-gray-200">
-          {isLoading ? (
-            <div className="p-10 flex justify-center">
-              <FaSpinner className="animate-spin text-blue-500 text-xl" />
-            </div>
-          ) : uploadedFiles.length === 0 ? (
-            <EmptyState message="No files uploaded yet." />
-          ) : (
-            uploadedFiles.map((file, index) => (
-              <div
-                key={index}
-                className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-gray-50"
-              >
-                <div className="col-span-4 flex items-center">
+        <DataTable
+          columns={[
+            { 
+              key: "file_name", 
+              label: "File Name", 
+              width: "30%",
+              render: (file) => (
+                <div className="flex items-center">
                   <FaFile className="mr-2 text-gray-400" />
                   <span className="truncate">{file.file_name}</span>
                 </div>
-                <div className="col-span-2">{file.file_size}</div>
-                <div className="col-span-3 flex items-center">
+              )
+            },
+            { 
+              key: "file_size", 
+              label: "Size", 
+              width: "15%" 
+            },
+            { 
+              key: "location", 
+              label: "Location", 
+              width: "25%",
+              render: (file) => (
+                <div className="flex items-center">
                   <FaFolderOpen className="mr-2 text-gray-400" />
                   <span className="truncate">{`${file.company_name}/${file.document_type}`}</span>
                 </div>
-                <div className="col-span-3">
-                  {formatDateTime(file.upload_time)}
-                </div>
-              </div>
-            ))
-          )}
-        </div>
+              ) 
+            },
+            { 
+              key: "upload_time", 
+              label: "Upload Time", 
+              width: "20%",
+              render: (file) => formatDateTime(file.upload_time)
+            }
+          ]}
+          data={uploadedFiles}
+          className={isLoading ? "opacity-50" : ""}
+        />
+        {isLoading && (
+          <div className="absolute inset-0 flex justify-center items-center">
+            <FaSpinner className="animate-spin text-blue-500 text-xl" />
+          </div>
+        )}
       </div>
 
       {uploadedFiles.length > 0 && totalPages > 1 && (

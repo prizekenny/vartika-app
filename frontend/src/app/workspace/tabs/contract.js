@@ -27,6 +27,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import DataTable from "../../../components/common/DataTable";
 
 // 定义图表颜色
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8"];
@@ -986,92 +987,50 @@ const ContractTab = () => {
           </div>
 
           {/* Contracts table */}
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Name
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Subject
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Amount
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Start Date
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    End Date
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {contractData.contracts.map((contract) => (
-                  <tr
-                    key={contract.contract_id}
-                    className="hover:bg-gray-50 cursor-pointer"
-                    onClick={() => handleEditClick(contract)}
+          <DataTable
+            columns={[
+              { key: "username", label: "Name", width: "120px" },
+              { key: "subject", label: "Subject", width: "180px" },
+              { key: "amount", label: "Amount", width: "100px", render: (row) => 
+                `$${parseFloat(row.amount).toLocaleString()}` },
+              { key: "start_date", label: "Start Date", width: "120px", render: (row) => 
+                new Date(row.start_date).toLocaleDateString() },
+              { key: "expiration_date", label: "End Date", width: "120px", render: (row) => 
+                new Date(row.expiration_date).toLocaleDateString() },
+              { key: "status", label: "Status", width: "80px", render: (row) => (
+                <span
+                  className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                    row.status === "Accept"
+                      ? "bg-green-100 text-green-800"
+                      : "bg-yellow-100 text-yellow-800"
+                  }`}
+                >
+                  {row.status}
+                </span>
+              )},
+              { key: "actions", label: "Actions", width: "100px", render: (row) => (
+                <div className="flex space-x-3" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    onClick={() => handleEditClick(row)}
+                    className="text-indigo-600 hover:text-indigo-900"
                   >
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {contract.username || "Unknown User"}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {contract.subject}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      ${parseFloat(contract.amount).toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(contract.start_date).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(contract.expiration_date).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          contract.status === "Accept"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }`}
-                      >
-                        {contract.status}
-                      </span>
-                    </td>
-                    <td
-                      className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
-                      onClick={(e) => e.stopPropagation()} // 防止触发行的点击事件
-                    >
-                      <button
-                        onClick={() => handleEditClick(contract)}
-                        className="text-indigo-600 hover:text-indigo-900 mr-3"
-                      >
-                        <FaEdit className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation(); // 防止触发行的点击事件
-                          setSelectedContract(contract);
-                          setShowDeleteModal(true);
-                        }}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        <FaTrash className="h-4 w-4" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    <FaEdit className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSelectedContract(row);
+                      setShowDeleteModal(true);
+                    }}
+                    className="text-red-600 hover:text-red-900"
+                  >
+                    <FaTrash className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+            ]}
+            data={contractData.contracts}
+            onRowClick={handleEditClick}
+          />
 
           {/* Pagination */}
           <div className="px-6 py-4 flex items-center justify-end border-t">
