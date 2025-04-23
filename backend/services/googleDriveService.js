@@ -67,8 +67,13 @@ async function getOrCreateFolder(drive, parentFolderId, folderName) {
 
 /**
  * 📤 上传文件到 Google Drive (分类存储)
+ * @param {string} username - 公司名称/用户名
+ * @param {string} fileType - 文件类型
+ * @param {ReadableStream} fileStream - 文件流
+ * @param {string} fileName - 文件名
+ * @param {string} mimeType - MIME类型
  */
-async function uploadFile(username, fileType, filePath, fileName, mimeType) {
+async function uploadFile(username, fileType, fileStream, fileName, mimeType) {
   try {
     const drive = await getDriveClient();
 
@@ -96,7 +101,7 @@ async function uploadFile(username, fileType, filePath, fileName, mimeType) {
       name: fileName,
       parents: [fileTypeFolderId],
     };
-    const media = { mimeType, body: fs.createReadStream(filePath) };
+    const media = { mimeType, body: fileStream };
 
     const response = await drive.files.create({
       requestBody: fileMetadata,
