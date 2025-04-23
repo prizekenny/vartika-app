@@ -1086,10 +1086,10 @@ const ContractTab = () => {
 
       {/* Edit/Create Modal */}
       {showEditModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div className="mt-3">
-              <h3 className="text-lg font-medium text-gray-900">
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center h-full w-full z-50">
+          <div className="relative mx-auto p-5 border w-96 shadow-lg rounded-md bg-white max-h-[90vh]">
+            <div className="mt-3 overflow-y-auto pr-2" style={{ maxHeight: 'calc(90vh - 40px)' }}>
+              <h3 className="text-lg font-medium text-gray-900 sticky top-0 bg-white pb-2">
                 {selectedContract ? "Edit Contract" : "New Contract"}
               </h3>
               <form onSubmit={handleSubmit} className="mt-4">
@@ -1228,28 +1228,30 @@ const ContractTab = () => {
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
-              Confirm Delete
-            </h3>
-            <p className="text-sm text-gray-500">
-              Are you sure you want to delete this contract? This action cannot
-              be undone.
-            </p>
-            <div className="mt-4 flex justify-end space-x-3">
-              <button
-                onClick={() => setShowDeleteModal(false)}
-                className="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDelete}
-                className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
-              >
-                Delete
-              </button>
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center h-full w-full z-50">
+          <div className="relative mx-auto p-5 border w-96 shadow-lg rounded-md bg-white max-h-[90vh]">
+            <div className="overflow-y-auto pr-2" style={{ maxHeight: 'calc(90vh - 40px)' }}>
+              <h3 className="text-lg font-medium text-gray-900 mb-4 sticky top-0 bg-white pb-2">
+                Confirm Delete
+              </h3>
+              <p className="text-sm text-gray-500">
+                Are you sure you want to delete this contract? This action cannot
+                be undone.
+              </p>
+              <div className="mt-4 flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  className="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDelete}
+                  className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
           </div>
         </div>
