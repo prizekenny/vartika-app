@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { FaUpload, FaSpinner, FaFile, FaExclamationTriangle } from "react-icons/fa";
+import { FaUpload, FaSpinner, FaFile, FaExclamationTriangle, FaFolderOpen } from "react-icons/fa";
 import Pagination from "@/components/common/Pagination";
 import Button from "@/components/common/Button";
 import EmptyState from "@/components/common/EmptyState";
@@ -20,6 +20,21 @@ const DocumentTab = () => {
   const [driveAuthorized, setDriveAuthorized] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [companyName, setCompanyName] = useState("");
+  const [documentType, setDocumentType] = useState("");
+  
+  // 预定义的文档类型选项
+  const documentTypes = [
+    "Invoices", 
+    "Contracts", 
+    "Reports", 
+    "Tax Documents", 
+    "Receipts", 
+    "Proposals",
+    "Other"
+  ];
 
   useEffect(() => {
     const loadDocumentData = async () => {
@@ -60,8 +75,24 @@ const DocumentTab = () => {
     }
   };
 
-  const getFileType = (fileName) => {
-    const extension = fileName.split(".").pop().toLowerCase();
+  const openFileSelector = () => {
+    document.getElementById("file-input").click();
+  };
+
+  const handleFileSelect = (event) => {
+    const files = event.target.files;
+    if (!files.length) return;
+    
+    setSelectedFiles(Array.from(files));
+    setShowUploadModal(true);
+  };
+
+  const getFileExtension = (fileName) => {
+    return fileName.split(".").pop().toLowerCase();
+  };
+
+  const getFileMimeType = (fileName) => {
+    const extension = getFileExtension(fileName);
     const fileTypes = {
       pdf: "application/pdf",
       doc: "application/msword",
@@ -76,22 +107,32 @@ const DocumentTab = () => {
     return fileTypes[extension] || "application/octet-stream";
   };
 
-  const handleFileUpload = async (event) => {
-    const files = event.target.files;
-    if (!files.length) return;
+  const handleUpload = async () => {
+    if (!selectedFiles.length) return;
+    if (!companyName.trim()) {
+      setErrorMessage("Please enter a company name");
+      return;
+    }
+    if (!documentType) {
+      setErrorMessage("Please select a document type");
+      return;
+    }
 
     setIsUploading(true);
     setUploadProgress(0);
     setErrorMessage("");
+    setShowUploadModal(false);
 
     try {
       const successfulUploads = [];
 
-      for (let i = 0; i < files.length; i++) {
+      for (let i = 0; i < selectedFiles.length; i++) {
         const formData = new FormData();
-        formData.append("file", files[i]);
-        formData.append("username", "testuser");
-        formData.append("fileType", getFileType(files[i].name));
+        formData.append("file", selectedFiles[i]);
+        // 使用公司名作为用户名
+        formData.append("username", companyName);
+        // 使用文档类型作为文件类型
+        formData.append("fileType", documentType);
 
         const response = await uploadFileToDrive(formData);
         const result = await response.json();
@@ -103,17 +144,21 @@ const DocumentTab = () => {
         }
 
         successfulUploads.push({
-          name: files[i].name,
-          size: `${(files[i].size / 1024).toFixed(2)} KB`,
-          type: getFileType(files[i].name),
+          name: selectedFiles[i].name,
+          size: `${(selectedFiles[i].size / 1024).toFixed(2)} KB`,
+          type: `${companyName}/${documentType}`,
           uploadTime: new Date().toISOString(),
         });
 
-        setUploadProgress(((i + 1) / files.length) * 100);
+        setUploadProgress(((i + 1) / selectedFiles.length) * 100);
       }
 
       setUploadedFiles((prev) => [...successfulUploads, ...prev]);
       alert("Files uploaded successfully!");
+      // 重置状态
+      setSelectedFiles([]);
+      setCompanyName("");
+      setDocumentType("");
     } catch (error) {
       console.error("Upload error:", error);
       setErrorMessage(`Upload failed: ${error.message}`);
@@ -121,6 +166,14 @@ const DocumentTab = () => {
       setIsUploading(false);
       setUploadProgress(0);
     }
+  };
+
+  const cancelUpload = () => {
+    setShowUploadModal(false);
+    setSelectedFiles([]);
+    setCompanyName("");
+    setDocumentType("");
+    setErrorMessage("");
   };
 
   const { itemsPerPage } = documentsData.pagination;
@@ -147,7 +200,7 @@ const DocumentTab = () => {
           <Button
             text="Upload Files"
             icon={<FaUpload />}
-            onClick={() => document.getElementById("file-input").click()}
+            onClick={openFileSelector}
             disabled={!driveAuthorized || isUploading}
           />
           <input
@@ -155,7 +208,7 @@ const DocumentTab = () => {
             type="file"
             multiple
             hidden
-            onChange={handleFileUpload}
+            onChange={handleFileSelect}
             disabled={!driveAuthorized || isUploading}
           />
         </div>
@@ -194,16 +247,82 @@ const DocumentTab = () => {
         </div>
       )}
 
+      {showUploadModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-bold mb-4">Upload Configuration</h3>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Company Name
+              </label>
+              <input
+                type="text"
+                className="w-full p-2 border border-gray-300 rounded"
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+                placeholder="Enter company name"
+              />
+            </div>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Document Type
+              </label>
+              <select
+                className="w-full p-2 border border-gray-300 rounded"
+                value={documentType}
+                onChange={(e) => setDocumentType(e.target.value)}
+              >
+                <option value="">Select document type</option>
+                {documentTypes.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Selected Files ({selectedFiles.length})
+              </label>
+              <div className="max-h-40 overflow-y-auto border border-gray-200 rounded p-2">
+                {selectedFiles.map((file, index) => (
+                  <div key={index} className="flex items-center py-1">
+                    <FaFile className="text-gray-400 mr-2" />
+                    <span className="text-sm truncate">{file.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+                onClick={cancelUpload}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                onClick={handleUpload}
+              >
+                Upload
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white rounded-lg shadow">
-        {/* ✅ 表头 */}
         <div className="grid grid-cols-12 gap-4 p-4 border-b border-gray-200 bg-gray-50 font-medium">
           <div className="col-span-4">File Name</div>
           <div className="col-span-3">Size</div>
-          <div className="col-span-3">Type</div>
+          <div className="col-span-3">Location</div>
           <div className="col-span-2">Upload Time</div>
         </div>
 
-        {/* ✅ 列表 */}
         <div className="divide-y divide-gray-200">
           {currentFiles.length === 0 ? (
             <EmptyState message="No files uploaded yet." />
@@ -218,7 +337,10 @@ const DocumentTab = () => {
                   <span className="truncate">{file.name}</span>
                 </div>
                 <div className="col-span-3">{file.size}</div>
-                <div className="col-span-3">{file.type}</div>
+                <div className="col-span-3 flex items-center">
+                  <FaFolderOpen className="mr-2 text-gray-400" />
+                  <span className="truncate">{file.type}</span>
+                </div>
                 <div className="col-span-2">
                   {formatDateTime(file.uploadTime)}
                 </div>
